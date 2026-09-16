@@ -130,18 +130,31 @@ const API_BASE = window.location.origin + (relativePath || '') + '/api/whatsapp'
         try {
             const res = await fetch(`${API_BASE}/qr`);
             const data = await res.json();
-            const qrImgElement = document.querySelector('#qr-modal img');
+            const qrImgElement = document.getElementById('qr-code-img') || document.querySelector('#qr-modal img');
+            const qrSpinner = document.getElementById('qr-loading-spinner');
+
             if (data.qrDataURL) {
                 if (qrImgElement) {
                     qrImgElement.src = data.qrDataURL;
                     qrImgElement.style.display = 'block';
                 }
+                if (qrSpinner) {
+                    qrSpinner.style.display = 'none';
+                }
                 if (qrModal) {
                     qrModal.classList.remove('hidden');
                 }
             } else {
-                // QR not ready yet - trigger status poll to generate QR in backend
+                if (qrImgElement) {
+                    qrImgElement.style.display = 'none';
+                }
+                if (qrSpinner) {
+                    qrSpinner.style.display = 'flex';
+                }
                 pollWhatsAppStatus();
+                if (qrModal && !qrModal.classList.contains('hidden')) {
+                    setTimeout(fetchLiveQR, 1500);
+                }
             }
         } catch (err) {}
     }
