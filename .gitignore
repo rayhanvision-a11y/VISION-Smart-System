@@ -24,3 +24,5 @@ Homestead.yaml
 Thumbs.db
 auth_info_*
 baileys_store*.json
+global_templates.json
+environment.php
