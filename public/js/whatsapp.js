@@ -130,14 +130,18 @@ const API_BASE = window.location.origin + (relativePath || '') + '/api/whatsapp'
         try {
             const res = await fetch(`${API_BASE}/qr`);
             const data = await res.json();
+            const qrImgElement = document.querySelector('#qr-modal img');
             if (data.qrDataURL) {
-                const qrImgElement = document.querySelector('#qr-modal img');
                 if (qrImgElement) {
                     qrImgElement.src = data.qrDataURL;
+                    qrImgElement.style.display = 'block';
                 }
                 if (qrModal) {
                     qrModal.classList.remove('hidden');
                 }
+            } else {
+                // QR not ready yet - trigger status poll to generate QR in backend
+                pollWhatsAppStatus();
             }
         } catch (err) {}
     }
@@ -146,16 +150,22 @@ const API_BASE = window.location.origin + (relativePath || '') + '/api/whatsapp'
     if (btnWaAuth) {
         btnWaAuth.addEventListener('click', (e) => {
             e.preventDefault();
-            if (qrModal) qrModal.classList.remove('hidden');
-            fetchLiveQR();
+            if (!isConnected) {
+                if (qrModal) qrModal.classList.remove('hidden');
+                pollWhatsAppStatus();
+                fetchLiveQR();
+            }
         });
     }
 
     if (accountStatusBadge) {
         accountStatusBadge.addEventListener('click', (e) => {
             e.preventDefault();
-            if (qrModal) qrModal.classList.remove('hidden');
-            fetchLiveQR();
+            if (!isConnected) {
+                if (qrModal) qrModal.classList.remove('hidden');
+                pollWhatsAppStatus();
+                fetchLiveQR();
+            }
         });
     }
 
@@ -1835,6 +1845,10 @@ const API_BASE = window.location.origin + (relativePath || '') + '/api/whatsapp'
             }
         });
     }
+
+    // ── Start Polling ──────────────────────────────────────────────────
+    pollWhatsAppStatus();
+    setInterval(pollWhatsAppStatus, 3000);
 
     function escapeHtml(str) {
         if (!str) return '';
