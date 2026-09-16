@@ -85,10 +85,13 @@ function getSession(userId) {
         const s = createSessionData(userId);
         sessions.set(userId, s);
         loadStoreFromDisk(s);
-        // Auto-connect when session is first created
         connectToWhatsApp(s);
     }
-    return sessions.get(userId);
+    const s = sessions.get(userId);
+    if (s && s.connectionStatus === 'disconnected' && !s._connecting) {
+        connectToWhatsApp(s);
+    }
+    return s;
 }
 
 function getSessionFromReq(req) {
