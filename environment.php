@@ -224,6 +224,20 @@ $allPassed = ($passedChecks === $totalChecks);
             </div>
         </div>
 
+        <!-- Pre-Upload / Post-Upload Status Banner -->
+        <?php 
+            $projectFilesUploaded = file_exists($baseDir . '/artisan') || file_exists($baseDir . '/composer.json');
+        ?>
+        <?php if (!$projectFilesUploaded): ?>
+        <div class="bg-indigo-950/60 border border-indigo-700/60 rounded-xl p-4 flex items-start gap-3 text-indigo-200 text-xs sm:text-sm shadow-md">
+            <span class="text-xl">🚀</span>
+            <div>
+                <strong class="font-bold block text-white text-sm sm:text-base">Pre-Upload Server Check Mode</strong>
+                You uploaded <code>environment.php</code> first to test your server. Below you can check if your server's <strong>PHP Version (>= 8.2)</strong>, <strong>Required Extensions</strong>, and <strong>php.ini limits</strong> are ready BEFORE uploading your project files or pulling from Git!
+            </div>
+        </div>
+        <?php endif; ?>
+
         <!-- Security Warning Alert -->
         <div class="bg-rose-950/40 border border-rose-800/60 rounded-xl p-4 flex items-start gap-3 text-rose-200 text-xs sm:text-sm">
             <span class="text-lg">⚠️</span>
