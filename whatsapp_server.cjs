@@ -9,6 +9,25 @@ const app = express();
 app.use(cors({ origin: false })); // no browser CORS — internal only
 app.use(express.json({ limit: '10mb' })); // reduced from 50mb
 
+// Load .env file automatically if present
+try {
+    const envPath = path.join(__dirname, '.env');
+    if (fs.existsSync(envPath)) {
+        const lines = fs.readFileSync(envPath, 'utf8').split('\n');
+        for (const line of lines) {
+            const trimmed = line.trim();
+            if (trimmed && !trimmed.startsWith('#') && trimmed.includes('=')) {
+                const idx = trimmed.indexOf('=');
+                const key = trimmed.substring(0, idx).trim();
+                const val = trimmed.substring(idx + 1).trim().replace(/^["']|["']$/g, '');
+                if (key && !process.env[key]) {
+                    process.env[key] = val;
+                }
+            }
+        }
+    }
+} catch (e) {}
+
 // Require internal token on every request — only Laravel proxy should call this
 const INTERNAL_SECRET = process.env.WA_INTERNAL_SECRET || 'change-me-in-env';
 app.use((req, res, next) => {

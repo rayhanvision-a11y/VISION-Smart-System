@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Http;
 
 class WhatsAppController extends Controller
 {
-    private string $nodeBase = 'http://localhost:3000/api/whatsapp';
+    private string $nodeBase = 'http://127.0.0.1:3000/api/whatsapp';
 
     private function waHeaders(): array
     {
