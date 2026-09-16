@@ -349,12 +349,12 @@
                 flex-shrink: 0 !important;
             }
 
-            /* Hide scrollbar when collapsed but allow mouse wheel scrolling */
-            .sidebar-collapsed nav {
+            /* Hide scrollbar for sidebar navigation but allow mouse wheel scrolling */
+            #main-sidebar nav {
                 -ms-overflow-style: none !important;
                 scrollbar-width: none !important;
             }
-            .sidebar-collapsed nav::-webkit-scrollbar {
+            #main-sidebar nav::-webkit-scrollbar {
                 display: none !important;
                 width: 0 !important;
                 height: 0 !important;
