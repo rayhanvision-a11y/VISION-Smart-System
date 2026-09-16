@@ -1,5 +1,6 @@
 ---
 deployment:
   tasks:
-    - export DEPLOYPATH=/home/YOUR_CPANEL_USER/public_html
+    - export DEPLOYPATH=/home/visiontech/public_html/domains/subdomains/portal.visiontech.com.bd
     - /bin/cp -R * $DEPLOYPATH
+    - /bin/chmod -R 755 $DEPLOYPATH/whatsapp-service/
