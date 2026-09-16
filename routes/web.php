@@ -31,6 +31,26 @@ use App\Models\Ticket;
 use App\Models\TicketHistory;
 use Illuminate\Support\Facades\Route;
 
+Route::match(['get', 'post'], '/deploy-webhook', function (\Illuminate\Http\Request $request) {
+    $secret = 'visiontech-deploy-secret-2026';
+    if ($request->query('secret') !== $secret) {
+        return response()->json(['error' => 'Forbidden: Invalid deploy secret'], 403);
+    }
+    
+    $repoPath = base_path();
+    $sshKey = '/home/visiontech/.ssh/github_deploy_key';
+    $sshCmd = file_exists($sshKey) ? "git config core.sshCommand \"ssh -i {$sshKey} -o StrictHostKeyChecking=no\" && " : "";
+    $cmd = "cd {$repoPath} && {$sshCmd}git fetch origin main 2>&1 && git reset --hard origin/main 2>&1";
+
+    exec($cmd, $output, $returnCode);
+
+    if ($returnCode === 0) {
+        return response()->json(['success' => true, 'output' => $output]);
+    } else {
+        return response()->json(['success' => false, 'output' => $output, 'code' => $returnCode], 500);
+    }
+});
+
 Route::get('/', function () {
     return redirect()->route('dashboard');
 });
