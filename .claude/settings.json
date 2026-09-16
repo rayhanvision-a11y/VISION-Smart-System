@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Get-Content \"F:\\\\laragon\\\\www\\\\isp-tickets\\\\composer.json\" -Raw | Select-String -Pattern '\"name\"|\"version\"|\"description\"' -AllMatches | Select-Object -ExpandProperty Matches | ForEach-Object { $_.Value })",
+      "Bash(grep -rn '$stats' f:/laragon/www/isp-tickets/resources/views/dashboard.blade.php)",
+      "Bash(php -r \"require 'vendor/autoload.php';\")",
+      "Bash(Get-Content \"f:\\\\laragon\\\\www\\\\isp-tickets\\\\storage\\\\logs\\\\laravel.log\" -Tail 60)",
+      "Read(//f/laragon/www/**)",
+      "Bash(dir \"f:\\\\laragon\\\\www\\\\isp-tickets\" /b)",
+      "Bash(node -e \"const {makeInMemoryStore} = require\\('@whiskeysockets/baileys'\\); console.log\\('makeInMemoryStore OK:', typeof makeInMemoryStore\\);\")",
+      "Bash(node -e \"require\\('./whatsapp_server.cjs'\\)\")",
+      "WebFetch(domain:github.com)",
+      "Bash(curl -s http://localhost:3000/api/whatsapp/templates)",
+      "Bash(curl -s -X POST http://localhost:3000/api/whatsapp/templates -H 'Content-Type: application/json' -d '{\"name\":\"Welcome Message\",\"message\":\"Hello {name}! Welcome to our ISP service. Your account is now active. For support call: 01XXXXXXXXX\"}')",
+      "Bash(python -m json.tool)",
+      "Bash(curl -s -X POST http://localhost:3000/api/whatsapp/templates -H 'Content-Type: application/json' -d '{\"name\":\"Bill Due Notice\",\"message\":\"Dear {name}, your internet bill is due. Please pay BDT XXXX to avoid service interruption. Pay now: bKash/Nagad 01XXXXXXXXX\"}')",
+      "Bash(curl -s -X POST http://localhost:3000/api/whatsapp/templates -H 'Content-Type: application/json' -d '{\"name\":\"Service Down Alert\",\"message\":\"Dear {name}, we are aware of a service outage in your area. Our team is working to restore it. ETA: 2 hours. Sorry for inconvenience.\"}')",
+      "PowerShell(Get-ChildItem \"f:\\\\laragon\\\\www\\\\isp-tickets\\\\\" | Where-Object { $_.Name -match \"auth_info|baileys\" } | Select-Object Name)"
+    ]
+  }
+}

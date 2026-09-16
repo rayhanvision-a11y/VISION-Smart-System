@@ -1,0 +1,101 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Dark mode — class-based (html.dark).
+ *
+ * The app is built almost entirely from a fixed slate/white palette plus a
+ * handful of colored status badges (blue/orange/violet/emerald/red/amber/
+ * indigo/purple/rose). Rather than hand-annotate every `dark:` variant
+ * across ~50 views, we override the underlying Tailwind utility classes
+ * directly whenever `html.dark` is present. New views automatically pick
+ * up dark mode for free as long as they stick to this existing palette.
+ */
+html.dark {
+    color-scheme: dark;
+}
+
+html.dark body {
+    background-color: #0b1220;
+}
+
+/* Surfaces */
+html.dark .bg-white       { background-color: #1e293b !important; }
+html.dark .bg-slate-50    { background-color: #0f172a !important; }
+html.dark .bg-slate-100   { background-color: #253346 !important; }
+html.dark .hover\:bg-slate-50:hover  { background-color: #24344a !important; }
+html.dark .hover\:bg-slate-100:hover { background-color: #2c3d54 !important; }
+
+/* Borders */
+html.dark .border-slate-100 { border-color: #334155 !important; }
+html.dark .border-slate-200 { border-color: #334155 !important; }
+html.dark .border-slate-300 { border-color: #475569 !important; }
+html.dark .divide-slate-50 > :not([hidden]) ~ :not([hidden]) { border-color: #263344 !important; }
+html.dark .divide-slate-100 > :not([hidden]) ~ :not([hidden]) { border-color: #334155 !important; }
+
+/* Text */
+html.dark .text-slate-900 { color: #f1f5f9 !important; }
+html.dark .text-slate-800 { color: #e2e8f0 !important; }
+html.dark .text-slate-700 { color: #cbd5e1 !important; }
+html.dark .text-slate-600 { color: #94a3b8 !important; }
+html.dark .text-slate-500 { color: #94a3b8 !important; }
+html.dark .text-slate-400 { color: #64748b !important; }
+
+/* Text — gray family (leftover Breeze scaffolding uses gray, not slate) */
+html.dark .text-black     { color: #f1f5f9 !important; }
+html.dark .text-gray-900  { color: #f1f5f9 !important; }
+html.dark .text-gray-800  { color: #e2e8f0 !important; }
+html.dark .text-gray-700  { color: #cbd5e1 !important; }
+html.dark .text-gray-600  { color: #94a3b8 !important; }
+html.dark .text-gray-500  { color: #94a3b8 !important; }
+html.dark .text-gray-400  { color: #64748b !important; }
+html.dark .hover\:text-gray-900:hover { color: #f1f5f9 !important; }
+
+/* Surfaces — gray family */
+html.dark .bg-gray-50   { background-color: #0f172a !important; }
+html.dark .bg-gray-100  { background-color: #253346 !important; }
+html.dark .border-gray-200 { border-color: #334155 !important; }
+html.dark .border-gray-300 { border-color: #475569 !important; }
+
+/* Form inputs */
+html.dark input, html.dark select, html.dark textarea {
+    background-color: #0f172a !important;
+    color: #e2e8f0 !important;
+    border-color: #334155 !important;
+}
+html.dark input::placeholder, html.dark textarea::placeholder { color: #64748b !important; }
+
+/* Status/priority badge backgrounds — softened for dark surfaces */
+html.dark .bg-blue-50    { background-color: rgba(59,130,246,.12)  !important; }
+html.dark .bg-blue-100   { background-color: rgba(59,130,246,.18)  !important; }
+html.dark .bg-orange-50  { background-color: rgba(249,115,22,.12)  !important; }
+html.dark .bg-orange-100 { background-color: rgba(249,115,22,.18)  !important; }
+html.dark .bg-violet-50  { background-color: rgba(139,92,246,.12)  !important; }
+html.dark .bg-violet-100 { background-color: rgba(139,92,246,.18)  !important; }
+html.dark .bg-emerald-50 { background-color: rgba(16,185,129,.12)  !important; }
+html.dark .bg-emerald-100{ background-color: rgba(16,185,129,.18)  !important; }
+html.dark .bg-red-50     { background-color: rgba(239,68,68,.12)   !important; }
+html.dark .bg-red-100    { background-color: rgba(239,68,68,.18)   !important; }
+html.dark .bg-rose-50    { background-color: rgba(244,63,94,.12)   !important; }
+html.dark .bg-amber-50   { background-color: rgba(245,158,11,.12)  !important; }
+html.dark .bg-amber-100  { background-color: rgba(245,158,11,.18)  !important; }
+html.dark .bg-indigo-50  { background-color: rgba(99,102,241,.14)  !important; }
+html.dark .bg-indigo-100 { background-color: rgba(99,102,241,.20)  !important; }
+html.dark .bg-purple-100 { background-color: rgba(168,85,247,.18)  !important; }
+html.dark .bg-pink-100   { background-color: rgba(236,72,153,.18)  !important; }
+
+/* Status/priority badge text — brightened for dark surfaces */
+html.dark .text-blue-500, html.dark .text-blue-600, html.dark .text-blue-700       { color: #93c5fd !important; }
+html.dark .text-orange-500, html.dark .text-orange-600, html.dark .text-orange-700 { color: #fdba74 !important; }
+html.dark .text-violet-500, html.dark .text-violet-600, html.dark .text-violet-700 { color: #c4b5fd !important; }
+html.dark .text-emerald-500, html.dark .text-emerald-600, html.dark .text-emerald-700 { color: #6ee7b7 !important; }
+html.dark .text-red-500, html.dark .text-red-600, html.dark .text-red-700          { color: #fca5a5 !important; }
+html.dark .text-rose-600, html.dark .text-rose-700                                 { color: #fda4af !important; }
+html.dark .text-amber-500, html.dark .text-amber-600, html.dark .text-amber-700    { color: #fcd34d !important; }
+html.dark .text-indigo-500, html.dark .text-indigo-600, html.dark .text-indigo-700 { color: #a5b4fc !important; }
+html.dark .text-purple-600, html.dark .text-purple-700                             { color: #d8b4fe !important; }
+
+/* Scrollbar */
+html.dark ::-webkit-scrollbar-track { background: #1e293b; }
+html.dark ::-webkit-scrollbar-thumb { background: #475569; border-radius: 8px; }
