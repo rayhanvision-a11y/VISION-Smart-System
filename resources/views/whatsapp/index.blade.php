@@ -1357,5 +1357,5 @@
             isSuperAdmin: @json(auth()->user()?->isSuperAdminOnly() ?? false)
         };
     </script>
-    <script src="{{ asset('js/whatsapp.js') }}?v=3.3"></script>
+    <script src="{{ asset('js/whatsapp.js') }}?v={{ time() }}"></script>
 </x-app-layout>
