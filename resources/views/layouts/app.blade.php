@@ -801,14 +801,12 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h10M4 18h14"/>
                             </svg>
                         </button>
-                        </button>
                         @isset($pageTitle)
                             <h1 class="text-lg font-semibold text-slate-800 dark:text-slate-100 flex-shrink-0">{{ $pageTitle }}</h1>
                         @endisset
                     </div>
 
-                    {{-- Dynamic Header Notice Marquee Ticker (Between Title/Logo and Search Bar) --}}
-                    {{-- Dynamic Header Notice Marquee Ticker (Supports Multiple Notices) --}}
+                    {{-- Dynamic Header Notice Marquee Ticker (Supports Multiple Notices & Continuous Position across pages) --}}
                     @php
                         $hNoticeActive = \App\Models\Setting::get('header_notice_active', '1') === '1';
                         $hNoticeRaw = \App\Models\Setting::get('header_notice_text');
@@ -832,12 +830,27 @@
                             📢 NOTICE {{ count($hNoticeItems) > 1 ? '('.count($hNoticeItems).')' : '' }}
                         </span>
                         <div class="flex-1 min-w-0 overflow-hidden text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100">
-                            <marquee scrollamount="{{ $hNoticeSpeed }}" onmouseover="this.stop();" onmouseout="this.start();" class="block whitespace-nowrap">
+                            <marquee id="header-notice-marquee" scrollamount="{{ $hNoticeSpeed }}" onmouseover="this.stop();" onmouseout="this.start();" class="block whitespace-nowrap">
                                 @foreach($hNoticeItems as $index => $noticeItem)
                                     <span class="inline-block">{{ $noticeItem }}</span>
                                     <span class="inline-block px-14 sm:px-20 text-red-600 font-extrabold text-sm sm:text-base">•</span>
                                 @endforeach
                             </marquee>
+                            <script>
+                                (function () {
+                                    const m = document.getElementById('header-notice-marquee');
+                                    if (!m) return;
+                                    const savedPos = sessionStorage.getItem('header_notice_scroll');
+                                    if (savedPos !== null) {
+                                        m.scrollLeft = parseFloat(savedPos);
+                                    }
+                                    window.addEventListener('beforeunload', function () {
+                                        if (m) {
+                                            sessionStorage.setItem('header_notice_scroll', m.scrollLeft);
+                                        }
+                                    });
+                                })();
+                            </script>
                         </div>
                     </div>
                     @endif
