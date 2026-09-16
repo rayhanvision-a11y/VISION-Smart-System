@@ -105,6 +105,9 @@ const API_BASE = window.location.origin + (relativePath || '') + '/api/whatsapp'
                     accountStatusBadge.style.borderColor = 'rgba(250,204,21,0.25)';
                     accountStatusBadge.innerHTML = '● Scan QR';
                 }
+                if (qrModal) {
+                    qrModal.classList.remove('hidden');
+                }
             } else {
                 if (isConnected) { isConnected = false; }
                 if (dot) { dot.style.background = '#f87171'; }
@@ -132,8 +135,35 @@ const API_BASE = window.location.origin + (relativePath || '') + '/api/whatsapp'
                 if (qrImgElement) {
                     qrImgElement.src = data.qrDataURL;
                 }
+                if (qrModal) {
+                    qrModal.classList.remove('hidden');
+                }
             }
         } catch (err) {}
+    }
+
+    // Modal & Login Click Event Listeners
+    if (btnWaAuth) {
+        btnWaAuth.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (qrModal) qrModal.classList.remove('hidden');
+            fetchLiveQR();
+        });
+    }
+
+    if (accountStatusBadge) {
+        accountStatusBadge.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (qrModal) qrModal.classList.remove('hidden');
+            fetchLiveQR();
+        });
+    }
+
+    if (btnCloseQr) {
+        btnCloseQr.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (qrModal) qrModal.classList.add('hidden');
+        });
     }
 
     let _fetchChatsTimer = null;
