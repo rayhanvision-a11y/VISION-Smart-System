@@ -143,6 +143,9 @@
                     <option value="close">{{ __('Close Tickets') }}</option>
                     <option value="assign">{{ __('Assign to NOC') }}</option>
                     <option value="status">{{ __('Change Status') }}</option>
+                    @if(auth()->user()->isSuperAdmin())
+                    <option value="delete">🗑 {{ __('Delete Permanently') }}</option>
+                    @endif
                 </select>
                 <select name="assigned_to" class="border border-indigo-200 dark:border-indigo-500/30 rounded-lg px-2 py-1.5 text-sm text-slate-700 dark:text-slate-100 bg-white dark:bg-slate-800 hidden" id="bulk-assign-select">
                     @foreach(\App\Models\User::where('role','noc')->get() as $noc)

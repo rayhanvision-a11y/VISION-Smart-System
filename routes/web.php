@@ -280,7 +280,7 @@ Route::middleware(['auth'])->group(function () {
     // Bulk action BEFORE resource so it is not treated as ticket ID
     Route::post('/tickets/bulk-action', [TicketController::class, 'bulkAction'])->name('tickets.bulk-action');
 
-    Route::resource('tickets', TicketController::class)->except(['destroy']);
+    Route::resource('tickets', TicketController::class);
     Route::post('/tickets/{ticket}/assign',  [TicketController::class, 'assign'])->name('tickets.assign');
     Route::post('/tickets/{ticket}/status',  [TicketController::class, 'updateStatus'])->name('tickets.status');
     Route::post('/tickets/{ticket}/resolve', [TicketController::class, 'resolve'])->name('tickets.resolve');

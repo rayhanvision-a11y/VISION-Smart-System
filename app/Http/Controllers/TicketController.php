@@ -528,10 +528,23 @@ class TicketController extends Controller
         $request->validate([
             'ticket_ids'  => 'required|array',
             'ticket_ids.*' => 'exists:tickets,id',
-            'action'      => 'required|in:assign,status',
+            'action'      => 'required|in:assign,status,delete',
             'assigned_to' => 'nullable|exists:users,id',
             'bulk_status' => 'nullable|in:in_progress,pending,waiting_for_customer_feedback,resolved',
         ]);
+
+        if ($request->action === 'delete') {
+            if (!auth()->user()->isSuperAdmin()) {
+                abort(403, 'Only Super Admin can permanently delete tickets.');
+            }
+            $tickets = Ticket::with(['attachments', 'messages', 'notes', 'history', 'labels', 'subtasks'])->whereIn('id', $request->ticket_ids)->get();
+            $count = 0;
+            foreach ($tickets as $ticket) {
+                $this->purgeTicket($ticket);
+                $count++;
+            }
+            return redirect()->route('tickets.index')->with('success', "{$count} ticket(s) permanently deleted.");
+        }
 
         $tickets = Ticket::whereIn('id', $request->ticket_ids)->get();
         $count = 0;
@@ -660,5 +673,73 @@ class TicketController extends Controller
         });
 
         return redirect()->route('tickets.show', $target)->with('success', "Ticket #{$source->id} merged into this ticket.");
+    }
+
+    public function destroy(Ticket $ticket)
+    {
+        $user = auth()->user();
+        if (!$user->isSuperAdmin()) {
+            abort(403, 'Only Super Admin can delete tickets.');
+        }
+
+        $ticketKey = $ticket->ticket_key ?? '#' . $ticket->id;
+        $this->purgeTicket($ticket);
+
+        return redirect()->route('tickets.index')->with('success', "Ticket {$ticketKey} and all associated data permanently deleted.");
+    }
+
+    private function purgeTicket(Ticket $ticket): void
+    {
+        // 1. Delete attachments and physical files
+        foreach ($ticket->attachments as $att) {
+            if ($att->file_path && \Illuminate\Support\Facades\Storage::disk('public')->exists($att->file_path)) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($att->file_path);
+            }
+            $att->delete();
+        }
+
+        // 2. Delete messages, message images, and reactions
+        foreach ($ticket->messages as $msg) {
+            if ($msg->image_path && \Illuminate\Support\Facades\Storage::disk('public')->exists($msg->image_path)) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($msg->image_path);
+            }
+            $msg->reactions()->delete();
+            $msg->delete();
+        }
+
+        // 3. Delete notes
+        $ticket->notes()->delete();
+
+        // 4. Delete history
+        $ticket->history()->delete();
+
+        // 5. Detach labels
+        $ticket->labels()->detach();
+
+        // 6. Delete links
+        \App\Models\TicketLink::where('ticket_id', $ticket->id)
+            ->orWhere('linked_ticket_id', $ticket->id)
+            ->delete();
+
+        // 7. Delete subtasks
+        foreach ($ticket->subtasks as $subtask) {
+            foreach ($subtask->attachments as $subAtt) {
+                if ($subAtt->file_path && \Illuminate\Support\Facades\Storage::disk('public')->exists($subAtt->file_path)) {
+                    \Illuminate\Support\Facades\Storage::disk('public')->delete($subAtt->file_path);
+                }
+                $subAtt->delete();
+            }
+            $subtask->messages()->delete();
+            $subtask->notes()->delete();
+            $subtask->history()->delete();
+            $subtask->labels()->detach();
+            $subtask->delete();
+        }
+
+        // 8. Delete notifications
+        \App\Models\Notification::where('ticket_id', $ticket->id)->delete();
+
+        // 9. Delete ticket record
+        $ticket->delete();
     }
 }

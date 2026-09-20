@@ -82,21 +82,22 @@ class TicketMessageController extends Controller
     private function serialize(TicketMessage $msg, User $user): array
     {
         return [
-            'id'          => $msg->id,
-            'isMe'        => $msg->sender_id === $user->id,
-            'is_private'  => (bool)$msg->is_private,
-            'senderName'  => $msg->sender->name ?? 'Unknown',
-            'senderRole'  => $msg->sender->role ?? 'unknown',
-            'avatarUrl'   => $msg->sender ? $msg->sender->avatarUrl() : '',
-            'message'     => $msg->message,
-            'image_url'   => $msg->image_path ? asset('storage/' . $msg->image_path) : null,
-            'time'        => $msg->created_at->format('d M, H:i'),
-            'replyTo'     => $msg->replyTo ? [
+            'id'                => $msg->id,
+            'isMe'              => $msg->sender_id === $user->id,
+            'is_private'        => (bool)$msg->is_private,
+            'senderName'        => $msg->sender->name ?? 'Unknown',
+            'senderRole'        => $msg->sender->role ?? 'unknown',
+            'avatarUrl'         => $msg->sender ? $msg->sender->avatarUrl() : '',
+            'message'           => $msg->message,
+            'formatted_message' => $msg->formatted_message ?? $msg->message,
+            'image_url'         => $msg->image_path ? asset('storage/' . $msg->image_path) : null,
+            'time'              => $msg->created_at->diffForHumans(),
+            'replyTo'           => $msg->replyTo ? [
                 'id'         => $msg->replyTo->id,
                 'senderName' => $msg->replyTo->sender->name ?? 'Unknown',
                 'preview'    => \Illuminate\Support\Str::limit(strip_tags($msg->replyTo->message ?? '📎 Image'), 80),
             ] : null,
-            'reactions'   => $msg->reactionSummary($user->id),
+            'reactions'         => $msg->reactionSummary($user->id),
         ];
     }
 
@@ -180,6 +181,13 @@ class TicketMessageController extends Controller
                 try { Mail::to($recipient->email)->send(new NewChatMessage($ticket)); } catch (\Exception $e) {}
             }
             NotificationService::send($recipient->id, "💬 New message on ticket #{$ticket->id}: {$preview}", $ticket->id);
+        }
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'status'  => 'ok',
+                'message' => $this->serialize($message, $user),
+            ]);
         }
 
         return back()->with('success', 'Message sent.');
