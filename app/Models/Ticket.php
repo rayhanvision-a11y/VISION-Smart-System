@@ -164,4 +164,15 @@ class Ticket extends Model
     {
         return $this->merged_into_id !== null;
     }
+
+    public function getFormattedDescriptionAttribute(): string
+    {
+        if (empty($this->description)) {
+            return '';
+        }
+
+        $cleanText = trim(strip_tags($this->description));
+
+        return nl2br(e($cleanText));
+    }
 }

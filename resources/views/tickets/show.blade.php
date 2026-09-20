@@ -142,7 +142,7 @@
             <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
                 <div class="px-5 py-3 border-b border-slate-100 bg-slate-50"><h2 class="text-sm font-semibold text-slate-600">{{ __('Description') }}</h2></div>
                 <div class="p-5">
-                    <div class="text-slate-700 text-sm leading-relaxed prose prose-sm max-w-none">{!! nl2br(e($ticket->description ?: __('No description provided.'))) !!}</div>
+                    <div class="text-slate-700 text-sm leading-relaxed prose prose-sm max-w-none">{!! $ticket->formatted_description ?: __('No description provided.') !!}</div>
                 </div>
             </div>
 
