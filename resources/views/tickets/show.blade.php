@@ -1595,6 +1595,7 @@
         editPreviewEl.classList.remove('flex');
         const submitBtn = document.getElementById('chat-submit');
         if (submitBtn) submitBtn.textContent = '{{ __("Save") }}';
+        if (quill) quill.setContents([]);
     }
 
     document.getElementById('reply-preview-cancel')?.addEventListener('click', clearReplyPreview);
@@ -1865,7 +1866,12 @@
             const msgText = editBtn.dataset.message || '';
             showEditPreview(msgId, sender);
             if (quill) {
-                quill.root.innerHTML = msgText;
+                quill.setContents([]);
+                if (quill.clipboard && typeof quill.clipboard.dangerouslyPasteHTML === 'function') {
+                    quill.clipboard.dangerouslyPasteHTML(0, msgText);
+                } else {
+                    quill.root.innerHTML = msgText;
+                }
             }
             editorActions?.style.removeProperty('display');
             document.getElementById('quill-body')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
