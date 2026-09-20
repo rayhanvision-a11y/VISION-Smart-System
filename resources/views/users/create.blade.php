@@ -30,6 +30,9 @@
                 <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">{{ __('Role') }}</label>
                 <select name="role" required class="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500">
                     <option value="reseller" {{ old('role') === 'reseller' ? 'selected' : '' }}>{{ __('Reseller') }}</option>
+                    <option value="call_center" {{ old('role') === 'call_center' ? 'selected' : '' }}>{{ __('Call Center') }}</option>
+                    <option value="supervisor" {{ old('role') === 'supervisor' ? 'selected' : '' }}>{{ __('Supervisor') }}</option>
+                    <option value="senior_supervisor" {{ old('role') === 'senior_supervisor' ? 'selected' : '' }}>{{ __('Senior Supervisor') }}</option>
                     <option value="noc"      {{ old('role') === 'noc'      ? 'selected' : '' }}>{{ __('NOC') }}</option>
                     <option value="admin"    {{ old('role') === 'admin'    ? 'selected' : '' }}>{{ __('Admin') }}</option>
                     @if(auth()->user()->isSuperAdmin())

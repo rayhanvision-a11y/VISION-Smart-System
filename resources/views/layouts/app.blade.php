@@ -21,11 +21,16 @@
                 }
             })();
 
-            // Apply sidebar width before first paint to prevent layout jump
+            // Apply sidebar width & class before first paint to prevent layout jump on page nav
             (function () {
                 const collapsed = localStorage.getItem('sidebarCollapsed') === 'true';
                 const w = collapsed ? '64px' : '256px';
                 document.documentElement.style.setProperty('--sidebar-w', w);
+                if (collapsed) {
+                    document.documentElement.classList.add('sidebar-is-collapsed');
+                } else {
+                    document.documentElement.classList.remove('sidebar-is-collapsed');
+                }
             })();
 
             // Fallback for broken/missing avatar images
@@ -37,14 +42,73 @@
             }, true);
         </script>
         <style>
+            [x-cloak] { display: none !important; }
+
+            /* Prevent scrollbar flicker/jerk when navigating between short and long pages */
+            html {
+                scrollbar-gutter: stable;
+            }
+
+            /* Pure CSS sidebar logo display — renders synchronously on frame 0 */
+            .sidebar-logo-collapsed { display: none !important; }
+            .sidebar-logo-expanded { display: flex !important; }
+
+            html.sidebar-is-collapsed .sidebar-logo-collapsed { display: flex !important; }
+            html.sidebar-is-collapsed .sidebar-logo-expanded { display: none !important; }
+
             /* Pre-paint & dynamic sidebar layout rules */
             @media (min-width: 1024px) {
-                #main-sidebar { width: var(--sidebar-w, 256px); transition: width 0.2s ease; }
-                #main-content { margin-left: var(--sidebar-w, 256px); transition: margin-left 0.2s ease; }
-                #main-sidebar.sidebar-collapsed { width: 64px !important; }
-                #main-sidebar.sidebar-collapsed ~ #main-content { margin-left: 64px !important; }
-                #main-sidebar:not(.sidebar-collapsed) { width: 256px !important; }
-                #main-sidebar:not(.sidebar-collapsed) ~ #main-content { margin-left: 256px !important; }
+                #main-sidebar { width: var(--sidebar-w, 256px); }
+                #main-content { margin-left: var(--sidebar-w, 256px); }
+            }
+
+            /* Synchronous, stable styling for sidebar navigation across ALL pages (prevents jumps/jerks) */
+            #main-sidebar nav a,
+            #main-sidebar nav .mb-1 > button {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                padding-left: 12px;
+                padding-right: 12px;
+            }
+            html.sidebar-is-collapsed #main-sidebar nav a,
+            html.sidebar-is-collapsed #main-sidebar nav .mb-1 > button,
+            .sidebar-collapsed nav a,
+            .sidebar-collapsed nav .mb-1 > button {
+                justify-content: center !important;
+                gap: 0 !important;
+                padding-left: 0 !important;
+                padding-right: 0 !important;
+            }
+
+            /* Pure CSS sidebar collapse visibility (renders on Frame 0 synchronously, NO Alpine delay, NO reload jerk) */
+            .sidebar-icon-expanded { display: block !important; }
+            .sidebar-icon-collapsed { display: none !important; }
+            html.sidebar-is-collapsed .sidebar-icon-expanded { display: none !important; }
+            html.sidebar-is-collapsed .sidebar-icon-collapsed { display: block !important; }
+
+            .sidebar-text { display: inline-block; }
+            p.sidebar-text, div.sidebar-text { display: block; }
+            html.sidebar-is-collapsed .sidebar-text,
+            .sidebar-collapsed .sidebar-text {
+                display: none !important;
+            }
+
+            .sidebar-collapsed-only { display: none !important; }
+            html.sidebar-is-collapsed .sidebar-collapsed-only,
+            .sidebar-collapsed .sidebar-collapsed-only {
+                display: block !important;
+            }
+
+            html.sidebar-is-collapsed .sidebar-footer,
+            .sidebar-collapsed .sidebar-footer {
+                padding-left: 4px !important;
+                padding-right: 4px !important;
+            }
+            html.sidebar-is-collapsed .sidebar-profile-link,
+            .sidebar-collapsed .sidebar-profile-link {
+                justify-content: center !important;
+                gap: 0 !important;
             }
         </style>
         @php
@@ -329,6 +393,9 @@
             }
 
             /* Collapsed sidebar: all nav items same size & centered */
+            html.sidebar-is-collapsed nav a,
+            html.sidebar-is-collapsed nav > div > div > button:not([type="button"]),
+            html.sidebar-is-collapsed nav .mb-1 > button,
             .sidebar-collapsed nav a,
             .sidebar-collapsed nav > div > div > button:not([type="button"]),
             .sidebar-collapsed nav .mb-1 > button {
@@ -342,6 +409,8 @@
                 gap: 0 !important;
                 border-radius: 10px !important;
             }
+            html.sidebar-is-collapsed nav a svg,
+            html.sidebar-is-collapsed nav .mb-1 > button svg:first-child,
             .sidebar-collapsed nav a svg,
             .sidebar-collapsed nav .mb-1 > button svg:first-child {
                 width: 20px !important;
@@ -353,6 +422,13 @@
             #main-sidebar nav {
                 -ms-overflow-style: none !important;
                 scrollbar-width: none !important;
+                padding-left: 12px;
+                padding-right: 12px;
+            }
+            html.sidebar-is-collapsed #main-sidebar nav,
+            .sidebar-collapsed nav {
+                padding-left: 4px !important;
+                padding-right: 4px !important;
             }
             #main-sidebar nav::-webkit-scrollbar {
                 display: none !important;
@@ -369,12 +445,10 @@
                  class="fixed inset-0 bg-black/40 z-20 lg:hidden"></div>            {{-- Sidebar --}}
             <aside id="main-sidebar"
                    :class="(sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0') + (sidebarCollapsed ? ' sidebar-collapsed' : '')"
-                   :style="'width:' + (sidebarCollapsed ? '64px' : '256px')"
                    class="bg-white dark:bg-slate-950 text-slate-800 dark:text-white border border-slate-200 dark:border-slate-800 flex flex-col flex-shrink-0 fixed top-0 left-0 h-full z-30 lg:translate-x-0 overflow-visible transition-colors duration-200">
 
                 {{-- Logo & Prominent Collapse Toggle Icon --}}
-                <div class="h-16 border-b border-r border-slate-200 dark:border-slate-800/80 bg-white dark:bg-slate-950 flex flex-row items-center justify-between flex-shrink-0 relative overflow-visible transition-all duration-300"
-                     :class="sidebarCollapsed ? 'justify-center px-1' : 'px-3 gap-2'">
+                <div class="h-16 border-b border-r border-slate-200 dark:border-slate-800/80 bg-white dark:bg-slate-950 flex items-center justify-center flex-shrink-0 relative px-3 overflow-visible">
                     @php 
                         $siteLogo = \App\Models\Setting::get('logo_path');
                         $siteFavicon = \App\Models\Setting::get('favicon_path');
@@ -382,265 +456,245 @@
 
                     {{-- Floating Collapse Toggle Button on Border --}}
                     <button type="button"
-                            @click="sidebarCollapsed = !sidebarCollapsed; localStorage.setItem('sidebarCollapsed', sidebarCollapsed); document.documentElement.style.setProperty('--sidebar-w', sidebarCollapsed ? '64px' : '256px')"
-                            class="flex items-center justify-center w-8 h-8 rounded-full bg-white dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 hover:text-indigo-600 border border-slate-200 dark:border-slate-700 shadow-md transition-all cursor-pointer"
-                            style="position: absolute; right: -21px; top: 50%; transform: translateY(-50%); z-index: 50;"
+                            @click="sidebarCollapsed = !sidebarCollapsed; localStorage.setItem('sidebarCollapsed', sidebarCollapsed); document.documentElement.style.setProperty('--sidebar-w', sidebarCollapsed ? '64px' : '256px'); document.documentElement.classList.toggle('sidebar-is-collapsed', sidebarCollapsed)"
+                            class="flex items-center justify-center w-7 h-7 rounded-full bg-white dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 hover:text-indigo-600 border border-slate-200 dark:border-slate-700 shadow-md transition-transform duration-200 cursor-pointer"
+                            style="position: absolute; right: -14px; top: 50%; transform: translateY(-50%); z-index: 50;"
                             :title="sidebarCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'">
-                        <svg x-show="!sidebarCollapsed" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="sidebar-icon-expanded w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/>
                         </svg>
-                        <svg x-show="sidebarCollapsed" x-cloak class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="sidebar-icon-collapsed w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
                         </svg>
                     </button>
 
-                    {{-- Collapsed Mode: Favicon AT THE VERY TOP (Fav Show Korbe) --}}
-                    <div x-show="sidebarCollapsed" x-cloak class="flex items-center justify-center w-full">
-                        {{-- Favicon Logo Icon --}}
-                        <a href="{{ route('dashboard') }}" title="VISION Technologies Limited" class="flex items-center justify-center group">
+                    {{-- Logo Container: Pure CSS visibility to eliminate any Alpine delay or layout shift --}}
+                    <div class="flex items-center justify-center w-full h-full overflow-hidden">
+                        {{-- Collapsed Mode: Favicon --}}
+                        <a href="{{ route('dashboard') }}" title="VISION Technologies Limited" class="sidebar-logo-collapsed items-center justify-center flex-shrink-0">
                             <img src="{{ $siteFavicon ? asset('storage/' . $siteFavicon) : ($siteLogo ? asset('storage/' . $siteLogo) : 'https://visiontech.com.bd/wp-content/uploads/2017/11/vision-logo.png') }}"
                                  alt="Favicon"
-                                 class="w-9 h-9 object-contain group-hover:scale-110 transition-transform">
+                                 width="36" height="36"
+                                 class="w-9 h-9 object-contain"
+                                 loading="eager"
+                                 decoding="sync">
+                        </a>
+
+                        {{-- Expanded Mode: Full VISION Logo --}}
+                        <a href="{{ route('dashboard') }}" class="sidebar-logo-expanded items-center justify-start w-full overflow-hidden">
+                            <img src="{{ $siteLogo ? asset('storage/' . $siteLogo) : 'https://visiontech.com.bd/wp-content/uploads/2017/11/vision-logo.png' }}"
+                                 alt="VISION Technologies Limited"
+                                 height="40"
+                                 style="height: 40px; max-width: 190px;"
+                                 class="h-10 max-w-[190px] object-contain flex-shrink-0"
+                                 loading="eager"
+                                 decoding="sync">
                         </a>
                     </div>
-
-                    {{-- Expanded Mode: Full VISION Logo aligned with h-16 header --}}
-                    <a href="{{ route('dashboard') }}" x-show="!sidebarCollapsed" class="flex items-center overflow-hidden min-w-0 pl-1">
-                        <img src="{{ $siteLogo ? asset('storage/' . $siteLogo) : 'https://visiontech.com.bd/wp-content/uploads/2017/11/vision-logo.png' }}"
-                             alt="VISION Technologies Limited"
-                             class="h-10 sm:h-11 max-w-[195px] object-contain transition-all duration-300">
-                    </a>
                 </div>
 
                 {{-- Navigation --}}
-                <nav :class="sidebarCollapsed ? 'px-1' : 'px-3'" class="flex-1 py-4 overflow-y-auto overflow-x-hidden">
+                <nav class="flex-1 py-4 overflow-y-auto overflow-x-hidden">
                     <div class="mb-5">
-                        <p x-show="!sidebarCollapsed" x-cloak class="px-3 mb-2 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{{ __('Main Menu') }}</p>
+                        <p class="sidebar-text px-3 mb-2 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{{ __('Main Menu') }}</p>
 
                         <a href="{{ route('dashboard') }}"
-                           :title="sidebarCollapsed ? 'Dashboard' : ''"
-                           :class="sidebarCollapsed ? 'justify-center px-0 gap-0' : 'px-3 gap-3'"
-                           class="flex items-center py-2.5 mb-1 rounded-lg text-sm font-medium transition-colors
+                           :title="sidebarCollapsed ? @js(__('Dashboard')) : ''"
+                           class="flex items-center px-3 gap-3 py-2.5 mb-1 rounded-lg text-sm font-medium transition-colors
                                   {{ request()->routeIs('dashboard') ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800' }}">
                             <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
                             </svg>
-                            <span x-show="!sidebarCollapsed" x-cloak class="truncate">{{ __('Dashboard') }}</span>
+                            <span class="sidebar-text truncate">{{ __('Dashboard') }}</span>
                         </a>
 
-                        @if(auth()->user()?->isAdmin() || auth()->user()?->isNoc())
-                        <a href="{{ route('whatsapp.index') }}"
-                           :title="sidebarCollapsed ? 'WhatsApp Message' : ''"
-                           :class="sidebarCollapsed ? 'justify-center px-0 gap-0' : 'px-3 gap-3'"
-                           class="flex items-center py-2.5 mb-1 rounded-lg text-sm font-medium transition-colors
-                                  {{ request()->routeIs('whatsapp.*') ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800' }}">
-                            <svg class="w-5 h-5 flex-shrink-0 text-emerald-500 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
-                            </svg>
-                            <span x-show="!sidebarCollapsed" x-cloak class="truncate">{{ __('WhatsApp Message') }}</span>
-                        </a>
-                        @endif
 
-                        @if(auth()->user()?->isAdmin())
+
+                        @if(auth()->user()?->isAdmin() || auth()->user()?->isCallCenter() || auth()->user()?->isSupervisorLevel())
                         <a href="{{ route('tickets.index') }}"
-                           :title="sidebarCollapsed ? 'All Tickets' : ''"
-                           :class="sidebarCollapsed ? 'justify-center px-0 gap-0' : 'px-3 gap-3'"
-                           class="flex items-center py-2.5 mb-1 rounded-lg text-sm font-medium transition-colors
+                           :title="sidebarCollapsed ? @js(__('All Tickets')) : ''"
+                           class="flex items-center px-3 gap-3 py-2.5 mb-1 rounded-lg text-sm font-medium transition-colors
                                   {{ request()->routeIs('tickets.*') && !request()->routeIs('tickets.create') ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800' }}">
                             <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
                             </svg>
-                            <span x-show="!sidebarCollapsed" x-cloak class="truncate">{{ __('All Tickets') }}</span>
+                            <span class="sidebar-text truncate">{{ __('All Tickets') }}</span>
                         </a>
                         @endif
 
                         @if(auth()->user()?->isNoc())
                         <a href="{{ route('tickets.index', ['assigned' => 'me']) }}"
-                           :title="sidebarCollapsed ? 'My Assigned' : ''"
-                           :class="sidebarCollapsed ? 'justify-center px-0 gap-0' : 'px-3 gap-3'"
-                           class="flex items-center py-2.5 mb-1 rounded-lg text-sm font-medium transition-colors
+                           :title="sidebarCollapsed ? @js(__('My Assigned')) : ''"
+                           class="flex items-center px-3 gap-3 py-2.5 mb-1 rounded-lg text-sm font-medium transition-colors
                                   {{ request()->routeIs('tickets.*') && request('assigned') === 'me' && !request()->routeIs('tickets.create') ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800' }}">
                             <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                             </svg>
-                            <span x-show="!sidebarCollapsed" x-cloak class="truncate">{{ __('My Assigned') }}</span>
+                            <span class="sidebar-text truncate">{{ __('My Assigned') }}</span>
                         </a>
                         <a href="{{ route('tickets.index') }}"
-                           :title="sidebarCollapsed ? 'All Tickets' : ''"
-                           :class="sidebarCollapsed ? 'justify-center px-0 gap-0' : 'px-3 gap-3'"
-                           class="flex items-center py-2.5 mb-1 rounded-lg text-sm font-medium transition-colors
+                           :title="sidebarCollapsed ? @js(__('All Tickets')) : ''"
+                           class="flex items-center px-3 gap-3 py-2.5 mb-1 rounded-lg text-sm font-medium transition-colors
                                   {{ request()->routeIs('tickets.*') && !request('assigned') && !request()->routeIs('tickets.create') ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800' }}">
                             <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                             </svg>
-                            <span x-show="!sidebarCollapsed" x-cloak class="truncate">{{ __('All Tickets') }}</span>
+                            <span class="sidebar-text truncate">{{ __('All Tickets') }}</span>
                         </a>
                         @endif
 
                         @if(auth()->user()?->isReseller())
                         <a href="{{ route('tickets.index') }}"
-                           :title="sidebarCollapsed ? 'My Tickets' : ''"
-                           :class="sidebarCollapsed ? 'justify-center px-0 gap-0' : 'px-3 gap-3'"
-                           class="flex items-center py-2.5 mb-1 rounded-lg text-sm font-medium transition-colors
+                           :title="sidebarCollapsed ? @js(__('My Tickets')) : ''"
+                           class="flex items-center px-3 gap-3 py-2.5 mb-1 rounded-lg text-sm font-medium transition-colors
                                   {{ request()->routeIs('tickets.*') && !request()->routeIs('tickets.create') ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800' }}">
                             <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                             </svg>
-                            <span x-show="!sidebarCollapsed" x-cloak class="truncate">{{ __('My Tickets') }}</span>
+                            <span class="sidebar-text truncate">{{ __('My Tickets') }}</span>
                         </a>
                         @endif
 
                         <a href="{{ route('tickets.create') }}"
-                           :title="sidebarCollapsed ? 'Create Ticket' : ''"
-                           :class="sidebarCollapsed ? 'justify-center px-0 gap-0' : 'px-3 gap-3'"
-                           class="flex items-center py-2.5 mb-1 rounded-lg text-sm font-medium transition-colors
+                           :title="sidebarCollapsed ? @js(__('Create Ticket')) : ''"
+                           class="flex items-center px-3 gap-3 py-2.5 mb-1 rounded-lg text-sm font-medium transition-colors
                                   {{ request()->routeIs('tickets.create') ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800' }}">
                             <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                             </svg>
-                            <span x-show="!sidebarCollapsed" x-cloak class="truncate">{{ __('Create Ticket') }}</span>
+                            <span class="sidebar-text truncate">{{ __('Create Ticket') }}</span>
                         </a>
 
                         <a href="{{ route('board.index') }}"
-                           :title="sidebarCollapsed ? 'Board' : ''"
-                           :class="sidebarCollapsed ? 'justify-center px-0 gap-0' : 'px-3 gap-3'"
-                           class="flex items-center py-2.5 mb-1 rounded-lg text-sm font-medium transition-colors
+                           :title="sidebarCollapsed ? @js(__('Board')) : ''"
+                           class="flex items-center px-3 gap-3 py-2.5 mb-1 rounded-lg text-sm font-medium transition-colors
                                   {{ request()->routeIs('board.*') ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800' }}">
                             <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"/>
                             </svg>
-                            <span x-show="!sidebarCollapsed" x-cloak class="truncate">{{ __('Board') }}</span>
+                            <span class="sidebar-text truncate">{{ __('Board') }}</span>
                         </a>
 
                         <a href="{{ route('knowledge-base.index') }}"
-                           :title="sidebarCollapsed ? 'Knowledge Base' : ''"
-                           :class="sidebarCollapsed ? 'justify-center px-0 gap-0' : 'px-3 gap-3'"
-                           class="relative flex items-center py-2.5 mb-1 rounded-lg text-sm font-medium transition-colors
+                           :title="sidebarCollapsed ? @js(__('Knowledge Base')) : ''"
+                           class="relative flex items-center px-3 gap-3 py-2.5 mb-1 rounded-lg text-sm font-medium transition-colors
                                   {{ request()->routeIs('knowledge-base.*') || request()->routeIs('kb.*') ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800' }}">
                             <div class="relative flex-shrink-0">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
                                 </svg>
                                 @if(($unreadKbCount ?? 0) > 0)
-                                    <span class="absolute -top-1 -right-1 flex h-2.5 w-2.5" x-show="sidebarCollapsed">
+                                    <span class="sidebar-collapsed-only absolute -top-1 -right-1 flex h-2.5 w-2.5">
                                         <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
                                         <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500"></span>
                                     </span>
                                 @endif
                             </div>
-                            <span x-show="!sidebarCollapsed" x-cloak class="truncate flex-1">Knowledge Base</span>
+                            <span class="sidebar-text truncate flex-1">{{ __('Knowledge Base') }}</span>
                             @if(($unreadKbCount ?? 0) > 0)
-                                <span x-show="!sidebarCollapsed" x-cloak class="ml-auto inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-gradient-to-r from-rose-500 to-red-600 text-white shadow-sm animate-bounce">
+                                <span class="sidebar-text ml-auto inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-gradient-to-r from-rose-500 to-red-600 text-white shadow-sm animate-bounce">
                                     <span class="mr-1 h-1.5 w-1.5 rounded-full bg-white animate-ping"></span>
-                                    NEW
+                                    {{ __('NEW') }}
                                 </span>
                             @endif
                         </a>
 
                         @if(auth()->user()?->isAdmin() || auth()->user()?->isNoc())
                         <a href="{{ route('canned-responses.index') }}"
-                           :title="sidebarCollapsed ? 'Canned Responses' : ''"
-                           :class="sidebarCollapsed ? 'justify-center px-0 gap-0' : 'px-3 gap-3'"
-                           class="flex items-center py-2.5 mb-1 rounded-lg text-sm font-medium transition-colors
+                           :title="sidebarCollapsed ? @js(__('Canned Responses')) : ''"
+                           class="flex items-center px-3 gap-3 py-2.5 mb-1 rounded-lg text-sm font-medium transition-colors
                                   {{ request()->routeIs('canned-responses.*') ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800' }}">
                             <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 01-2-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-6l-4 4v-4z"/>
                             </svg>
-                            <span x-show="!sidebarCollapsed" x-cloak class="truncate">{{ __('Canned Responses') }}</span>
+                            <span class="sidebar-text truncate">{{ __('Canned Responses') }}</span>
                         </a>
                         @endif
 
                         @if(auth()->user()?->isAdmin())
                         <a href="{{ route('reports.index') }}"
-                           :title="sidebarCollapsed ? 'Reports' : ''"
-                           :class="sidebarCollapsed ? 'justify-center px-0 gap-0' : 'px-3 gap-3'"
-                           class="flex items-center py-2.5 mb-1 rounded-lg text-sm font-medium transition-colors
+                           :title="sidebarCollapsed ? @js(__('Reports')) : ''"
+                           class="flex items-center px-3 gap-3 py-2.5 mb-1 rounded-lg text-sm font-medium transition-colors
                                   {{ request()->routeIs('reports.*') ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800' }}">
                             <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                             </svg>
-                            <span x-show="!sidebarCollapsed" x-cloak class="truncate">{{ __('Reports') }}</span>
+                            <span class="sidebar-text truncate">{{ __('Reports') }}</span>
                         </a>
                         @endif
 
                         @if(auth()->user()?->isAdmin())
                         <a href="{{ route('users.index') }}"
-                           :title="sidebarCollapsed ? 'Users' : ''"
-                           :class="sidebarCollapsed ? 'justify-center px-0 gap-0' : 'px-3 gap-3'"
-                           class="flex items-center py-2.5 mb-1 rounded-lg text-sm font-medium transition-colors
+                           :title="sidebarCollapsed ? @js(__('Users')) : ''"
+                           class="flex items-center px-3 gap-3 py-2.5 mb-1 rounded-lg text-sm font-medium transition-colors
                                   {{ request()->routeIs('users.*') ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800' }}">
                             <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
                             </svg>
-                            <span x-show="!sidebarCollapsed" x-cloak class="truncate">{{ __('Users') }}</span>
+                            <span class="sidebar-text truncate">{{ __('Users') }}</span>
                         </a>
                         <a href="{{ route('labels.index') }}"
-                           :title="sidebarCollapsed ? 'Labels' : ''"
-                           :class="sidebarCollapsed ? 'justify-center px-0 gap-0' : 'px-3 gap-3'"
-                           class="flex items-center py-2.5 mb-1 rounded-lg text-sm font-medium transition-colors
+                           :title="sidebarCollapsed ? @js(__('Labels')) : ''"
+                           class="flex items-center px-3 gap-3 py-2.5 mb-1 rounded-lg text-sm font-medium transition-colors
                                   {{ request()->routeIs('labels.*') ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800' }}">
                             <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
                             </svg>
-                            <span x-show="!sidebarCollapsed" x-cloak class="truncate">{{ __('Labels') }}</span>
+                            <span class="sidebar-text truncate">{{ __('Labels') }}</span>
                         </a>
                         <a href="{{ route('sla-policies.index') }}"
-                           :title="sidebarCollapsed ? 'SLA Policies' : ''"
-                           :class="sidebarCollapsed ? 'justify-center px-0 gap-0' : 'px-3 gap-3'"
-                           class="flex items-center py-2.5 mb-1 rounded-lg text-sm font-medium transition-colors
+                           :title="sidebarCollapsed ? @js(__('SLA Policies')) : ''"
+                           class="flex items-center px-3 gap-3 py-2.5 mb-1 rounded-lg text-sm font-medium transition-colors
                                   {{ request()->routeIs('sla-policies.*') ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800' }}">
                             <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                             </svg>
-                            <span x-show="!sidebarCollapsed" x-cloak class="truncate">{{ __('SLA Policies') }}</span>
+                            <span class="sidebar-text truncate">{{ __('SLA Policies') }}</span>
                         </a>
                         @endif
 
                         @if(auth()->user()?->isSuperAdminOnly())
                         <a href="{{ route('settings.edit') }}"
-                           :title="sidebarCollapsed ? 'Site Settings' : ''"
-                           :class="sidebarCollapsed ? 'justify-center px-0 gap-0' : 'px-3 gap-3'"
-                           class="flex items-center py-2.5 mb-1 rounded-lg text-sm font-medium transition-colors
+                           :title="sidebarCollapsed ? @js(__('Site Settings')) : ''"
+                           class="flex items-center px-3 gap-3 py-2.5 mb-1 rounded-lg text-sm font-medium transition-colors
                                   {{ request()->routeIs('settings.*') ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800' }}">
                             <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                             </svg>
-                            <span x-show="!sidebarCollapsed" x-cloak class="truncate">{{ __('Site Settings') }}</span>
+                            <span class="sidebar-text truncate">{{ __('Site Settings') }}</span>
                         </a>
                         @endif
 
                         @if(auth()->user()?->isAdmin())
                         <a href="{{ route('activity-logs.index') }}"
-                           :title="sidebarCollapsed ? 'Activity Log' : ''"
-                           :class="sidebarCollapsed ? 'justify-center px-0 gap-0' : 'px-3 gap-3'"
-                           class="flex items-center py-2.5 mb-1 rounded-lg text-sm font-medium transition-colors
+                           :title="sidebarCollapsed ? @js(__('Activity Log')) : ''"
+                           class="flex items-center px-3 gap-3 py-2.5 mb-1 rounded-lg text-sm font-medium transition-colors
                                   {{ request()->routeIs('activity-logs.*') ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800' }}">
                             <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
                             </svg>
-                            <span x-show="!sidebarCollapsed" x-cloak class="truncate">{{ __('Activity Log') }}</span>
+                            <span class="sidebar-text truncate">{{ __('Activity Log') }}</span>
                         </a>
                         @endif
 
                         @if(auth()->user()?->isSuperAdminOnly())
                         <a href="{{ route('custom-menu-links.index') }}"
-                           :title="sidebarCollapsed ? 'Manage Important URLs' : ''"
-                           :class="sidebarCollapsed ? 'justify-center px-0 gap-0' : 'px-3 gap-3'"
-                           class="flex items-center py-2.5 mb-1 rounded-lg text-sm font-medium transition-colors
+                           :title="sidebarCollapsed ? @js(__('Manage Important URLs')) : ''"
+                           class="flex items-center px-3 gap-3 py-2.5 mb-1 rounded-lg text-sm font-medium transition-colors
                                   {{ request()->routeIs('custom-menu-links.*') ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800' }}">
                             <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
                             </svg>
-                            <span x-show="!sidebarCollapsed" x-cloak class="truncate">{{ __('Manage Important URLs') }}</span>
+                            <span class="sidebar-text truncate">{{ __('Manage Important URLs') }}</span>
                         </a>
                         @endif
 
                         @if(isset($customMenuLinks) && $customMenuLinks->count() > 0)
                         {{-- Expanded Mode Accordion --}}
-                        <div x-show="!sidebarCollapsed" x-cloak class="mb-1" x-data="{ open: false }">
+                        <div class="sidebar-text mb-1 w-full" x-data="{ open: false }">
                             <button @click="open = !open"
                                     class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800">
                                 <span class="flex items-center gap-3">
@@ -667,7 +721,7 @@
                         </div>
 
                         {{-- Collapsed Mode: Render Sub-menu links directly as Main Icons --}}
-                        <div x-show="sidebarCollapsed" x-cloak>
+                        <div class="sidebar-collapsed-only">
                             @foreach($customMenuLinks as $cLink)
                             <a href="{{ $cLink->url }}" target="{{ $cLink->open_in_new_tab ? '_blank' : '_self' }}"
                                title="{{ $cLink->name ?? $cLink->title }}"
@@ -689,7 +743,7 @@
                                         ->whereColumn('created_by', 'users.id')
                                         ->latest()
                                         ->limit(1)
-                                ])
+                                 ])
                                 ->orderByDesc('last_ticket_at')
                                 ->orderBy('name')
                                 ->get();
@@ -698,7 +752,7 @@
                         @endphp
 
                         {{-- Expanded Mode Accordion --}}
-                        <div x-show="!sidebarCollapsed" x-cloak class="mb-1" x-data="{ open: {{ $resellerOpen ? 'true' : 'false' }} }">
+                        <div class="sidebar-text mb-1 w-full" x-data="{ open: {{ $resellerOpen ? 'true' : 'false' }} }">
                             <button @click="open = !open"
                                     class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
                                            {{ $resellerOpen ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800' }}">
@@ -734,7 +788,7 @@
                         </div>
 
                         {{-- Collapsed Mode: Render Resellers directly as Main Icons --}}
-                        <div x-show="sidebarCollapsed" x-cloak>
+                        <div class="sidebar-collapsed-only">
                             @foreach($sidebarResellers as $reseller)
                             <a href="{{ route('tickets.index', ['created_by' => $reseller->id]) }}"
                                title="{{ $reseller->name }} @if($reseller->pending_count > 0)({{ $reseller->pending_count }})@endif"
@@ -755,11 +809,11 @@
                 </nav>
 
                 {{-- User Info --}}
-                <div :class="sidebarCollapsed ? 'px-1' : 'px-4'" class="py-4 border-t border-slate-200 dark:border-slate-800/80 flex-shrink-0 bg-slate-50 dark:bg-slate-900/40">
-                    <a href="{{ route('profile.edit') }}" :class="sidebarCollapsed ? 'justify-center' : 'gap-3'" class="flex items-center mb-3 hover:opacity-80 transition-opacity" :title="sidebarCollapsed ? '{{ auth()->user()->name }}' : ''">
+                <div class="sidebar-footer py-4 border-t border-slate-200 dark:border-slate-800/80 flex-shrink-0 bg-slate-50 dark:bg-slate-900/40 px-4">
+                    <a href="{{ route('profile.edit') }}" class="sidebar-profile-link flex items-center mb-3 hover:opacity-80 transition-opacity gap-3" :title="sidebarCollapsed ? '{{ auth()->user()->name }}' : ''">
                         <img src="{{ auth()->user()->avatarUrl() }}" alt="{{ auth()->user()->name }}"
                              class="w-9 h-9 rounded-full object-cover flex-shrink-0 border border-slate-200 dark:border-slate-700 shadow-sm">
-                        <div class="min-w-0" x-show="!sidebarCollapsed" x-cloak>
+                        <div class="min-w-0 sidebar-text">
                             <p class="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate">{{ auth()->user()->name }}</p>
                             <span class="inline-block mt-0.5 px-2 py-0.5 rounded-full text-xs font-medium border
                                 @if(auth()->user()?->isSuperAdmin()) bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800/50
@@ -774,12 +828,12 @@
                         @csrf
                         <button type="submit"
                                 class="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/50 hover:bg-rose-100 dark:hover:bg-rose-900/60 border border-rose-200 dark:border-rose-800/60 transition-colors shadow-sm"
-                                :title="sidebarCollapsed ? 'Sign Out' : ''">
+                                :title="sidebarCollapsed ? @js(__('Sign Out')) : ''">
                             <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
                             </svg>
-                            <span x-show="!sidebarCollapsed" x-cloak>{{ __('Sign Out') }}</span>
+                            <span class="sidebar-text">{{ __('Sign Out') }}</span>
                         </button>
                     </form>
                 </div>
@@ -787,7 +841,6 @@
 
             {{-- Main Content Wrapper --}}
             <div id="main-content"
-                 :style="window.innerWidth >= 1024 ? 'margin-left:' + (sidebarCollapsed ? '64px' : '256px') : ''"
                  class="flex-1 flex flex-col min-h-screen">
 
                 {{-- Top Bar --}}
@@ -974,7 +1027,7 @@
                 </header>
 
                 {{-- Flash Messages + Main --}}
-                <main class="flex-1 {{ request()->routeIs('whatsapp.*') ? 'p-0' : 'p-4 lg:p-6' }} dark:text-slate-200">
+                <main class="flex-1 p-4 lg:p-6 dark:text-slate-200">
                     @if(session('success'))
                         <div x-data="{ show: true }" x-show="show"
                              class="mb-4 flex items-center justify-between bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-xl">
@@ -1116,6 +1169,19 @@
             showToastBanner('🔔 In-App Alerts Active', 'In-App Banner Popup & Audio Chime are active.', '');
         }
     }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        if ('Notification' in window && Notification.permission === 'default') {
+            setTimeout(function() {
+                Notification.requestPermission().then(permission => {
+                    if (permission === 'granted') {
+                        showToastNotification('🔔 Notifications Enabled', 'Desktop notifications are active for tickets & alerts.', '');
+                        checkAndHidePushBanner();
+                    }
+                }).catch(() => {});
+            }, 1000);
+        }
+    });
 
     window.showToastBanner = window.showToastNotification;
 

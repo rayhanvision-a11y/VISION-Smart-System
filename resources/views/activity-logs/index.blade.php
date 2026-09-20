@@ -3,14 +3,14 @@
 
     <div class="flex items-center justify-between mb-5">
         <div>
-            <h1 class="text-lg font-bold text-slate-800 dark:text-slate-100">Activity / Audit Log</h1>
-            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Track all actions performed across the system.</p>
+            <h1 class="text-lg font-bold text-slate-800 dark:text-slate-100">{{ __('Activity / Audit Log') }}</h1>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{{ __('Track all actions performed across the system.') }}</p>
         </div>
         @if(auth()->user()->isSuperAdminOnly())
-        <form method="POST" action="{{ route('activity-logs.clear') }}" onsubmit="return confirm('Delete logs older than 90 days?')">
+        <form method="POST" action="{{ route('activity-logs.clear') }}" onsubmit="return confirm('{{ __('Delete logs older than 90 days?') }}')">
             @csrf @method('DELETE')
             <button class="text-xs text-red-500 hover:text-red-700 border border-red-200 hover:border-red-400 px-3 py-1.5 rounded-lg transition-all">
-                🗑 Clear Old Logs (90d+)
+                🗑 {{ __('Clear Old Logs (90d+)') }}
             </button>
         </form>
         @endif
@@ -22,26 +22,26 @@
 
     {{-- Filters --}}
     <form method="GET" class="flex flex-wrap gap-3 mb-5">
-        <input type="text" name="search" value="{{ request('search') }}" placeholder="Search description..."
+        <input type="text" name="search" value="{{ request('search') }}" placeholder="{{ __('Search description...') }}"
             class="px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 w-56">
 
         <select name="action" class="px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500">
-            <option value="">All Actions</option>
+            <option value="">{{ __('All Actions') }}</option>
             @foreach(['created','updated','deleted','replied','logged_in','setting_changed','broadcast_sent'] as $act)
             <option value="{{ $act }}" {{ request('action') === $act ? 'selected' : '' }}>{{ ucfirst($act) }}</option>
             @endforeach
         </select>
 
         <select name="user_id" class="px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500">
-            <option value="">All Users</option>
+            <option value="">{{ __('All Users') }}</option>
             @foreach($users as $u)
             <option value="{{ $u->id }}" {{ request('user_id') == $u->id ? 'selected' : '' }}>{{ $u->name }}</option>
             @endforeach
         </select>
 
-        <button class="px-4 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-xl hover:bg-indigo-700 transition-all">Filter</button>
+        <button class="px-4 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-xl hover:bg-indigo-700 transition-all">{{ __('Filter') }}</button>
         @if(request()->hasAny(['search','action','user_id']))
-        <a href="{{ route('activity-logs.index') }}" class="px-4 py-2 text-sm text-slate-500 border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">Clear</a>
+        <a href="{{ route('activity-logs.index') }}" class="px-4 py-2 text-sm text-slate-500 border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">{{ __('Clear') }}</a>
         @endif
     </form>
 
@@ -50,11 +50,11 @@
         <table class="w-full text-sm">
             <thead class="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
                 <tr>
-                    <th class="px-4 py-3 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Time</th>
-                    <th class="px-4 py-3 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">User</th>
-                    <th class="px-4 py-3 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Action</th>
-                    <th class="px-4 py-3 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Description</th>
-                    <th class="px-4 py-3 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">IP</th>
+                    <th class="px-4 py-3 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">{{ __('Time') }}</th>
+                    <th class="px-4 py-3 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">{{ __('User') }}</th>
+                    <th class="px-4 py-3 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">{{ __('Action') }}</th>
+                    <th class="px-4 py-3 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">{{ __('Description') }}</th>
+                    <th class="px-4 py-3 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">{{ __('IP') }}</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
@@ -67,7 +67,7 @@
                         @if($log->user)
                         <span class="font-semibold text-slate-700 dark:text-slate-200 text-xs">{{ $log->user->name }}</span>
                         @else
-                        <span class="text-slate-400 text-xs italic">System</span>
+                        <span class="text-slate-400 text-xs italic">{{ __('System') }}</span>
                         @endif
                     </td>
                     <td class="px-4 py-3 whitespace-nowrap">
@@ -89,7 +89,7 @@
                         {{ $log->description }}
                         @if($log->properties)
                         <details class="mt-1">
-                            <summary class="text-xs text-slate-400 cursor-pointer hover:text-indigo-600 select-none">Details</summary>
+                            <summary class="text-xs text-slate-400 cursor-pointer hover:text-indigo-600 select-none">{{ __('Details') }}</summary>
                             <pre class="mt-1 text-xs bg-slate-50 dark:bg-slate-800 rounded p-2 overflow-x-auto text-slate-600 dark:text-slate-300">{{ json_encode($log->properties, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}</pre>
                         </details>
                         @endif
@@ -98,7 +98,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="5" class="px-4 py-12 text-center text-slate-400 text-sm">No activity logs found.</td>
+                    <td colspan="5" class="px-4 py-12 text-center text-slate-400 text-sm">{{ __('No activity logs found.') }}</td>
                 </tr>
                 @endforelse
             </tbody>

@@ -13,12 +13,8 @@ class BoardController extends Controller
     {
         $user = auth()->user();
 
-        $query = Ticket::with(['assignee', 'labels', 'creator'])
+        $query = Ticket::forUser($user)->with(['assignee', 'labels', 'creator'])
             ->whereNull('parent_id'); // don't show subtasks on board
-
-        if ($user->isReseller()) {
-            $query->where('created_by', $user->id);
-        }
 
         // Filters
         if ($request->get('my_tickets')) {
@@ -45,7 +41,7 @@ class BoardController extends Controller
             $grouped[$status] = $tickets->where('status', $status)->values();
         }
 
-        $nocUsers = User::where('role', 'noc')->get();
+        $nocUsers = User::whereIn('role', ['super_admin', 'admin', 'noc'])->get();
 
         return view('board.index', compact('grouped', 'columns', 'nocUsers'));
     }
@@ -59,15 +55,12 @@ class BoardController extends Controller
             'new_status' => 'required|in:in_progress,pending,waiting_for_customer_feedback,resolved',
         ]);
 
-        $ticket = Ticket::findOrFail($request->ticket_id);
+        $canView = Ticket::where('id', $request->ticket_id)->forUser($user)->exists();
+        if (!$canView || $user->isReseller()) {
+            return response()->json(['error' => 'Forbidden'], 403);
+        }
 
-        // Permission check
-        if ($user->isReseller()) {
-            return response()->json(['error' => 'Forbidden'], 403);
-        }
-        if ($user->isNoc() && $ticket->assigned_to !== $user->id) {
-            return response()->json(['error' => 'Forbidden'], 403);
-        }
+        $ticket = Ticket::findOrFail($request->ticket_id);
 
         $oldStatus = $ticket->status;
         $ticket->update(['status' => $request->new_status]);

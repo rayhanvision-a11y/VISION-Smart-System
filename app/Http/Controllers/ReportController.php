@@ -19,8 +19,8 @@ class ReportController extends Controller
         $tab      = $request->get('tab', 'team');
         $personId = $request->get('person_id');
 
-        // --- Team members (super_admin, admin, noc) ---
-        $teamUsers   = User::whereIn('role', ['super_admin', 'admin', 'noc'])->orderBy('name')->get();
+        // --- Team members (super_admin, admin, noc, call_center) ---
+        $teamUsers   = User::whereIn('role', ['super_admin', 'admin', 'noc', 'call_center'])->orderBy('name')->get();
         $teamMembers = $this->bulkMemberStats($teamUsers, $from, $to);
 
         // --- Resellers ---

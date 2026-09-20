@@ -50,6 +50,46 @@ class Ticket extends Model
         return $prefix . str_pad($count + 1, 3, '0', STR_PAD_LEFT);
     }
 
+    /**
+     * Scope tickets according to user role and personal assignment rules.
+     */
+    public function scopeForUser($query, ?User $user = null)
+    {
+        $user = $user ?? auth()->user();
+        if (!$user) {
+            return $query;
+        }
+
+        // 1. Super Admin: full visibility
+        if ($user->isSuperAdmin()) {
+            return $query;
+        }
+
+        // 2. Reseller: only tickets created by this reseller
+        if ($user->isReseller()) {
+            return $query->where('created_by', $user->id);
+        }
+
+        // 3. Admin, NOC, Supervisor, Senior Supervisor, Call Center:
+        // Personal Assignment Rule:
+        // - Assigned tickets (assigned_to is NOT NULL) are visible ONLY to assignee, creator, and Super Admin.
+        // - Unassigned tickets (assigned_to is NULL) are visible to team (NOC, Supervisor, Admin, Call Center),
+        //   except Call Center cannot see reseller tickets.
+        return $query->where(function ($q) use ($user) {
+            $q->where('assigned_to', $user->id)
+              ->orWhere('created_by', $user->id)
+              ->orWhere(function ($unassignedQuery) use ($user) {
+                  $unassignedQuery->whereNull('assigned_to');
+
+                  if ($user->isCallCenter()) {
+                      $unassignedQuery->whereHas('creator', function ($cq) {
+                          $cq->where('role', '!=', 'reseller');
+                      });
+                  }
+              });
+        });
+    }
+
     public function creator()
     {
         return $this->belongsTo(User::class, 'created_by');

@@ -5,7 +5,7 @@ use App\Http\Controllers\BlogPostController;
 use App\Http\Controllers\BoardController;
 use App\Http\Controllers\CannedResponseController;
 use App\Http\Controllers\CustomMenuLinkController;
-use App\Http\Controllers\InboundEmailController;
+use App\Http\Controllers\KbCategoryController;
 use App\Http\Controllers\KnowledgeBaseController;
 use App\Http\Controllers\KbArticleController;
 use App\Http\Controllers\PopOfficeController;
@@ -20,11 +20,12 @@ use App\Http\Controllers\SlaPolicyController;
 use App\Http\Controllers\TicketAttachmentController;
 use App\Http\Controllers\TicketController;
 use App\Http\Controllers\TicketLinkController;
+use App\Http\Controllers\TicketCategoryController;
 use App\Http\Controllers\TicketMessageController;
 use App\Http\Controllers\TicketNoteController;
 use App\Http\Controllers\TwoFactorController;
 use App\Http\Controllers\UserController;
-use App\Http\Controllers\WhatsAppController;
+// use App\Http\Controllers\WhatsAppController;
 use App\Models\Label;
 use App\Models\PopOffice;
 use App\Models\Ticket;
@@ -32,8 +33,9 @@ use App\Models\TicketHistory;
 use Illuminate\Support\Facades\Route;
 
 Route::match(['get', 'post'], '/deploy-webhook', function (\Illuminate\Http\Request $request) {
-    $secret = 'visiontech-deploy-secret-2026';
-    if ($request->query('secret') !== $secret) {
+    $secret = env('DEPLOY_WEBHOOK_SECRET', 'visiontech-deploy-secret-2026');
+    $provided = $request->query('secret') ?? $request->input('secret');
+    if (!$provided || !hash_equals($secret, (string)$provided)) {
         return response()->json(['error' => 'Forbidden: Invalid deploy secret'], 403);
     }
     
@@ -62,7 +64,8 @@ Route::post('/locale/{locale}', function (string $locale) {
     return redirect()->back();
 })->middleware(['auth', 'throttle:10,1'])->name('locale.set');
 
-// WhatsApp Web System Routes — all require auth so auth()->id() is always set
+/*
+// WhatsApp Web System Routes — Disabled
 Route::middleware(['auth'])->group(function () {
     Route::get('/whatsapp', [WhatsAppController::class, 'index'])->name('whatsapp.index');
     Route::get('/api/whatsapp/status', [WhatsAppController::class, 'status']);
@@ -95,6 +98,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/api/whatsapp/sessions', [WhatsAppController::class, 'getSessions']);
     Route::post('/api/whatsapp/sessions/{userId}/logout', [WhatsAppController::class, 'logoutSession']);
 });
+*/
 
 Route::middleware(['auth'])->group(function () {
 
@@ -305,6 +309,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/users/{user}/reset-password', [UserController::class, 'resetPassword'])->name('users.reset-password');
 
     Route::resource('labels', LabelController::class)->only(['index', 'store', 'destroy']);
+    Route::resource('ticket-categories', TicketCategoryController::class)->only(['index', 'store', 'update', 'destroy']);
 
     Route::get('/search', [SearchController::class, 'index'])->name('search');
 
@@ -368,6 +373,11 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/two-factor', [TwoFactorController::class, 'disable'])->name('two-factor.disable');
 
     // ── Knowledge Base (জ্ঞান ভাণ্ডার) ──────────────────────────────────
+    Route::get('/knowledge-base/categories', [KbCategoryController::class, 'index'])->name('kb-categories.index');
+    Route::post('/knowledge-base/categories', [KbCategoryController::class, 'store'])->name('kb-categories.store');
+    Route::put('/knowledge-base/categories/{category}', [KbCategoryController::class, 'update'])->name('kb-categories.update');
+    Route::delete('/knowledge-base/categories/{category}', [KbCategoryController::class, 'destroy'])->name('kb-categories.destroy');
+
     Route::get('/knowledge-base', [BlogPostController::class, 'index'])->name('knowledge-base.index');
     Route::get('/knowledge-base/create', [BlogPostController::class, 'create'])->name('knowledge-base.create');
     Route::post('/knowledge-base', [BlogPostController::class, 'store'])->name('knowledge-base.store');
@@ -399,8 +409,5 @@ Route::middleware(['auth'])->group(function () {
 // ── Two-factor login challenge (partially-authenticated state) ─────
 Route::get('/two-factor-challenge', [TwoFactorController::class, 'challenge'])->name('two-factor.challenge');
 Route::post('/two-factor-challenge', [TwoFactorController::class, 'verifyChallenge'])->middleware('throttle:5,1')->name('two-factor.challenge.verify');
-
-// ── Inbound email webhook (no auth — protected by shared secret) ───
-Route::post('/webhooks/inbound-email', [InboundEmailController::class, 'handle'])->name('webhooks.inbound-email');
 
 require __DIR__.'/auth.php';

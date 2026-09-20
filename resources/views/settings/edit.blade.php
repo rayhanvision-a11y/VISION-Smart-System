@@ -62,6 +62,85 @@
             </form>
         </div>
 
+        {{-- Ticket Categories Card --}}
+        <div x-data="{ showQuickAddCat: false }" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm p-6 mb-6">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h2 class="text-sm font-bold text-slate-800 dark:text-slate-100 uppercase tracking-wide flex items-center gap-2">
+                        <span class="px-2 py-0.5 rounded-full text-xs font-black bg-indigo-600 text-white">🏷️ CATEGORIES</span>
+                        {{ __('Ticket Categories Management') }}
+                    </h2>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                        {{ __('Add, edit or manage ticket categories shown when users create or filter support tickets.') }}
+                    </p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button @click="showQuickAddCat = true" type="button" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition-all shadow-xs cursor-pointer flex items-center gap-1">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                        {{ __('Add Category') }}
+                    </button>
+                    <a href="{{ route('ticket-categories.index') }}" class="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-xl transition-all">
+                        {{ __('Full Page View') }} &rarr;
+                    </a>
+                </div>
+            </div>
+
+            {{-- Categories Badges List --}}
+            <div class="flex flex-wrap gap-2.5 pt-2">
+                @forelse($categories ?? [] as $cat)
+                    <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 text-xs font-semibold text-slate-800 dark:text-slate-200">
+                        <span class="w-2.5 h-2.5 rounded-full" style="background-color: {{ $cat->color }}"></span>
+                        <span>{{ $cat->name }}</span>
+                        <span class="text-[10px] text-slate-400 font-mono">({{ $cat->slug }})</span>
+                    </div>
+                @empty
+                    <p class="text-xs text-slate-400">{{ __('No custom categories added yet.') }}</p>
+                @endforelse
+            </div>
+
+            {{-- Quick Add Category Modal inside Settings --}}
+            <div x-show="showQuickAddCat" x-cloak
+                 class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+                <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full border border-slate-200 dark:border-slate-800 shadow-2xl p-6"
+                     @click.away="showQuickAddCat = false">
+                    <div class="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800 mb-4">
+                        <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100 uppercase tracking-wide">{{ __('Add New Ticket Category') }}</h3>
+                        <button @click="showQuickAddCat = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                        </button>
+                    </div>
+                    <form method="POST" action="{{ route('ticket-categories.store') }}">
+                        @csrf
+                        <div class="space-y-4 text-left">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">{{ __('Category Name') }} *</label>
+                                <input type="text" name="name" required placeholder="e.g. ONU / Fiber Patch Issue"
+                                       class="w-full border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2 text-sm bg-slate-50 dark:bg-slate-800 dark:text-white focus:ring-2 focus:ring-indigo-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">{{ __('Badge Color') }}</label>
+                                <input type="color" name="color" value="#4f46e5"
+                                       class="h-10 w-20 border border-slate-200 dark:border-slate-700 rounded-lg p-1 bg-slate-50 dark:bg-slate-800 cursor-pointer">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">{{ __('Description') }}</label>
+                                <textarea name="description" rows="2" placeholder="Details about this category..."
+                                          class="w-full border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2 text-sm bg-slate-50 dark:bg-slate-800 dark:text-white focus:ring-2 focus:ring-indigo-500"></textarea>
+                            </div>
+                        </div>
+                        <div class="mt-6 flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+                            <button type="button" @click="showQuickAddCat = false" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">
+                                {{ __('Cancel') }}
+                            </button>
+                            <button type="submit" class="px-4 py-2 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm">
+                                {{ __('Save Category') }}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
         {{-- Theme Color Card (Super Admin Only) --}}
         @if(auth()->user()->isSuperAdminOnly())
         <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm p-6 mb-6">
@@ -301,13 +380,13 @@
                 <div class="border border-slate-200 dark:border-slate-700 rounded-xl p-4">
                     <div class="flex items-center gap-2 mb-2">
                         <span class="text-lg">📤</span>
-                        <span class="font-bold text-sm text-slate-700 dark:text-slate-200">Export Backup</span>
+                        <span class="font-bold text-sm text-slate-700 dark:text-slate-200">{{ __('Export Backup') }}</span>
                     </div>
-                    <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Download all current settings as a JSON file.</p>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">{{ __('Download all current settings as a JSON file.') }}</p>
                     <a href="{{ route('settings.backup.export') }}"
                         class="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition-all shadow-sm">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                        Download Backup
+                        {{ __('Download Backup') }}
                     </a>
                 </div>
 
@@ -315,9 +394,9 @@
                 <div class="border border-slate-200 dark:border-slate-700 rounded-xl p-4">
                     <div class="flex items-center gap-2 mb-2">
                         <span class="text-lg">📥</span>
-                        <span class="font-bold text-sm text-slate-700 dark:text-slate-200">Restore Backup</span>
+                        <span class="font-bold text-sm text-slate-700 dark:text-slate-200">{{ __('Restore Backup') }}</span>
                     </div>
-                    <p class="text-xs text-slate-500 dark:text-slate-400 mb-3">Upload a previously exported JSON backup file.</p>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mb-3">{{ __('Upload a previously exported JSON backup file.') }}</p>
                     <form method="POST" action="{{ route('settings.backup.restore') }}" enctype="multipart/form-data">
                         @csrf
                         @error('backup_file')
@@ -327,9 +406,9 @@
                             <input type="file" name="backup_file" accept=".json" required
                                 class="flex-1 text-xs text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg cursor-pointer focus:outline-none file:mr-2 file:py-1.5 file:px-3 file:rounded-l-lg file:border-0 file:text-xs file:font-semibold file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100">
                             <button type="submit"
-                                onclick="return confirm('Restore settings from this file? This will overwrite current settings.')"
+                                onclick="return confirm('{{ __('Restore settings from this file? This will overwrite current settings.') }}')"
                                 class="px-3 py-2 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-xl transition-all whitespace-nowrap">
-                                Restore
+                                {{ __('Restore') }}
                             </button>
                         </div>
                     </form>

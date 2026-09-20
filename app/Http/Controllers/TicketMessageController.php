@@ -24,7 +24,7 @@ class TicketMessageController extends Controller
     public function poll(Request $request, Ticket $ticket)
     {
         $user = auth()->user();
-        if ($user->isReseller() && $ticket->created_by !== $user->id) abort(403);
+        if (!Ticket::where('id', $ticket->id)->forUser($user)->exists()) abort(403);
 
         $after = (int) $request->get('after', 0);
 
@@ -58,7 +58,7 @@ class TicketMessageController extends Controller
     public function typing(Request $request, Ticket $ticket)
     {
         $user = auth()->user();
-        if ($user->isReseller() && $ticket->created_by !== $user->id) abort(403);
+        if (!Ticket::where('id', $ticket->id)->forUser($user)->exists()) abort(403);
 
         $cacheKey = "ticket:{$ticket->id}:typing";
         $typingList = \Illuminate\Support\Facades\Cache::get($cacheKey, []);
@@ -104,7 +104,7 @@ class TicketMessageController extends Controller
     {
         $user = auth()->user();
 
-        if ($user->isReseller() && $ticket->created_by !== $user->id) {
+        if (!Ticket::where('id', $ticket->id)->forUser($user)->exists()) {
             abort(403);
         }
 

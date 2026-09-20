@@ -1,11 +1,9 @@
-# cPanel এ ডিপ্লয় করার গাইড (File Manager + phpMyAdmin + cPanel Terminal)
+# cPanel এ ডিপ্লয় ও আপডেট গাইড (File Manager + phpMyAdmin)
 
 **টার্গেট ডোমেইন:** `https://portal.visiontech.com.bd/`  
 **ফোল্ডার ডিরেক্টরি:** `public_html/domains/subdomains/portal.visiontech.com.bd` (আপনার সাব-ডোমেইনের ফোল্ডার)
 
-এই গাইডে আগে থেকে তৈরি করা ডিপ্লয়মেন্ট প্যাকেজ (`isp-tickets-deploy.zip`) ব্যবহার করা হয়েছে, যার মধ্যে `vendor/` (Composer ডিপেন্ডেন্সি) এবং `public/build/` (কম্পাইল করা CSS/JS) আগে থেকেই অন্তর্ভুক্ত আছে। ফলে **সার্ভারে আলাদাভাবে Composer এর প্রয়োজন হবে না** — cPanel এর File Manager, phpMyAdmin এবং cPanel Terminal ব্যবহার করলেই চলবে।
-
-> **WhatsApp মেডিউল ও cPanel Terminal সার্ভিস:** জিপ (zip) ফাইলের মধ্যে `whatsapp_server.cjs`, `package.json` এবং `whatsapp-service/` ফোল্ডার (start/stop/watchdog স্ক্রিপ্টসহ) অন্তর্ভুক্ত আছে। আপনার cPanel এ **Terminal** সুবিধা থাকায়, আলাদা "Setup Node.js App" টুল ছাড়াই ব্যাকগ্রাউন্ড সার্ভিস ও Cron Watchdog দিয়ে হোয়াটসঅ্যাপ বট সার্ভিস চালু রাখতে পারবেন — বিস্তারিত **ধাপ ৮** দেখুন।
+লারাভেল ভিত্তিক আইএসপি ও হেল্পডেস্ক টিকিটিং সিস্টেম (`VISION Smart System`) এর ডিপ্লয়মেন্ট ও আপডেট নির্দেশিকা।
 
 ---
 
@@ -116,70 +114,14 @@ cPanel ➔ **File Manager** ➔ ডিরেক্টরিতে যান:
 
 ---
 
-## 8. WhatsApp ব্রিজিং ব্যাকগ্রাউন্ড সার্ভিস রান করা (cPanel Terminal)
+## 8. সাম্প্রতিক পরিবর্তনসমূহ cPanel এ আপডেট করার নিয়ম (Incremental File Update)
 
-`whatsapp_server.cjs` একটি ব্যাকগ্রাউন্ড সার্ভিস যা রিয়েল-টাইম হোয়াটসঅ্যাপ কানেকশন ধরে রাখে। cPanel **Terminal** ব্যবহার করে এটি ব্যাকগ্রাউন্ডে এবং ক্রোন ওয়াচডগ দিয়ে সার্বক্ষণিক চালু রাখতে পারবেন:
+আপনি যদি ইতিপূর্বে সার্ভারে সাইট ইনস্টল করে থাকেন এবং সাম্প্রতিক বাংলা অনুবাদ ও প্রফেশনাল রিপোর্ট পেজ আপডেট করতে চান, তবে শুধু নিচের ফাইলগুলো cPanel File Manager থেকে সংশ্লিষ্ট ফোল্ডারে রিপ্লেস (Replace/Overwrite) করে দিন:
 
-### 8.1 Node ভার্সন চেক করুন (Node ≥ 20 প্রয়োজন)
+1. **`resources/views/reports/index.blade.php`** — সম্পূর্ণ নতুন এক্সিকিউটিভ-গ্রেড প্রফেশনাল রিপোর্ট ড্যাশবোর্ড ও টিম/রিসেলার ড্রপডাউন।
+2. **`lang/bn.json`** — সাইটের সম্পূর্ণ বাংলা অনুবাদ (৫২৬+ কি)।
+3. **`resources/views/layouts/app.blade.php`** — সাইডবার বাংলা টাইটেল ও লোগো ঝাঁকি ফিক্স।
+4. **`resources/views/activity-logs/index.blade.php`** ও **`resources/views/settings/edit.blade.php`** — লগ ও সেটিংস পেজের পূর্ণ বাংলা সমর্থন।
+5. **`routes/web.php`** — আপডেটেড রাউট ফাইল।
 
-cPanel ➔ **Terminal** এ গিয়ে লিখুন:
-
-```bash
-node -v
-```
-
-যদি Node 20 এর কম হয় বা না থাকে, `nvm` আছে কি না দেখুন:
-
-```bash
-command -v nvm || ls -la ~/.nvm 2>/dev/null
-```
-
-`nvm` থাকলে Node 20 ইনস্টল করে নিন:
-
-```bash
-nvm install 20
-nvm use 20
-```
-
-### 8.2 ডিপেন্ডেন্সি ইনস্টল করুন
-
-```bash
-cd ~/public_html/domains/subdomains/portal.visiontech.com.bd
-npm install --omit=dev
-```
-
-### 8.3 সার্ভিস স্ক্রিপ্ট পারমিশন দিন এবং স্টার্ট করুন
-
-```bash
-cd ~/public_html/domains/subdomains/portal.visiontech.com.bd
-chmod +x whatsapp-service/*.sh
-./whatsapp-service/wa-start.sh
-```
-
-এটি `Started whatsapp_server.cjs (PID ...)` আউটপুট দেবে। সার্ভিসটি সঠিকভাবে চলছে কি না দেখতে:
-
-```bash
-tail -f whatsapp-service/wa.log
-```
-*(বন্ধ করতে `Ctrl+C` চাপুন — ব্যাকগ্রাউন্ডে সার্ভিস চালু থাকবে)*
-
-### 8.4 ক্রোন ওয়াচডগ (Cron Watchdog) দিয়ে সবসময় চালু রাখা
-
-cPanel ➔ **Cron Jobs** এ প্রতি ৫ মিনিটে একটি ওয়াচডগ জব সেট করুন:
-
-```bash
-*/5 * * * * /home/CPANELUSER/public_html/domains/subdomains/portal.visiontech.com.bd/whatsapp-service/wa-watchdog.sh
-```
-*(এখানে `CPANELUSER` এর জায়গায় আপনার cPanel ইউজারনাম দিন)*
-
-### 8.5 টেস্ট ও ভেরিফাই করুন
-
-লগইন অবস্থায় `https://portal.visiontech.com.bd/whatsapp` পেজে যান এবং কিউআর কোড (QR Code) স্ক্যান করে আপনার হোয়াটসঅ্যাপ কানেক্ট করুন!
-
-### পরবতী সার্ভিস ম্যানেজমেন্ট কমান্ডসমূহ:
-
-```bash
-./whatsapp-service/wa-stop.sh     # সার্ভিস বন্ধ করতে
-./whatsapp-service/wa-start.sh    # আবার স্টার্ট করতে
-tail -f whatsapp-service/wa.log   # লাইভ লগ দেখতে
-```
+> 💡 ফাইল আপলোড শেষে cPanel Terminal থাকলে রান করুন: `php artisan view:clear` অথবা cPanel File Manager থেকে `storage/framework/views/` ফোল্ডারের ভেতরের ক্যাশ ফাইলগুলো ডিলিট করে দিন।

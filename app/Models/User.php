@@ -86,6 +86,26 @@ class User extends Authenticatable
         return $this->role === 'reseller';
     }
 
+    public function isCallCenter(): bool
+    {
+        return $this->role === 'call_center';
+    }
+
+    public function isSupervisor(): bool
+    {
+        return $this->role === 'supervisor';
+    }
+
+    public function isSeniorSupervisor(): bool
+    {
+        return $this->role === 'senior_supervisor';
+    }
+
+    public function isSupervisorLevel(): bool
+    {
+        return in_array($this->role, ['supervisor', 'senior_supervisor']);
+    }
+
     public function avatarUrl(): string
     {
         if ($this->avatar) {

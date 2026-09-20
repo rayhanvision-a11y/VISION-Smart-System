@@ -23,6 +23,7 @@ class SettingController extends Controller
             'noticeSpeed'    => Setting::get('header_notice_speed', '8'),
             'themePrimary'   => Setting::get('theme_primary_color',   '#4f46e5'),
             'themeSecondary' => Setting::get('theme_secondary_color',  '#10b981'),
+            'categories'     => \App\Models\TicketCategory::orderBy('name')->get(),
         ]);
     }
 

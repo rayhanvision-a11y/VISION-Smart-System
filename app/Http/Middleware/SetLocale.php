@@ -22,6 +22,7 @@ class SetLocale
 
         if (in_array($locale, self::SUPPORTED, true)) {
             App::setLocale($locale);
+            \Carbon\Carbon::setLocale($locale);
         }
 
         if ($tz = $request->user()?->timezone) {

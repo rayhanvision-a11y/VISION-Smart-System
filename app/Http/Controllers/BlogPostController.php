@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\BlogPost;
 use App\Models\BlogPostComment;
 use App\Models\BlogPostLike;
+use App\Models\KbCategory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -34,11 +35,12 @@ class BlogPostController extends Controller
 
         $posts = $query->latest()->paginate(9)->withQueryString();
 
+        $kbCategories = KbCategory::orderBy('name')->get();
+        $dbCategories = $kbCategories->pluck('name')->toArray();
         $existingCategories = BlogPost::where('is_published', true)->distinct()->pluck('category')->filter()->toArray();
-        $defaultCategories = ['নেটওয়ার্ক টিউটোরিয়াল', 'বিলিং গাইড', 'সফ্টওয়্যার সেটআপ', 'সার্ভার ব্যবস্থাপনা', 'সাধারণ প্রশ্নাবলী', 'Billing', 'App Server', 'Smart Form', 'Tutorial', 'General'];
-        $categories = array_values(array_unique(array_merge($defaultCategories, $existingCategories)));
+        $categories = array_values(array_unique(array_merge($dbCategories, $existingCategories)));
 
-        return view('blogs.index', compact('posts', 'categories'));
+        return view('blogs.index', compact('posts', 'categories', 'kbCategories'));
     }
 
     /**
@@ -50,7 +52,10 @@ class BlogPostController extends Controller
             abort(403);
         }
 
-        $categories = ['নেটওয়ার্ক টিউটোরিয়াল', 'বিলিং গাইড', 'সফ্টওয়্যার সেটআপ', 'সার্ভার ব্যবস্থাপনা', 'সাধারণ প্রশ্নাবলী', 'Billing', 'App Server', 'Smart Form', 'Tutorial', 'General'];
+        $categories = KbCategory::orderBy('name')->pluck('name')->toArray();
+        if (empty($categories)) {
+            $categories = ['General'];
+        }
         return view('blogs.create', compact('categories'));
     }
 
@@ -142,7 +147,10 @@ class BlogPostController extends Controller
         }
 
         $blog = BlogPost::where('slug', $slug)->firstOrFail();
-        $categories = ['Billing', 'App Server', 'Smart Form', 'Tutorial', 'General'];
+        $categories = KbCategory::orderBy('name')->pluck('name')->toArray();
+        if (empty($categories)) {
+            $categories = ['General'];
+        }
         return view('blogs.edit', compact('blog', 'categories'));
     }
 

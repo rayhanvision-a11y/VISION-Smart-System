@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C /f/laragon/www/isp-tickets show HEAD:whatsapp_server.cjs)"
+    ]
+  }
+}

@@ -28,6 +28,16 @@ class AppServiceProvider extends ServiceProvider
     {
         \Illuminate\Database\Eloquent\Model::preventLazyLoading(! app()->isProduction());
 
+        \Carbon\Carbon::macro('toBn', function ($format = null) {
+            /** @var \Carbon\Carbon $this */
+            $locale = app()->getLocale();
+            if ($locale === 'bn') {
+                $str = $format ? $this->translatedFormat($format) : $this->diffForHumans();
+                return str_replace(['0','1','2','3','4','5','6','7','8','9'], ['০','১','২','৩','৪','৫','৬','৭','৮','৯'], $str);
+            }
+            return $format ? $this->format($format) : $this->diffForHumans();
+        });
+
         Ticket::observe(TicketObserver::class);
         TicketMessage::observe(TicketMessageObserver::class);
 

@@ -67,11 +67,19 @@
                 <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">{{ __('Category') }}</label>
                 <select name="category" class="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-700 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-slate-50 dark:bg-slate-800">
                     <option value="">{{ __('All Categories') }}</option>
-                    <option value="line_fault"     {{ request('category') === 'line_fault'     ? 'selected' : '' }}>{{ __('Line Fault') }}</option>
-                    <option value="router_issue"   {{ request('category') === 'router_issue'   ? 'selected' : '' }}>{{ __('Router Issue') }}</option>
-                    <option value="new_connection" {{ request('category') === 'new_connection' ? 'selected' : '' }}>{{ __('New Connection') }}</option>
-                    <option value="billing"        {{ request('category') === 'billing'        ? 'selected' : '' }}>{{ __('Billing') }}</option>
-                    <option value="other"          {{ request('category') === 'other'          ? 'selected' : '' }}>{{ __('Other') }}</option>
+                    @if(isset($categories) && $categories->count() > 0)
+                        @foreach($categories as $cat)
+                            <option value="{{ $cat->slug }}" {{ request('category') === $cat->slug ? 'selected' : '' }}>
+                                {{ $cat->name }}
+                            </option>
+                        @endforeach
+                    @else
+                        <option value="line_fault"     {{ request('category') === 'line_fault'     ? 'selected' : '' }}>{{ __('Line Fault') }}</option>
+                        <option value="router_issue"   {{ request('category') === 'router_issue'   ? 'selected' : '' }}>{{ __('Router Issue') }}</option>
+                        <option value="new_connection" {{ request('category') === 'new_connection' ? 'selected' : '' }}>{{ __('New Connection') }}</option>
+                        <option value="billing"        {{ request('category') === 'billing'        ? 'selected' : '' }}>{{ __('Billing') }}</option>
+                        <option value="other"          {{ request('category') === 'other'          ? 'selected' : '' }}>{{ __('Other') }}</option>
+                    @endif
                 </select>
             </div>
 

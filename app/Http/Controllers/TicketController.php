@@ -7,6 +7,7 @@ use App\Mail\TicketResolved;
 use App\Mail\TicketReopened;
 use App\Models\Label;
 use App\Models\Ticket;
+use App\Models\TicketCategory;
 use App\Models\TicketHistory;
 use App\Models\TicketLink;
 use App\Models\TicketNote;
@@ -21,11 +22,7 @@ class TicketController extends Controller
     public function index(Request $request)
     {
         $user = auth()->user();
-        $query = Ticket::with(['creator', 'assignee', 'labels']);
-
-        if ($user->isReseller()) {
-            $query->where('created_by', $user->id);
-        }
+        $query = Ticket::forUser($user)->with(['creator', 'assignee', 'labels']);
 
         if ($request->filled('status')) {
             if ($request->status === 'overdue') {
@@ -60,15 +57,17 @@ class TicketController extends Controller
 
         $tickets = $query->latest()->paginate(15)->withQueryString();
         $allLabels = Label::orderBy('name')->get();
+        $categories = TicketCategory::where('is_active', true)->orderBy('name')->get();
 
-        return view('tickets.index', compact('tickets', 'allLabels'));
+        return view('tickets.index', compact('tickets', 'allLabels', 'categories'));
     }
 
     public function create()
     {
-        $nocUsers = User::whereNotIn('role', ['reseller'])->orderBy('name')->get();
+        $nocUsers = User::whereIn('role', ['super_admin', 'admin', 'noc'])->orderBy('name')->get();
         $labels = Label::orderBy('name')->get();
-        return view('tickets.create', compact('nocUsers', 'labels'));
+        $categories = TicketCategory::where('is_active', true)->orderBy('name')->get();
+        return view('tickets.create', compact('nocUsers', 'labels', 'categories'));
     }
 
     public function store(Request $request)
@@ -76,12 +75,15 @@ class TicketController extends Controller
         $validated = $request->validate([
             'title'       => 'required|string|max:255',
             'description' => 'required|string|max:10000',
-            'category'    => 'required|in:line_fault,router_issue,new_connection,billing,other',
+            'category'    => 'required|string|max:255',
             'priority'    => 'required|in:low,medium,high,critical',
             'pop_office_id' => 'nullable|exists:pop_offices,id',
             'assigned_to' => ['nullable', 'exists:users,id', function($attr, $val, $fail) {
-                if ($val && \App\Models\User::where('id', $val)->where('role', 'reseller')->exists()) {
-                    $fail('Cannot assign ticket to a reseller.');
+                if ($val) {
+                    $targetUser = \App\Models\User::find($val);
+                    if ($targetUser && in_array($targetUser->role, ['reseller', 'call_center'])) {
+                        $fail('Tickets can only be assigned to Admin or NOC users.');
+                    }
                 }
             }],
             'labels'      => 'nullable|array',
@@ -148,21 +150,17 @@ class TicketController extends Controller
 
         $user = auth()->user();
 
-        if ($user->isReseller() && $ticket->created_by !== $user->id) {
-            abort(403);
+        $canView = Ticket::where('id', $id)->forUser($user)->exists();
+        if (!$canView) {
+            abort(403, 'You are not authorized to view this ticket.');
         }
 
         if ($user->isReseller()) {
             $ticket->setRelation('notes', collect());
         }
 
-        $nocUsers = User::whereNotIn('role', ['reseller'])->orderBy('name')->get();
+        $nocUsers = User::whereIn('role', ['super_admin', 'admin', 'noc'])->orderBy('name')->get();
         $allLabels = Label::orderBy('name')->get();
-        $allTickets = Ticket::where('id', '!=', $ticket->id)
-            ->whereNull('parent_id')
-            ->select('id', 'ticket_key', 'title', 'status')
-            ->orderByDesc('id')
-            ->get();
 
         $mentionUsers = User::orderBy('name')->get()->map(fn($u) => [
             'id'       => $u->id,
@@ -171,7 +169,7 @@ class TicketController extends Controller
             'role'     => $u->role,
         ])->values();
 
-        return view('tickets.show', compact('ticket', 'nocUsers', 'allLabels', 'allTickets', 'mentionUsers'));
+        return view('tickets.show', compact('ticket', 'nocUsers', 'allLabels', 'mentionUsers'));
     }
 
     public function storeSubtask(Request $request, Ticket $ticket)
@@ -226,11 +224,13 @@ class TicketController extends Controller
 
     public function edit(string $id)
     {
-        if (auth()->user()->isReseller()) {
+        $user = auth()->user();
+        $canView = Ticket::where('id', $id)->forUser($user)->exists();
+        if (!$canView || $user->isReseller()) {
             abort(403);
         }
         $ticket = Ticket::findOrFail($id);
-        $nocUsers = User::whereNotIn('role', ['reseller'])->orderBy('name')->get();
+        $nocUsers = User::whereIn('role', ['super_admin', 'admin', 'noc'])->orderBy('name')->get();
         return view('tickets.edit', compact('ticket', 'nocUsers'));
     }
 
@@ -451,13 +451,19 @@ class TicketController extends Controller
     public function assign(Request $request, string $id)
     {
         $authUser = auth()->user();
-        if ($authUser->isReseller()) {
+        $canView = Ticket::where('id', $id)->forUser($authUser)->exists();
+        if (!$canView || $authUser->isReseller()) {
             abort(403);
         }
 
         $ticket = Ticket::findOrFail($id);
         $validated = $request->validate([
-            'assigned_to' => 'required|exists:users,id',
+            'assigned_to' => ['required', 'exists:users,id', function($attr, $val, $fail) {
+                $targetUser = \App\Models\User::find($val);
+                if ($targetUser && in_array($targetUser->role, ['reseller', 'call_center'])) {
+                    $fail('Tickets can only be assigned to Admin or NOC users.');
+                }
+            }],
         ]);
 
         $oldAssignee = $ticket->assigned_to;
