@@ -91,17 +91,16 @@ class TicketController extends Controller
         ]);
 
         $ticket = Ticket::create([
-            'title'       => $validated['title'],
-            'description' => $validated['description'],
-            'category'    => $validated['category'],
-            'priority'    => $validated['priority'],
+            'ticket_key'    => Ticket::generateKey(),
+            'title'         => $validated['title'],
+            'description'   => $validated['description'],
+            'category'      => $validated['category'],
+            'priority'      => $validated['priority'],
             'status'        => 'in_progress',
             'created_by'    => auth()->id(),
             'assigned_to'   => auth()->user()->isReseller() ? null : ($validated['assigned_to'] ?? null),
             'pop_office_id' => auth()->user()->isReseller() ? null : ($validated['pop_office_id'] ?? null),
         ]);
-
-        $ticket->update(['ticket_key' => \App\Models\Ticket::generateKey()]);
 
         $slaPolicy = \App\Models\SlaPolicy::forPriority($validated['priority']);
         $resolutionHours = $slaPolicy?->resolution_hours ?? match($validated['priority']) {
@@ -184,6 +183,7 @@ class TicketController extends Controller
         ]);
 
         $subtask = Ticket::create([
+            'ticket_key'  => Ticket::generateKey(),
             'title'       => $validated['title'],
             'description' => '',
             'category'    => $ticket->category,
@@ -193,8 +193,6 @@ class TicketController extends Controller
             'assigned_to' => $ticket->assigned_to,
             'parent_id'   => $ticket->id,
         ]);
-
-        $subtask->update(['ticket_key' => \App\Models\Ticket::generateKey()]);
 
         TicketHistory::create([
             'ticket_id'       => $ticket->id,

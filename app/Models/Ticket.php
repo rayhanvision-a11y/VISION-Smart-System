@@ -37,17 +37,33 @@ class Ticket extends Model
     ];
 
     /**
-     * Generate custom ticket key: YYMMDDNNN (e.g. 260910001)
+     * Generate custom ticket key: YYMMDDNNN (e.g. 260920001)
      * NNN is the daily sequential count for that date.
      */
     public static function generateKey(): string
     {
-        $prefix = now()->format('ymd'); // e.g. 260910
-        $count  = static::whereDate('created_at', now()->toDateString())
-                        ->whereNotNull('ticket_key')
-                        ->where('ticket_key', 'like', $prefix . '%')
-                        ->count();
-        return $prefix . str_pad($count + 1, 3, '0', STR_PAD_LEFT);
+        $prefix = now()->format('ymd'); // e.g. 260920
+
+        // Find the maximum existing numerical sequence for this prefix
+        $keys = static::where('ticket_key', 'like', $prefix . '%')
+            ->pluck('ticket_key');
+
+        $maxSeq = 0;
+        foreach ($keys as $k) {
+            $suffix = substr($k, strlen($prefix));
+            if (is_numeric($suffix)) {
+                $maxSeq = max($maxSeq, (int) $suffix);
+            }
+        }
+
+        $nextSeq = $maxSeq + 1;
+
+        // Extra safety: guarantee key never collides with any existing key
+        while (static::where('ticket_key', $prefix . str_pad($nextSeq, 3, '0', STR_PAD_LEFT))->exists()) {
+            $nextSeq++;
+        }
+
+        return $prefix . str_pad($nextSeq, 3, '0', STR_PAD_LEFT);
     }
 
     /**
