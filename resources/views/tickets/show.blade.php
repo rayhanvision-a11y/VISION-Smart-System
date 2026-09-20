@@ -1946,14 +1946,25 @@
             e.preventDefault();
             const msgId = editBtn.dataset.id;
             const sender = editBtn.dataset.sender;
-            const msgText = editBtn.dataset.message || '';
+
+            // Prefer the live rendered HTML from the message bubble in DOM if available
+            const msgBubble = editBtn.closest('[data-message-id]')?.querySelector('.prose');
+            let rawContent = msgBubble ? msgBubble.innerHTML : (editBtn.dataset.message || '');
+
+            // Decode any escaped HTML entities (&lt;p&gt;, &amp;, etc.) so Quill parses true HTML
+            if (rawContent.includes('&lt;') || rawContent.includes('&gt;') || rawContent.includes('&amp;')) {
+                const txt = document.createElement('textarea');
+                txt.innerHTML = rawContent;
+                rawContent = txt.value;
+            }
+
             showEditPreview(msgId, sender);
             if (quill) {
                 quill.setContents([]);
                 if (quill.clipboard && typeof quill.clipboard.dangerouslyPasteHTML === 'function') {
-                    quill.clipboard.dangerouslyPasteHTML(0, msgText);
+                    quill.clipboard.dangerouslyPasteHTML(rawContent);
                 } else {
-                    quill.root.innerHTML = msgText;
+                    quill.root.innerHTML = rawContent;
                 }
             }
             editorActions?.style.removeProperty('display');

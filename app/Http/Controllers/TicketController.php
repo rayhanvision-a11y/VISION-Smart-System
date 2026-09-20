@@ -43,7 +43,11 @@ class TicketController extends Controller
             $query->where('title', 'like', '%' . $request->search . '%');
         }
         if ($request->get('assigned') === 'me') {
-            $query->where('assigned_to', auth()->id());
+            if ($user->isReseller()) {
+                $query->where('created_by', $user->id);
+            } else {
+                $query->where('assigned_to', $user->id);
+            }
         }
         if ($request->get('created') === 'me') {
             $query->where('created_by', auth()->id());

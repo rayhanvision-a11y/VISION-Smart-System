@@ -134,7 +134,11 @@ class TicketMessageController extends Controller
         }
 
         // Process mentions to wrap unformatted @User Name in <span class="mention-chip">
-        [$finalMessage, $mentionedIds] = $this->processMentions($request->message);
+        $rawMessage = $request->message;
+        if ($rawMessage && (str_contains($rawMessage, '&lt;') || str_contains($rawMessage, '&gt;'))) {
+            $rawMessage = html_entity_decode($rawMessage, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        }
+        [$finalMessage, $mentionedIds] = $this->processMentions($rawMessage);
 
         $message = TicketMessage::create([
             'ticket_id'   => $ticket->id,
@@ -210,7 +214,11 @@ class TicketMessageController extends Controller
             'is_private' => 'nullable|boolean',
         ]);
 
-        [$finalMessage, $mentionedIds] = $this->processMentions($request->message);
+        $rawMessage = $request->message;
+        if ($rawMessage && (str_contains($rawMessage, '&lt;') || str_contains($rawMessage, '&gt;'))) {
+            $rawMessage = html_entity_decode($rawMessage, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        }
+        [$finalMessage, $mentionedIds] = $this->processMentions($rawMessage);
 
         $message->update([
             'message'    => $finalMessage,

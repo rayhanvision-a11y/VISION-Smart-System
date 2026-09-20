@@ -3,7 +3,7 @@
     <div class="flex items-center justify-between mb-4">
         <div>
             <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100">
-                {{ auth()->user()->isReseller() ? __('My Tickets') : __('All Tickets') }}
+                {{ (request('assigned') === 'me' || auth()->user()->isReseller()) ? __('My Tickets') : __('All Tickets') }}
             </h1>
             <p class="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
                 {{ trans_choice(':count ticket found|:count tickets found', $tickets->total(), ['count' => $tickets->total()]) }}
