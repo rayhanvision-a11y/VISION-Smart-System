@@ -127,15 +127,18 @@ class TicketController extends Controller
             'changed_by'      => auth()->id(),
         ]);
 
-        // Notify all super_admin, admin, noc about new ticket
-        $notifyIds = User::whereIn('role', ['super_admin', 'admin', 'noc'])
-            ->where('id', '!=', auth()->id())
-            ->pluck('id')->toArray();
-        NotificationService::sendToMany($notifyIds, "🎫 New ticket #{$ticket->id} from {$ticket->creator->name}: {$ticket->title}", $ticket->id);
+        // Notify team members who have permission to view this ticket
+        $recipientUsers = User::where('id', '!=', auth()->id())
+            ->where('role', '!=', 'reseller')
+            ->get()
+            ->filter(fn($u) => Ticket::where('id', $ticket->id)->forUser($u)->exists());
 
-        // Notify assigned NOC if set (and not already notified above)
-        if ($ticket->assigned_to && !in_array($ticket->assigned_to, $notifyIds)) {
-            NotificationService::send($ticket->assigned_to, "You have been assigned ticket #{$ticket->id}: {$ticket->title}", $ticket->id);
+        foreach ($recipientUsers as $recipient) {
+            if ($recipient->id === (int)$ticket->assigned_to) {
+                NotificationService::send($recipient->id, "📋 You have been assigned ticket #{$ticket->ticket_key}: {$ticket->title}", $ticket->id);
+            } else {
+                NotificationService::send($recipient->id, "🎫 New ticket #{$ticket->ticket_key} from {$ticket->creator->name}: {$ticket->title}", $ticket->id);
+            }
         }
 
         return redirect()->route('tickets.show', $ticket)->with('success', 'Ticket created successfully.');
@@ -308,12 +311,19 @@ class TicketController extends Controller
         }
 
         // DB notification to ticket creator
-        if ($ticket->created_by) {
-            NotificationService::send($ticket->created_by, "✅ Ticket #{$ticket->id} \"{$ticket->title}\" has been resolved. Please review and close or reopen.", $ticket->id);
+        if ($ticket->created_by && $ticket->created_by !== $user->id) {
+            NotificationService::send($ticket->created_by, "✅ Ticket #{$ticket->ticket_key} \"{$ticket->title}\" has been resolved. Please review and close or reopen.", $ticket->id);
         }
-        // Notify super_admin + admin
-        $adminIds = User::whereIn('role', ['super_admin', 'admin'])->where('id', '!=', $user->id)->pluck('id')->toArray();
-        NotificationService::sendToMany($adminIds, "✅ Ticket #{$ticket->id} resolved by {$user->name}", $ticket->id);
+        // Notify staff who have access to this ticket
+        $staffToNotify = User::where('id', '!=', $user->id)
+            ->where('role', '!=', 'reseller')
+            ->get()
+            ->filter(fn($u) => Ticket::where('id', $ticket->id)->forUser($u)->exists());
+        foreach ($staffToNotify as $staff) {
+            if ($staff->id !== (int)$ticket->created_by) {
+                NotificationService::send($staff->id, "✅ Ticket #{$ticket->ticket_key} resolved by {$user->name}", $ticket->id);
+            }
+        }
 
         return redirect()->route('tickets.show', $ticket)->with('success', 'Ticket marked as resolved.');
     }
@@ -357,13 +367,22 @@ class TicketController extends Controller
             $whatsapp->send($ticket->assignee->phone, "Ticket #{$ticket->id} has been reopened. Please check.");
         }
 
-        // DB notification to assigned NOC
-        if ($ticket->assigned_to) {
-            NotificationService::send($ticket->assigned_to, "🔁 Ticket #{$ticket->id} \"{$ticket->title}\" has been reopened. Please check.", $ticket->id);
+        // Notify staff / assignee / creator who have access to this ticket
+        $staffToNotify = User::where('id', '!=', $user->id)
+            ->where('role', '!=', 'reseller')
+            ->get()
+            ->filter(fn($u) => Ticket::where('id', $ticket->id)->forUser($u)->exists());
+
+        foreach ($staffToNotify as $staff) {
+            if ($staff->id === (int)$ticket->assigned_to) {
+                NotificationService::send($staff->id, "🔁 Ticket #{$ticket->ticket_key} \"{$ticket->title}\" has been reopened. Please check.", $ticket->id);
+            } elseif ($staff->id !== (int)$ticket->created_by) {
+                NotificationService::send($staff->id, "🔁 Ticket #{$ticket->ticket_key} reopened by {$user->name}", $ticket->id);
+            }
         }
-        // Notify super_admin + admin
-        $adminIds = User::whereIn('role', ['super_admin', 'admin'])->where('id', '!=', $user->id)->pluck('id')->toArray();
-        NotificationService::sendToMany($adminIds, "🔁 Ticket #{$ticket->id} reopened by {$user->name}", $ticket->id);
+        if ($ticket->created_by && $ticket->created_by !== $user->id && !$staffToNotify->contains('id', $ticket->created_by)) {
+            NotificationService::send($ticket->created_by, "🔁 Your ticket #{$ticket->ticket_key} has been reopened by {$user->name}.", $ticket->id);
+        }
 
         return redirect()->route('tickets.show', $ticket)->with('success', 'Ticket reopened.');
     }
@@ -440,11 +459,19 @@ class TicketController extends Controller
             if ($ticket->creator && $ticket->creator->email && $ticket->creator->notify_on_resolve) {
                 try { Mail::to($ticket->creator->email)->send(new TicketResolved($ticket)); } catch (\Exception $e) {}
             }
-            if ($ticket->created_by) {
-                NotificationService::send($ticket->created_by, "✅ Ticket #{$ticket->id} \"{$ticket->title}\" has been resolved by {$user->name}. Please review and close or reopen.", $ticket->id);
+            if ($ticket->created_by && $ticket->created_by !== $user->id) {
+                NotificationService::send($ticket->created_by, "✅ Ticket #{$ticket->ticket_key} \"{$ticket->title}\" has been resolved by {$user->name}. Please review and close or reopen.", $ticket->id);
             }
-            $adminIds = User::whereIn('role', ['super_admin', 'admin'])->where('id', '!=', $user->id)->pluck('id')->toArray();
-            NotificationService::sendToMany($adminIds, "✅ Ticket #{$ticket->id} resolved by {$user->name}", $ticket->id);
+            $staffToNotify = User::where('id', '!=', $user->id)
+                ->where('role', '!=', 'reseller')
+                ->get()
+                ->filter(fn($u) => Ticket::where('id', $ticket->id)->forUser($u)->exists());
+
+            foreach ($staffToNotify as $staff) {
+                if ($staff->id !== (int)$ticket->created_by) {
+                    NotificationService::send($staff->id, "✅ Ticket #{$ticket->ticket_key} resolved by {$user->name}", $ticket->id);
+                }
+            }
         }
 
         return redirect()->route('tickets.show', $ticket)->with('success', 'Ticket updated successfully.');

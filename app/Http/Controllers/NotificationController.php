@@ -9,13 +9,14 @@ class NotificationController extends Controller
 {
     public function index()
     {
-        $notifications = Notification::where('user_id', auth()->id())
+        $user = auth()->user();
+        $notifications = Notification::forUser($user)
             ->with('ticket')
             ->latest()
             ->paginate(20);
 
         // Mark all as read when viewing the full list
-        Notification::where('user_id', auth()->id())
+        Notification::forUser($user)
             ->where('is_read', false)
             ->update(['is_read' => true]);
 
@@ -24,7 +25,8 @@ class NotificationController extends Controller
 
     public function markRead($id)
     {
-        $notification = Notification::where('user_id', auth()->id())->findOrFail($id);
+        $user = auth()->user();
+        $notification = Notification::forUser($user)->findOrFail($id);
         $notification->update(['is_read' => true]);
 
         if ($notification->ticket_id) {
@@ -35,7 +37,8 @@ class NotificationController extends Controller
 
     public function markAllRead()
     {
-        Notification::where('user_id', auth()->id())
+        $user = auth()->user();
+        Notification::forUser($user)
             ->where('is_read', false)
             ->update(['is_read' => true]);
 
@@ -44,11 +47,11 @@ class NotificationController extends Controller
 
     public function unreadCount()
     {
-        $userId = auth()->id();
+        $user = auth()->user();
 
-        $count = Notification::where('user_id', $userId)->where('is_read', false)->count();
+        $count = Notification::forUser($user)->where('is_read', false)->count();
 
-        $latest = Notification::where('user_id', $userId)
+        $latest = Notification::forUser($user)
             ->where('is_read', false)
             ->latest()
             ->take(10)
@@ -67,7 +70,8 @@ class NotificationController extends Controller
 
     public function dropdown()
     {
-        $notifications = Notification::where('user_id', auth()->id())
+        $user = auth()->user();
+        $notifications = Notification::forUser($user)
             ->latest()
             ->take(8)
             ->get();

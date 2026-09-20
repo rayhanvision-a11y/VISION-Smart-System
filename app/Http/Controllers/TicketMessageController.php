@@ -155,21 +155,29 @@ class TicketMessageController extends Controller
             if ($mid === $user->id) continue;
             $mentioned = User::find($mid);
             if ($mentioned) {
-                NotificationService::send($mentioned->id, "🔔 {$user->name} mentioned you in ticket #{$ticket->id}", $ticket->id);
+                if ($message->is_private && $mentioned->isReseller()) {
+                    continue;
+                }
+                NotificationService::send($mentioned->id, "🔔 {$user->name} mentioned you in ticket #{$ticket->ticket_key}", $ticket->id);
                 $notifiedIds[] = $mid;
             }
         }
 
         // Notify the message this one replies to (if not already notified/self)
         if ($message->replyTo && $message->replyTo->sender_id !== $user->id && !in_array($message->replyTo->sender_id, $notifiedIds)) {
-            NotificationService::send($message->replyTo->sender_id, "↩️ {$user->name} replied to your message on ticket #{$ticket->id}", $ticket->id);
-            $notifiedIds[] = $message->replyTo->sender_id;
+            $replyUser = $message->replyTo->sender;
+            if (!($message->is_private && $replyUser && $replyUser->isReseller())) {
+                NotificationService::send($message->replyTo->sender_id, "↩️ {$user->name} replied to your message on ticket #{$ticket->ticket_key}", $ticket->id);
+                $notifiedIds[] = $message->replyTo->sender_id;
+            }
         }
 
         // Notify creator and assignee (except sender and already notified)
         $notify = collect();
         if ($ticket->creator && $ticket->creator->id !== $user->id && !in_array($ticket->creator->id, $notifiedIds)) {
-            $notify->push($ticket->creator);
+            if (!($message->is_private && $ticket->creator->isReseller())) {
+                $notify->push($ticket->creator);
+            }
         }
         if ($ticket->assignee && $ticket->assignee->id !== $user->id
             && !in_array($ticket->assignee->id, $notifiedIds)

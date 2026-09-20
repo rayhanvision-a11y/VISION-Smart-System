@@ -54,7 +54,7 @@ class CheckSlaBreaches extends Command
                 continue;
             }
 
-            $message = "SLA breached: Ticket #{$ticket->id} \"{$ticket->title}\" was due {$ticket->due_at->diffForHumans()}.";
+            $message = "SLA breached: Ticket #{$ticket->ticket_key} \"{$ticket->title}\" was due {$ticket->due_at->diffForHumans()}.";
 
             $recipientIds = $adminIds;
             if ($ticket->assigned_to) {
