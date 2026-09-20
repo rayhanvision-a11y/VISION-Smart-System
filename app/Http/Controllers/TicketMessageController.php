@@ -185,6 +185,40 @@ class TicketMessageController extends Controller
         return back()->with('success', 'Message sent.');
     }
 
+    public function update(Request $request, Ticket $ticket, TicketMessage $message)
+    {
+        $user = auth()->user();
+
+        if ($message->ticket_id !== $ticket->id) {
+            abort(404);
+        }
+
+        if (!$user->isAdmin() && $message->sender_id !== $user->id) {
+            abort(403, 'Unauthorized to edit this message.');
+        }
+
+        $request->validate([
+            'message'    => 'required|string|max:5000',
+            'is_private' => 'nullable|boolean',
+        ]);
+
+        [$finalMessage, $mentionedIds] = $this->processMentions($request->message);
+
+        $message->update([
+            'message'    => $finalMessage,
+            'is_private' => $user->isReseller() ? false : $request->boolean('is_private'),
+        ]);
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'status'  => 'ok',
+                'message' => $this->serialize($message, $user),
+            ]);
+        }
+
+        return back()->with('success', 'Message updated.');
+    }
+
     public function toggleReaction(Request $request, Ticket $ticket, TicketMessage $message)
     {
         $user = auth()->user();

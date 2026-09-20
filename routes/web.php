@@ -287,6 +287,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/tickets/{ticket}/reopen',  [TicketController::class, 'reopen'])->name('tickets.reopen');
     Route::post('/tickets/{ticket}/close',   [TicketController::class, 'close'])->name('tickets.close');
     Route::post('/tickets/{ticket}/messages', [TicketMessageController::class, 'store'])->name('tickets.messages.store');
+    Route::put('/tickets/{ticket}/messages/{message}', [TicketMessageController::class, 'update'])->name('tickets.messages.update');
     Route::get('/tickets/{ticket}/messages/poll', [TicketMessageController::class, 'poll'])->name('tickets.messages.poll');
     Route::post('/tickets/{ticket}/typing', [TicketMessageController::class, 'typing'])->name('tickets.typing');
     Route::post('/tickets/{ticket}/messages/{message}/react', [TicketMessageController::class, 'toggleReaction'])->name('tickets.messages.react');

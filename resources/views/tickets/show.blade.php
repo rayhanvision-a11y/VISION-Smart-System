@@ -336,6 +336,7 @@
                             @csrf
                             @error('message')<p class="text-red-500 text-xs mb-2">{{ $message }}</p>@enderror
                             <input type="hidden" name="reply_to_id" id="reply-to-id" value="">
+                            <input type="hidden" name="editing_message_id" id="editing-message-id" value="">
                             <input type="hidden" name="is_private" :value="isPrivate ? '1' : '0'">
 
                             {{-- Public vs Private Comment Mode Toggles (Hidden for Resellers) --}}
@@ -368,6 +369,15 @@
                                     <span class="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
                                 </span>
                                 <span id="typing-text">✍️ Someone is typing...</span>
+                            </div>
+
+                            {{-- Edit preview banner --}}
+                            <div id="edit-preview" class="hidden justify-between gap-2 mb-2 px-3 py-2 rounded-lg bg-amber-50 border-l-2 border-amber-400 text-xs items-center">
+                                <div class="min-w-0">
+                                    <span class="font-semibold text-amber-800">✏ {{ __('Editing comment by') }}</span>
+                                    <span class="font-bold text-amber-900" id="edit-preview-sender"></span>
+                                </div>
+                                <button type="button" id="edit-preview-cancel" class="text-amber-600 hover:text-amber-800 text-xs font-semibold underline flex-shrink-0">{{ __('Cancel Edit') }}</button>
                             </div>
 
                             {{-- Reply preview banner --}}
@@ -1463,10 +1473,18 @@
             }
 
             const fd  = new FormData(chatForm);
+            const editingId = document.getElementById('editing-message-id')?.value;
+
+            let targetUrl = chatForm.action;
+            if (editingId) {
+                targetUrl = "{{ url('tickets/' . $ticket->id . '/messages') }}/" + editingId;
+                fd.append('_method', 'PUT');
+            }
+
             const btn = document.getElementById('chat-submit');
             if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
 
-            fetch(chatForm.action, {
+            fetch(targetUrl, {
                 method: 'POST',
                 headers: { 'X-Requested-With': 'XMLHttpRequest' },
                 body: fd,
@@ -1475,12 +1493,16 @@
                 if (r.ok) {
                     if (quill) quill.setContents([]);
                     clearReplyPreview();
+                    clearEditPreview();
                     pollChat();
                 }
             })
             .catch(() => {})
             .finally(() => {
-                if (btn) { btn.disabled = false; btn.textContent = 'Save'; }
+                if (btn) {
+                    btn.disabled = false;
+                    btn.textContent = editingId ? '{{ __("Update") }}' : '{{ __("Save") }}';
+                }
             });
         });
     }
@@ -1528,14 +1550,19 @@
         }, { capture: true });
     }
 
-    // ── Reply-to-message ─────────────────────────────────────────────────────
+    // ── Reply & Edit Message Helpers ─────────────────────────────────────────
     const replyToInput   = document.getElementById('reply-to-id');
     const replyPreviewEl = document.getElementById('reply-preview');
     const replyPreviewSender = document.getElementById('reply-preview-sender');
     const replyPreviewText   = document.getElementById('reply-preview-text');
 
+    const editingInput     = document.getElementById('editing-message-id');
+    const editPreviewEl    = document.getElementById('edit-preview');
+    const editPreviewSender = document.getElementById('edit-preview-sender');
+
     function showReplyPreview(id, sender, preview) {
         if (!replyToInput || !replyPreviewEl) return;
+        clearEditPreview();
         replyToInput.value = id;
         replyPreviewSender.textContent = sender;
         replyPreviewText.textContent = preview;
@@ -1550,7 +1577,28 @@
         replyPreviewEl.classList.remove('flex');
     }
 
+    function showEditPreview(id, sender) {
+        if (!editingInput || !editPreviewEl) return;
+        clearReplyPreview();
+        editingInput.value = id;
+        if (editPreviewSender) editPreviewSender.textContent = sender;
+        editPreviewEl.classList.remove('hidden');
+        editPreviewEl.classList.add('flex');
+        const submitBtn = document.getElementById('chat-submit');
+        if (submitBtn) submitBtn.textContent = '{{ __("Update") }}';
+    }
+
+    function clearEditPreview() {
+        if (!editingInput || !editPreviewEl) return;
+        editingInput.value = '';
+        editPreviewEl.classList.add('hidden');
+        editPreviewEl.classList.remove('flex');
+        const submitBtn = document.getElementById('chat-submit');
+        if (submitBtn) submitBtn.textContent = '{{ __("Save") }}';
+    }
+
     document.getElementById('reply-preview-cancel')?.addEventListener('click', clearReplyPreview);
+    document.getElementById('edit-preview-cancel')?.addEventListener('click', clearEditPreview);
 
     function escHtml(str) {
         if (str === null || str === undefined) return '';
@@ -1806,6 +1854,22 @@
             e.stopPropagation();
             const msgId = moreBtn.dataset.msgId;
             showFullEmojiPicker(msgId, moreBtn);
+            return;
+        }
+
+        const editBtn = e.target.closest('.msg-edit-btn');
+        if (editBtn) {
+            e.preventDefault();
+            const msgId = editBtn.dataset.id;
+            const sender = editBtn.dataset.sender;
+            const msgText = editBtn.dataset.message || '';
+            showEditPreview(msgId, sender);
+            if (quill) {
+                quill.root.innerHTML = msgText;
+            }
+            editorActions?.style.removeProperty('display');
+            document.getElementById('quill-body')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            if (quill) quill.focus();
             return;
         }
 
