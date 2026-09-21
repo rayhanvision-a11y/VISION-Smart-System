@@ -17,6 +17,9 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'team',
+        'current_shift',
+        'shift_date',
         'is_active',
         'phone',
         'avatar',
@@ -104,6 +107,58 @@ class User extends Authenticatable
     public function isSupervisorLevel(): bool
     {
         return in_array($this->role, ['supervisor', 'senior_supervisor']);
+    }
+
+    public const TEAMS = [
+        'IT Team'         => 'IT Team',
+        'NOC team'        => 'NOC team',
+        'Call center'     => 'Call center',
+        'Supervisor Team' => 'Supervisor Team',
+    ];
+
+    public const SHIFTS = [
+        'unassigned'  => 'Unassigned Pool',
+        'day_shift'   => 'Day Shift (9:00 AM - 6:00 PM)',
+        'night_shift' => 'Night Shift (2:00 PM - 10:00 PM)',
+        'day_off'     => 'Day Off',
+    ];
+
+    public function ensureCurrentShiftDate(): void
+    {
+        $today = now()->toDateString();
+        if ($this->shift_date !== $today) {
+            $this->forceFill([
+                'current_shift' => 'unassigned',
+                'shift_date'    => $today,
+            ])->save();
+        }
+    }
+
+    public function isOnDuty(): bool
+    {
+        $this->ensureCurrentShiftDate();
+
+        $shift = $this->current_shift ?? 'unassigned';
+        if (in_array($shift, ['day_off', 'unassigned'])) {
+            return false;
+        }
+
+        $now = now();
+        $hour = (int) $now->format('H');
+        $minute = (int) $now->format('i');
+        $timeMinutes = $hour * 60 + $minute;
+
+        if ($shift === 'day_shift') {
+            // 9:00 AM (540 mins) to 6:00 PM (1080 mins)
+            return $timeMinutes >= 540 && $timeMinutes <= 1080;
+        }
+
+        if ($shift === 'night_shift') {
+            // 2:00 PM (840 mins = 14:00) to 10:00 PM (1320 mins = 22:00)
+            return $timeMinutes >= 840 && $timeMinutes <= 1320;
+        }
+
+        return false;
     }
 
     public function avatarUrl(): string

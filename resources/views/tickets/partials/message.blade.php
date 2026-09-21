@@ -28,11 +28,16 @@
 
         <div class="{{ $msg->is_private ? 'bg-amber-50 dark:bg-amber-950/30 border-2 border-amber-300 text-slate-800' : ($isMe ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-800') }} rounded-xl px-4 py-3 shadow-sm">
             @if($msg->message)<div class="text-sm leading-relaxed prose prose-sm max-w-none {{ $isMe && !$msg->is_private ? 'prose-invert' : '' }}">{!! $msg->formatted_message !!}</div>@endif
-            @if($msg->image_path)
-            <img src="{{ asset('storage/' . $msg->image_path) }}" alt="Attachment"
-                 class="mt-2 rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
-                 style="max-height:160px; max-width:220px; object-fit:cover; display:block;"
-                 onclick="openImgModal(this.src)">
+            @php $imgUrls = $msg->image_urls; @endphp
+            @if(count($imgUrls) > 0)
+            <div class="mt-2 flex flex-wrap gap-2">
+                @foreach($imgUrls as $imgUrl)
+                <img src="{{ $imgUrl }}" alt="Attachment"
+                     class="rounded-lg cursor-pointer hover:opacity-90 transition-opacity border border-slate-200/50"
+                     style="max-height:160px; max-width:220px; object-fit:cover; display:block;"
+                     onclick="openImgModal(this.src)">
+                @endforeach
+            </div>
             @endif
         </div>
 

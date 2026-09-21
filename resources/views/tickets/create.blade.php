@@ -93,7 +93,7 @@
                             <option value="">{{ __('Leave Unassigned') }}</option>
                             @foreach($nocUsers as $noc)
                                 <option value="{{ $noc->id }}" {{ old('assigned_to') == $noc->id ? 'selected' : '' }}>
-                                    {{ $noc->name }} ({{ strtoupper(str_replace('_',' ',$noc->role)) }})
+                                    {{ $noc->isOnDuty() ? '🟢' : '⚪' }} {{ $noc->name }} ({{ $noc->team ? $noc->team . ' • ' : '' }}{{ $noc->isOnDuty() ? __('On Duty') : __('Off Duty') }})
                                 </option>
                             @endforeach
                         </select>

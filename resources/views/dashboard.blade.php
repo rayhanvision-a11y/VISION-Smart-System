@@ -57,9 +57,9 @@
             <div class="w-9 h-9 bg-violet-100 rounded-lg flex items-center justify-center flex-shrink-0"><svg class="w-4 h-4 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg></div>
             <div><p id="stat-g-waiting" class="text-xl font-bold text-violet-600">{{ $globalWaiting }}</p><p class="text-xs text-slate-400 group-hover:text-violet-500 transition-colors">{{ __('Waiting') }}</p></div>
         </a>
-        <a href="{{ route('tickets.index', ['status' => 'resolved']) }}" class="flex items-center gap-3 bg-white border border-slate-200 rounded-xl px-4 py-3 hover:shadow-sm transition-shadow group">
-            <div class="w-9 h-9 bg-emerald-100 rounded-lg flex items-center justify-center flex-shrink-0"><svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div>
-            <div><p id="stat-g-resolved" class="text-xl font-bold text-emerald-600">{{ $globalResolved }}</p><p class="text-xs text-slate-400 group-hover:text-emerald-500 transition-colors">{{ __('Resolved') }}</p></div>
+        <a href="{{ route('tickets.index', ['status' => 'resolved']) }}" class="flex items-center gap-3 bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-xl px-4 py-3 hover:shadow-sm transition-shadow group">
+            <div class="w-9 h-9 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg flex items-center justify-center flex-shrink-0"><svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div>
+            <div><p id="stat-g-resolved" class="text-xl font-bold text-emerald-600 dark:text-emerald-400">{{ $globalResolved }}</p><p class="text-xs text-slate-400 group-hover:text-emerald-500 transition-colors">{{ __('Resolved') }}</p></div>
         </a>
     </div>
 
@@ -103,6 +103,18 @@
             <p class="text-xs text-slate-400 mt-1 group-hover:text-indigo-600 transition-colors">{{ __('View all') }} →</p>
         </a>
 
+        <a href="{{ route('tickets.index', ['priority' => 'critical']) }}"
+           class="bg-white border border-slate-200 rounded-xl shadow-sm border-l-4 border-l-red-500 p-4 hover:shadow-md transition-shadow group block">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-semibold text-slate-500 uppercase tracking-wide">{{ __('Critical') }}</span>
+                <div class="w-8 h-8 bg-red-50 rounded-lg flex items-center justify-center">
+                    <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                </div>
+            </div>
+            <p id="stat-critical" class="text-3xl font-bold text-red-600">{{ $stats['critical'] }}</p>
+            <p class="text-xs text-slate-400 mt-1 group-hover:text-indigo-600 transition-colors">{{ __('View all') }} →</p>
+        </a>
+
         <a href="{{ route('tickets.index', ['status' => 'resolved']) }}"
            class="bg-white border border-slate-200 rounded-xl shadow-sm border-l-4 border-l-emerald-400 p-4 hover:shadow-md transition-shadow group block">
             <div class="flex items-center justify-between mb-2">
@@ -120,22 +132,10 @@
             <div class="flex items-center justify-between mb-2">
                 <span class="text-xs font-semibold text-slate-500 uppercase tracking-wide">{{ __('Total') }}</span>
                 <div class="w-8 h-8 bg-indigo-50 rounded-lg flex items-center justify-center">
-                    <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                    <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
                 </div>
             </div>
             <p id="stat-total" class="text-3xl font-bold text-indigo-600">{{ $stats['total'] }}</p>
-            <p class="text-xs text-slate-400 mt-1 group-hover:text-indigo-600 transition-colors">{{ __('View all') }} →</p>
-        </a>
-
-        <a href="{{ route('tickets.index', ['priority' => 'critical']) }}"
-           class="bg-white border border-slate-200 rounded-xl shadow-sm border-l-4 border-l-red-500 p-4 hover:shadow-md transition-shadow group block">
-            <div class="flex items-center justify-between mb-2">
-                <span class="text-xs font-semibold text-slate-500 uppercase tracking-wide">{{ __('Critical') }}</span>
-                <div class="w-8 h-8 bg-red-50 rounded-lg flex items-center justify-center">
-                    <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-                </div>
-            </div>
-            <p id="stat-critical" class="text-3xl font-bold text-red-600">{{ $stats['critical'] }}</p>
             <p class="text-xs text-slate-400 mt-1 group-hover:text-indigo-600 transition-colors">{{ __('View all') }} →</p>
         </a>
 
@@ -218,6 +218,118 @@
             <p class="text-xs text-slate-400 mt-1 group-hover:text-indigo-600 transition-colors">{{ __('View all') }} →</p>
         </a>
     </div>
+    @endif
+
+    {{-- Live Team Duty Stat Cards (Premium Ultra-Modern Cards) --}}
+    @if(!$user->isReseller())
+        @php
+            $teams = \App\Models\User::TEAMS;
+            $allStaff = \App\Models\User::whereNotNull('team')->get();
+            $teamConfig = [
+                'IT Team' => [
+                    'label'       => 'IT Team',
+                    'icon'        => '⚡',
+                    'border'      => 'border-l-emerald-500',
+                    'bg_gradient' => 'from-emerald-500/5 via-emerald-500/[0.02] to-transparent',
+                    'metric_clr'  => 'text-emerald-600 dark:text-emerald-400',
+                    'bar_clr'     => 'bg-emerald-500',
+                ],
+                'NOC team' => [
+                    'label'       => 'NOC Team',
+                    'icon'        => '📡',
+                    'border'      => 'border-l-indigo-500',
+                    'bg_gradient' => 'from-indigo-500/5 via-indigo-500/[0.02] to-transparent',
+                    'metric_clr'  => 'text-indigo-600 dark:text-indigo-400',
+                    'bar_clr'     => 'bg-indigo-500',
+                ],
+                'Call center' => [
+                    'label'       => 'Call Center',
+                    'icon'        => '🎧',
+                    'border'      => 'border-l-cyan-500',
+                    'bg_gradient' => 'from-cyan-500/5 via-cyan-500/[0.02] to-transparent',
+                    'metric_clr'  => 'text-cyan-600 dark:text-cyan-400',
+                    'bar_clr'     => 'bg-cyan-500',
+                ],
+                'Supervisor Team' => [
+                    'label'       => 'Supervisor Team',
+                    'icon'        => '🛡️',
+                    'border'      => 'border-l-purple-500',
+                    'bg_gradient' => 'from-purple-500/5 via-purple-500/[0.02] to-transparent',
+                    'metric_clr'  => 'text-purple-600 dark:text-purple-400',
+                    'bar_clr'     => 'bg-purple-500',
+                ],
+            ];
+        @endphp
+
+        <div class="mb-8">
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                @foreach($teams as $teamKey => $teamLabel)
+                    @php
+                        $tUsers     = $allStaff->filter(fn($u) => $u->team === $teamKey);
+                        $tot        = $tUsers->count();
+                        $act        = $tUsers->filter(fn($u) => $u->isOnDuty())->count();
+                        $dayShift   = $tUsers->where('current_shift', 'day_shift')->count();
+                        $nightShift = $tUsers->where('current_shift', 'night_shift')->count();
+                        $dayOff     = $tUsers->where('current_shift', 'day_off')->count();
+                        $pct        = $tot > 0 ? round(($act / $tot) * 100) : 0;
+                        $cfg        = $teamConfig[$teamKey] ?? [
+                            'label' => $teamKey, 'icon' => '👥', 'border' => 'border-l-indigo-500',
+                            'bg_gradient' => 'from-indigo-500/5 via-transparent to-transparent',
+                            'metric_clr' => 'text-indigo-600 dark:text-indigo-400', 'bar_clr' => 'bg-indigo-500'
+                        ];
+                    @endphp
+                    <a href="{{ route('roster.index', ['team' => $teamKey]) }}"
+                       class="bg-white dark:bg-slate-800/90 border border-slate-200/90 dark:border-slate-700/80 rounded-2xl shadow-sm border-l-4 {{ $cfg['border'] }} p-5 min-h-[135px] hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 group block relative overflow-hidden bg-gradient-to-br {{ $cfg['bg_gradient'] }}">
+
+                        {{-- Subtle background Glow Effect --}}
+                        <div class="absolute -right-6 -bottom-6 w-24 h-24 rounded-full {{ $cfg['bg_gradient'] }} blur-xl opacity-60 pointer-events-none"></div>
+
+                        <div class="flex items-center justify-between gap-3 h-full relative z-10">
+                            {{-- Left: Team Badge, Big Metric, Mini Progress & Link --}}
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-1.5 mb-1.5">
+                                    <span class="text-xs">{!! $cfg['icon'] !!}</span>
+                                    <span class="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider truncate" title="Duty &rarr; {{ $teamKey }}">
+                                        Duty &rarr; {{ $teamKey }}
+                                    </span>
+                                </div>
+
+                                <div class="flex items-baseline gap-2">
+                                    <p class="text-3xl font-black tracking-tight {{ $cfg['metric_clr'] }}">{{ $act }}/{{ $tot }}</p>
+                                    <span class="text-[10px] font-semibold text-slate-400 dark:text-slate-400">({{ $pct }}%)</span>
+                                </div>
+
+                                {{-- Progress Mini-bar --}}
+                                <div class="w-24 bg-slate-100 dark:bg-slate-700/60 rounded-full h-1.5 mt-1.5 overflow-hidden">
+                                    <div class="{{ $cfg['bar_clr'] }} h-1.5 rounded-full transition-all duration-500" style="width: {{ $pct }}%"></div>
+                                </div>
+
+                                <p class="text-[11px] font-semibold text-slate-400 dark:text-slate-400 mt-2.5 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors flex items-center gap-1">
+                                    <span>{{ __('View all') }}</span>
+                                    <span class="group-hover:translate-x-1 transition-transform">&rarr;</span>
+                                </p>
+                            </div>
+
+                            {{-- Right: Styled Pill Badges for Shift Breakdown --}}
+                            <div class="text-right text-[11px] space-y-2.5 font-medium flex-shrink-0">
+                                <div class="flex items-center justify-end gap-2 px-3 py-1.5 rounded-xl bg-amber-500/10 dark:bg-amber-400/10 text-amber-700 dark:text-amber-300 border border-amber-500/20">
+                                    <span>{{ $dayShift }} Day shift</span>
+                                    <span class="text-xs">☀️</span>
+                                </div>
+                                <div class="flex items-center justify-end gap-2 px-3 py-1.5 rounded-xl bg-indigo-500/10 dark:bg-indigo-400/10 text-indigo-700 dark:text-indigo-300 border border-indigo-500/20">
+                                    <span>{{ $nightShift }} Night shift</span>
+                                    <span class="text-xs">🌙</span>
+                                </div>
+                                <div class="flex items-center justify-end gap-2 px-3 py-1.5 rounded-xl bg-violet-500/10 dark:bg-violet-400/10 text-violet-700 dark:text-violet-300 border border-violet-500/20">
+                                    <span>{{ $dayOff }} Day off</span>
+                                    <span class="text-xs">🏖️</span>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                @endforeach
+            </div>
+        </div>
     @endif
 
     {{-- Admin only: Charts + Leaderboard --}}

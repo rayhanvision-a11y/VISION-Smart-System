@@ -14,6 +14,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileAvatarController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\RosterController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\SlaPolicyController;
@@ -301,6 +302,10 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/board', [BoardController::class, 'index'])->name('board.index');
     Route::post('/board/move', [BoardController::class, 'move'])->name('board.move');
+
+    Route::get('/roster', [RosterController::class, 'index'])->name('roster.index');
+    Route::post('/roster/update-shift', [RosterController::class, 'updateShift'])->name('roster.update-shift');
+    Route::post('/roster/users/{user}/team', [RosterController::class, 'updateTeam'])->name('roster.users.team');
 
     Route::get('/reports',       [ReportController::class, 'index'])->name('reports.index');
     Route::get('/reports/pdf',   [ReportController::class, 'downloadPdf'])->name('reports.pdf');

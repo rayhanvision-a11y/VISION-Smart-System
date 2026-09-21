@@ -81,6 +81,7 @@ class TicketMessageController extends Controller
 
     private function serialize(TicketMessage $msg, User $user): array
     {
+        $imgUrls = $msg->image_urls;
         return [
             'id'                => $msg->id,
             'isMe'              => $msg->sender_id === $user->id,
@@ -90,7 +91,8 @@ class TicketMessageController extends Controller
             'avatarUrl'         => $msg->sender ? $msg->sender->avatarUrl() : '',
             'message'           => $msg->message,
             'formatted_message' => $msg->formatted_message ?? $msg->message,
-            'image_url'         => $msg->image_path ? asset('storage/' . $msg->image_path) : null,
+            'image_url'         => count($imgUrls) > 0 ? $imgUrls[0] : null,
+            'images'            => $imgUrls,
             'time'              => $msg->created_at->diffForHumans(),
             'replyTo'           => $msg->replyTo ? [
                 'id'         => $msg->replyTo->id,
@@ -112,17 +114,30 @@ class TicketMessageController extends Controller
         $request->validate([
             'message'     => 'nullable|string|max:5000',
             'image'       => 'nullable|image|max:4096',
+            'images'      => 'nullable|array',
+            'images.*'    => 'nullable|image|max:4096',
             'reply_to_id' => 'nullable|exists:ticket_messages,id',
             'is_private'  => 'nullable|boolean',
         ]);
 
-        if (!$request->filled('message') && !$request->hasFile('image')) {
-            return back()->withErrors(['message' => 'Please enter a message or attach an image.']);
+        $imagePaths = [];
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $file) {
+                if ($file && $file->isValid()) {
+                    $imagePaths[] = $file->store('ticket-images', 'public');
+                }
+            }
+        } elseif ($request->hasFile('image')) {
+            $imagePaths[] = $request->file('image')->store('ticket-images', 'public');
         }
 
-        $imagePath = null;
-        if ($request->hasFile('image')) {
-            $imagePath = $request->file('image')->store('ticket-images', 'public');
+        $imagePathValue = null;
+        if (!empty($imagePaths)) {
+            $imagePathValue = count($imagePaths) === 1 ? $imagePaths[0] : json_encode(array_values($imagePaths));
+        }
+
+        if (!$request->filled('message') && empty($imagePaths)) {
+            return back()->withErrors(['message' => 'Please enter a message or attach an image.']);
         }
 
         // Only allow replying to a message that actually belongs to this ticket.
@@ -145,7 +160,7 @@ class TicketMessageController extends Controller
             'sender_id'   => $user->id,
             'reply_to_id' => $replyToId,
             'message'     => $finalMessage,
-            'image_path'  => $imagePath,
+            'image_path'  => $imagePathValue,
             'is_private'  => $user->isReseller() ? false : $request->boolean('is_private'),
         ]);
 

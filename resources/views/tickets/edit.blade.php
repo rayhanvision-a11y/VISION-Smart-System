@@ -40,7 +40,9 @@
                     <select name="assigned_to" class="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3.5 py-2.5 text-sm text-slate-700 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 bg-slate-50 dark:bg-slate-800">
                         <option value="">{{ __('Unassigned') }}</option>
                         @foreach($nocUsers as $noc)
-                        <option value="{{ $noc->id }}" {{ $ticket->assigned_to == $noc->id ? 'selected' : '' }}>{{ $noc->name }}</option>
+                        <option value="{{ $noc->id }}" {{ $ticket->assigned_to == $noc->id ? 'selected' : '' }}>
+                            {{ $noc->isOnDuty() ? '🟢' : '⚪' }} {{ $noc->name }} ({{ $noc->team ? $noc->team . ' • ' : '' }}{{ $noc->isOnDuty() ? __('On Duty') : __('Off Duty') }})
+                        </option>
                         @endforeach
                     </select>
                 </div>

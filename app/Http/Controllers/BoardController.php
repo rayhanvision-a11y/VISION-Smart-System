@@ -23,6 +23,11 @@ class BoardController extends Controller
         if ($request->filled('assignee')) {
             $query->where('assigned_to', $request->assignee);
         }
+        if ($request->filled('team')) {
+            $query->whereHas('assignee', function ($q) use ($request) {
+                $q->where('team', $request->team);
+            });
+        }
         if ($request->filled('priority')) {
             $query->where('priority', $request->priority);
         }

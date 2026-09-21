@@ -143,4 +143,16 @@ class TicketMessage extends Model
 
         return $result;
     }
+
+    public function getImageUrlsAttribute(): array
+    {
+        if (!$this->image_path) {
+            return [];
+        }
+        if (str_starts_with($this->image_path, '[')) {
+            $paths = json_decode($this->image_path, true) ?: [];
+            return array_map(fn($p) => asset('storage/' . $p), $paths);
+        }
+        return [asset('storage/' . $this->image_path)];
+    }
 }

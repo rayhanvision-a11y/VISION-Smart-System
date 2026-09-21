@@ -461,20 +461,22 @@
 
                                     {{-- Image attachment --}}
                                     <div class="mt-2">
-                                        <input type="file" name="image" id="chat-image-input" accept="image/*" class="hidden">
+                                        <input type="file" name="images[]" id="chat-image-input" accept="image/*" multiple class="hidden">
                                         <button type="button" id="chat-image-btn"
                                                 class="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-indigo-600 border border-slate-200 dark:border-slate-700 hover:border-indigo-300 rounded-lg px-2.5 py-1.5 transition-colors"
                                                 onclick="document.getElementById('chat-image-input').click()">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                                            {{ __('Attach Image') }}
+                                            {{ __('Attach Images') }}
                                         </button>
                                     </div>
 
                                     {{-- Image preview --}}
-                                    <div id="chat-image-preview" class="hidden mt-2 relative inline-block">
-                                        <img id="chat-image-thumb" src="" alt="Preview" class="h-20 w-auto rounded-lg border border-slate-200 object-cover">
+                                    <div id="chat-image-preview" class="hidden mt-2 flex flex-wrap gap-2 items-center">
+                                        <div id="chat-image-thumbs-container" class="flex flex-wrap gap-2 items-center"></div>
                                         <button type="button" id="chat-image-remove"
-                                                class="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs leading-none hover:bg-red-600">&times;</button>
+                                                class="text-xs text-red-500 hover:text-red-700 underline font-medium ml-1">
+                                            {{ __('Remove all') }}
+                                        </button>
                                     </div>
 
                                     @if($user->isAdmin() || $user->isNoc())
@@ -648,7 +650,7 @@
                             <option value="">{{ __('Unassigned') }}</option>
                             @foreach($nocUsers as $noc)
                             <option value="{{ $noc->id }}" {{ $ticket->assigned_to == $noc->id ? 'selected' : '' }}>
-                                {{ $noc->name }} ({{ strtoupper(str_replace('_',' ',$noc->role)) }})
+                                {{ $noc->isOnDuty() ? '🟢' : '⚪' }} {{ $noc->name }} ({{ $noc->team ? $noc->team . ' • ' : '' }}{{ $noc->isOnDuty() ? __('On Duty') : __('Off Duty') }})
                             </option>
                             @endforeach
                         </select>
@@ -924,11 +926,16 @@
 
         const msgBody = msg.formatted_message || msg.message || '';
         let content = msgBody ? `<div class="text-sm leading-relaxed prose prose-sm max-w-none ${isMe && !msg.is_private ? 'prose-invert' : ''}">${msgBody}</div>` : '';
-        if (msg.image_url) {
-            content += `<img src="${msg.image_url}" alt="Attachment"
-                             class="mt-2 rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
-                             style="max-height:160px; max-width:220px; object-fit:cover; display:block;"
-                             onclick="openImgModal(this.src)">`;
+        const imagesList = (msg.images && msg.images.length > 0) ? msg.images : (msg.image_url ? [msg.image_url] : []);
+        if (imagesList.length > 0) {
+            content += `<div class="mt-2 flex flex-wrap gap-2">`;
+            imagesList.forEach(imgUrl => {
+                content += `<img src="${imgUrl}" alt="Attachment"
+                                 class="rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                                 style="max-height:160px; max-width:220px; object-fit:cover; display:block;"
+                                 onclick="openImgModal(this.src)">`;
+            });
+            content += `</div>`;
         }
 
         const plainPreview = escHtml((msg.message || '').replace(/<[^>]*>/g, '').slice(0, 60) || '📎 Image');
@@ -1234,13 +1241,21 @@
                 if (emptyComments) emptyComments.remove();
 
                 data.messages.forEach(msg => {
-                    const bubble1 = buildBubble(msg);
-                    const bubble2 = buildBubble(msg);
-                    if (chatBox) chatBox.appendChild(bubble1);
-                    if (commentsBox) commentsBox.appendChild(bubble2);
+                    const existsInChat = chatBox ? chatBox.querySelector(`[data-message-id="${msg.id}"]`) : null;
+                    const existsInComments = commentsBox ? commentsBox.querySelector(`[data-message-id="${msg.id}"]`) : null;
+
+                    if (!existsInChat && chatBox) {
+                        const bubble1 = buildBubble(msg);
+                        chatBox.appendChild(bubble1);
+                    }
+                    if (!existsInComments && commentsBox) {
+                        const bubble2 = buildBubble(msg);
+                        commentsBox.appendChild(bubble2);
+                    }
+
                     lastMsgId = Math.max(lastMsgId, msg.id);
 
-                    if (!msg.isMe) {
+                    if (!msg.isMe && (!existsInChat && !existsInComments)) {
                         pushDesktop(
                             `New message — Ticket {{ $ticket->ticket_key ?? '#'.$ticket->id }}`,
                             `${msg.senderName}: ${msg.message || '📎 Image'}`,
@@ -1576,6 +1591,23 @@
                         const newBubble = buildBubble(data.message);
                         el.replaceWith(newBubble);
                     });
+                } else if (data && data.message) {
+                    const msg = data.message;
+                    const existsInChat = chatBox ? chatBox.querySelector(`[data-message-id="${msg.id}"]`) : null;
+                    const existsInComments = commentsBox ? commentsBox.querySelector(`[data-message-id="${msg.id}"]`) : null;
+
+                    if (!existsInChat && chatBox) {
+                        const emptyChat = chatBox.querySelector('.py-8');
+                        if (emptyChat) emptyChat.remove();
+                        chatBox.appendChild(buildBubble(msg));
+                    }
+                    if (!existsInComments && commentsBox) {
+                        const emptyComments = commentsBox.querySelector('.py-8');
+                        if (emptyComments) emptyComments.remove();
+                        commentsBox.appendChild(buildBubble(msg));
+                    }
+                    lastMsgId = Math.max(lastMsgId, msg.id);
+                    scrollBottom();
                 } else {
                     pollChat();
                 }
@@ -1593,27 +1625,43 @@
     // ── Image attachment ─────────────────────────────────────────────────────
     const chatImageInput   = document.getElementById('chat-image-input');
     const chatImagePreview = document.getElementById('chat-image-preview');
-    const chatImageThumb   = document.getElementById('chat-image-thumb');
     const chatImageRemove  = document.getElementById('chat-image-remove');
 
     if (chatImageInput) {
         chatImageInput.addEventListener('change', function() {
-            const file = this.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                chatImageThumb.src = e.target.result;
-                chatImagePreview.classList.remove('hidden');
-                if (editorActions) editorActions.style.removeProperty('display');
-            };
-            reader.readAsDataURL(file);
+            const files = Array.from(this.files);
+            const container = document.getElementById('chat-image-thumbs-container');
+            if (container) container.innerHTML = '';
+
+            if (files.length === 0) {
+                if (chatImagePreview) chatImagePreview.classList.add('hidden');
+                return;
+            }
+
+            if (chatImagePreview) chatImagePreview.classList.remove('hidden');
+            if (editorActions) editorActions.style.removeProperty('display');
+
+            files.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    if (container) {
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        img.alt = 'Preview';
+                        img.className = 'h-20 w-auto rounded-lg border border-slate-200 dark:border-slate-700 object-cover';
+                        container.appendChild(img);
+                    }
+                };
+                reader.readAsDataURL(file);
+            });
         });
     }
 
     if (chatImageRemove) {
         chatImageRemove.addEventListener('click', function() {
             chatImageInput.value = '';
-            chatImageThumb.src = '';
+            const container = document.getElementById('chat-image-thumbs-container');
+            if (container) container.innerHTML = '';
             chatImagePreview.classList.add('hidden');
             if (quill && quill.getText().trim() === '') {
                 if (editorActions) editorActions.style.setProperty('display', 'none', 'important');
@@ -1627,7 +1675,8 @@
         origChatForm.addEventListener('submit', function() {
             setTimeout(function() {
                 if (chatImageInput) chatImageInput.value = '';
-                if (chatImageThumb) chatImageThumb.src = '';
+                const container = document.getElementById('chat-image-thumbs-container');
+                if (container) container.innerHTML = '';
                 if (chatImagePreview) chatImagePreview.classList.add('hidden');
             }, 500);
         }, { capture: true });

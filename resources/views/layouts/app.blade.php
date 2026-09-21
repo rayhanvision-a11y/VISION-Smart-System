@@ -556,6 +556,16 @@
                             <span class="sidebar-text truncate">{{ __('Board') }}</span>
                         </a>
 
+                        <a href="{{ route('roster.index') }}"
+                           :title="sidebarCollapsed ? @js(__('Shift Roster')) : ''"
+                           class="flex items-center px-3 gap-3 py-2.5 mb-1 rounded-lg text-sm font-medium transition-colors
+                                  {{ request()->routeIs('roster.*') ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800' }}">
+                            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            </svg>
+                            <span class="sidebar-text truncate">{{ __('Shift Roster') }}</span>
+                        </a>
+
                         <a href="{{ route('knowledge-base.index') }}"
                            :title="sidebarCollapsed ? @js(__('Knowledge Base')) : ''"
                            class="relative flex items-center px-3 gap-3 py-2.5 mb-1 rounded-lg text-sm font-medium transition-colors

@@ -53,6 +53,7 @@ class UserController extends Controller
             'name'     => 'required|string|max:255',
             'email'    => 'required|email|unique:users,email',
             'role'     => $allowedRoles,
+            'team'     => 'nullable|string|max:100',
             'phone'    => 'nullable|string|max:20',
         ]);
 
@@ -61,6 +62,7 @@ class UserController extends Controller
             'email'     => $validated['email'],
             'password'  => Hash::make(Str::random(32)), // temporary; user sets via reset link
             'role'      => $validated['role'],
+            'team'      => $validated['team'] ?? null,
             'phone'     => $validated['phone'] ?? null,
             'is_active' => true,
         ]);
@@ -107,6 +109,7 @@ class UserController extends Controller
             'name'      => 'required|string|max:255',
             'email'     => 'required|email|unique:users,email,' . $editUser->id,
             'role'      => $allowedRoles,
+            'team'      => 'nullable|string|max:100',
             'is_active' => 'boolean',
             'phone'     => 'nullable|string|max:20',
             'password'  => 'nullable|min:8',
@@ -117,6 +120,7 @@ class UserController extends Controller
             'name'      => $validated['name'],
             'email'     => $validated['email'],
             'role'      => $validated['role'],
+            'team'      => $validated['team'] ?? null,
             'is_active' => $request->boolean('is_active'),
             'phone'     => $validated['phone'] ?? null,
         ];

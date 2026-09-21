@@ -35,6 +35,12 @@
             <option value="{{ $noc->id }}" {{ request('assignee') == $noc->id ? 'selected' : '' }}>{{ $noc->name }}</option>
             @endforeach
         </select>
+        <select name="team" class="border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-1.5 text-sm text-slate-700 dark:text-slate-100 bg-slate-50 dark:bg-slate-800 focus:ring-2 focus:ring-indigo-500">
+            <option value="">{{ __('All Teams') }}</option>
+            @foreach(\App\Models\User::TEAMS as $teamKey => $teamName)
+            <option value="{{ $teamKey }}" {{ request('team') === $teamKey ? 'selected' : '' }}>🏷️ {{ $teamName }}</option>
+            @endforeach
+        </select>
         @endif
         <select name="priority" class="border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-1.5 text-sm text-slate-700 dark:text-slate-100 bg-slate-50 dark:bg-slate-800 focus:ring-2 focus:ring-indigo-500">
             <option value="">{{ __('All Priorities') }}</option>

@@ -148,8 +148,8 @@
                     @endif
                 </select>
                 <select name="assigned_to" class="border border-indigo-200 dark:border-indigo-500/30 rounded-lg px-2 py-1.5 text-sm text-slate-700 dark:text-slate-100 bg-white dark:bg-slate-800 hidden" id="bulk-assign-select">
-                    @foreach(\App\Models\User::where('role','noc')->get() as $noc)
-                    <option value="{{ $noc->id }}">{{ $noc->name }}</option>
+                    @foreach(\App\Models\User::whereIn('role',['super_admin','admin','noc'])->get() as $noc)
+                    <option value="{{ $noc->id }}">{{ $noc->isOnDuty() ? '🟢' : '⚪' }} {{ $noc->name }}</option>
                     @endforeach
                 </select>
                 <select name="bulk_status" class="border border-indigo-200 dark:border-indigo-500/30 rounded-lg px-2 py-1.5 text-sm text-slate-700 dark:text-slate-100 bg-white dark:bg-slate-800 hidden" id="bulk-status-select">
