@@ -1375,9 +1375,53 @@
     if (quillEl) {
         quill = new Quill('#quill-body', {
             theme: 'snow',
-            placeholder: 'Write a comment… (type @ to mention someone)',
-            modules: { toolbar: '#quill-toolbar' },
+            placeholder: 'Write a comment… (Enter to send, Shift+Enter for new line, @ to mention)',
+            modules: {
+                toolbar: '#quill-toolbar',
+                keyboard: {
+                    bindings: {
+                        submitOnEnter: {
+                            key: 13,
+                            shiftKey: false,
+                            handler: function() {
+                                // Let mention dropdown handle Enter when it's open
+                                if (mentionDrop && mentionDrop.classList.contains('show')) {
+                                    return false;
+                                }
+                                const form = document.getElementById('chat-form');
+                                if (form) {
+                                    if (typeof form.requestSubmit === 'function') {
+                                        form.requestSubmit();
+                                    } else {
+                                        form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+                                    }
+                                }
+                                return false;
+                            }
+                        }
+                    }
+                }
+            },
         });
+
+        quill.root.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                if (mentionDrop && mentionDrop.classList.contains('show')) {
+                    return;
+                }
+                e.preventDefault();
+                e.stopPropagation();
+                const form = document.getElementById('chat-form');
+                if (form) {
+                    if (typeof form.requestSubmit === 'function') {
+                        form.requestSubmit();
+                    } else {
+                        form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+                    }
+                }
+            }
+        }, true);
+
 
         // ── Canned responses picker ──────────────────────────────────
         const cannedPicker = document.getElementById('canned-response-picker');
@@ -1525,28 +1569,44 @@
         });
 
         worklogInput.addEventListener('keydown', function(e) {
-            if (!mentionDrop.classList.contains('show') || !onMentionSelect) return;
-            const items = mentionDrop.querySelectorAll('.mention-item');
-            const results = mentionUsers.filter(u =>
-                u.value.toLowerCase().includes(wlMentionSearch.toLowerCase())
-            );
-            if (e.key === 'ArrowDown') {
-                e.preventDefault();
-                items[activeIdx]?.classList.remove('active');
-                activeIdx = (activeIdx + 1) % items.length;
-                items[activeIdx]?.classList.add('active');
-            } else if (e.key === 'ArrowUp') {
-                e.preventDefault();
-                items[activeIdx]?.classList.remove('active');
-                activeIdx = (activeIdx - 1 + items.length) % items.length;
-                items[activeIdx]?.classList.add('active');
-            } else if (e.key === 'Enter' || e.key === 'Tab') {
-                e.preventDefault();
-                if (results[activeIdx] && onMentionSelect) {
-                    onMentionSelect(results[activeIdx]);
+            if (mentionDrop.classList.contains('show') && onMentionSelect) {
+                const items = mentionDrop.querySelectorAll('.mention-item');
+                const results = mentionUsers.filter(u =>
+                    u.value.toLowerCase().includes(wlMentionSearch.toLowerCase())
+                );
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    items[activeIdx]?.classList.remove('active');
+                    activeIdx = (activeIdx + 1) % items.length;
+                    items[activeIdx]?.classList.add('active');
+                    return;
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    items[activeIdx]?.classList.remove('active');
+                    activeIdx = (activeIdx - 1 + items.length) % items.length;
+                    items[activeIdx]?.classList.add('active');
+                    return;
+                } else if (e.key === 'Enter' || e.key === 'Tab') {
+                    e.preventDefault();
+                    if (results[activeIdx] && onMentionSelect) {
+                        onMentionSelect(results[activeIdx]);
+                    }
+                    return;
+                } else if (e.key === 'Escape') {
+                    hideMention();
+                    return;
                 }
-            } else if (e.key === 'Escape') {
-                hideMention();
+            }
+
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                if (worklogInput.form) {
+                    if (typeof worklogInput.form.requestSubmit === 'function') {
+                        worklogInput.form.requestSubmit();
+                    } else {
+                        worklogInput.form.submit();
+                    }
+                }
             }
         });
     }
