@@ -205,7 +205,8 @@
                         {{-- Primary Comment Form --}}
                         <form method="POST" action="{{ route('knowledge-base.comments.store', $post->slug) }}#comments" class="space-y-3">
                             @csrf
-                            <textarea name="comment" rows="3" required placeholder="Leave a comment..."
+                            <textarea name="comment" rows="3" required placeholder="Leave a comment... (Enter to send, Shift+Enter for new line)"
+                                      onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();this.form.requestSubmit();}"
                                       class="w-full px-4 py-3 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-blue-500 focus:bg-white dark:focus:bg-slate-900 transition-all"></textarea>
                             <div class="flex justify-end pt-1">
                                 <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-extrabold px-6 py-2.5 rounded-xl text-xs shadow-md hover:shadow-lg transition-all inline-flex items-center gap-2 cursor-pointer" style="background-color: #2563eb !important; color: #ffffff !important;">

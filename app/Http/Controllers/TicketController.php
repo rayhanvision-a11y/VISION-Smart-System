@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Mail\TicketAssigned;
-use App\Mail\TicketResolved;
 use App\Mail\TicketReopened;
+use App\Mail\TicketResolved;
 use App\Models\Label;
+use App\Models\Notification;
+use App\Models\SlaPolicy;
 use App\Models\Ticket;
 use App\Models\TicketCategory;
 use App\Models\TicketHistory;
@@ -13,9 +15,10 @@ use App\Models\TicketLink;
 use App\Models\TicketNote;
 use App\Models\User;
 use App\Services\NotificationService;
-use App\Services\WhatsAppService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 
 class TicketController extends Controller
 {
@@ -27,8 +30,8 @@ class TicketController extends Controller
         if ($request->filled('status')) {
             if ($request->status === 'overdue') {
                 $query->whereNotNull('due_at')
-                      ->where('due_at', '<', now())
-                      ->whereNotIn('status', ['resolved']);
+                    ->where('due_at', '<', now())
+                    ->whereNotIn('status', ['resolved']);
             } else {
                 $query->where('status', $request->status);
             }
@@ -40,7 +43,7 @@ class TicketController extends Controller
             $query->where('category', $request->category);
         }
         if ($request->filled('search')) {
-            $query->where('title', 'like', '%' . $request->search . '%');
+            $query->where('title', 'like', '%'.$request->search.'%');
         }
         if ($request->get('assigned') === 'me') {
             if ($user->isReseller()) {
@@ -56,7 +59,7 @@ class TicketController extends Controller
             $query->where('created_by', $request->created_by);
         }
         if ($request->filled('label')) {
-            $query->whereHas('labels', fn($q) => $q->where('labels.id', $request->label));
+            $query->whereHas('labels', fn ($q) => $q->where('labels.id', $request->label));
         }
 
         $tickets = $query->latest()->paginate(15)->withQueryString();
@@ -71,70 +74,71 @@ class TicketController extends Controller
         $nocUsers = User::whereIn('role', ['super_admin', 'admin', 'noc'])->orderBy('name')->get();
         $labels = Label::orderBy('name')->get();
         $categories = TicketCategory::where('is_active', true)->orderBy('name')->get();
+
         return view('tickets.create', compact('nocUsers', 'labels', 'categories'));
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'title'       => 'required|string|max:255',
+            'title' => 'required|string|max:255',
             'description' => 'required|string|max:10000',
-            'category'    => 'required|string|max:255',
-            'priority'    => 'required|in:low,medium,high,critical',
+            'category' => 'required|string|max:255',
+            'priority' => 'required|in:low,medium,high,critical',
             'pop_office_id' => 'nullable|exists:pop_offices,id',
-            'assigned_to' => ['nullable', 'exists:users,id', function($attr, $val, $fail) {
+            'assigned_to' => ['nullable', 'exists:users,id', function ($attr, $val, $fail) {
                 if ($val) {
-                    $targetUser = \App\Models\User::find($val);
+                    $targetUser = User::find($val);
                     if ($targetUser && in_array($targetUser->role, ['reseller', 'call_center'])) {
                         $fail('Tickets can only be assigned to Admin or NOC users.');
                     }
                 }
             }],
-            'labels'      => 'nullable|array',
-            'labels.*'    => 'exists:labels,id',
+            'labels' => 'nullable|array',
+            'labels.*' => 'exists:labels,id',
         ]);
 
         $ticket = Ticket::create([
-            'ticket_key'    => Ticket::generateKey(),
-            'title'         => $validated['title'],
-            'description'   => $validated['description'],
-            'category'      => $validated['category'],
-            'priority'      => $validated['priority'],
-            'status'        => 'in_progress',
-            'created_by'    => auth()->id(),
-            'assigned_to'   => auth()->user()->isReseller() ? null : ($validated['assigned_to'] ?? null),
+            'ticket_key' => Ticket::generateKey(),
+            'title' => $validated['title'],
+            'description' => $validated['description'],
+            'category' => $validated['category'],
+            'priority' => $validated['priority'],
+            'status' => 'in_progress',
+            'created_by' => auth()->id(),
+            'assigned_to' => auth()->user()->isReseller() ? null : ($validated['assigned_to'] ?? null),
             'pop_office_id' => auth()->user()->isReseller() ? null : ($validated['pop_office_id'] ?? null),
         ]);
 
-        $slaPolicy = \App\Models\SlaPolicy::forPriority($validated['priority']);
-        $resolutionHours = $slaPolicy?->resolution_hours ?? match($validated['priority']) {
+        $slaPolicy = SlaPolicy::forPriority($validated['priority']);
+        $resolutionHours = $slaPolicy?->resolution_hours ?? match ($validated['priority']) {
             'critical' => 2,
-            'high'     => 4,
-            'medium'   => 24,
-            'low'      => 72,
+            'high' => 4,
+            'medium' => 24,
+            'low' => 72,
         };
         $ticket->update(['due_at' => now()->addHours($resolutionHours)]);
 
-        if (!empty($validated['labels'])) {
+        if (! empty($validated['labels'])) {
             $ticket->labels()->sync($validated['labels']);
         }
 
         TicketHistory::create([
-            'ticket_id'       => $ticket->id,
-            'action'          => 'Ticket created',
+            'ticket_id' => $ticket->id,
+            'action' => 'Ticket created',
             'old_assignee_id' => null,
             'new_assignee_id' => $ticket->assigned_to,
-            'changed_by'      => auth()->id(),
+            'changed_by' => auth()->id(),
         ]);
 
         // Notify team members who have permission to view this ticket
         $recipientUsers = User::where('id', '!=', auth()->id())
             ->where('role', '!=', 'reseller')
             ->get()
-            ->filter(fn($u) => Ticket::where('id', $ticket->id)->forUser($u)->exists());
+            ->filter(fn ($u) => Ticket::where('id', $ticket->id)->forUser($u)->exists());
 
         foreach ($recipientUsers as $recipient) {
-            if ($recipient->id === (int)$ticket->assigned_to) {
+            if ($recipient->id === (int) $ticket->assigned_to) {
                 NotificationService::send($recipient->id, "📋 You have been assigned ticket #{$ticket->ticket_key}: {$ticket->title}", $ticket->id);
             } else {
                 NotificationService::send($recipient->id, "🎫 New ticket #{$ticket->ticket_key} from {$ticket->creator->name}: {$ticket->title}", $ticket->id);
@@ -157,7 +161,7 @@ class TicketController extends Controller
         $user = auth()->user();
 
         $canView = Ticket::where('id', $id)->forUser($user)->exists();
-        if (!$canView) {
+        if (! $canView) {
             abort(403, 'You are not authorized to view this ticket.');
         }
 
@@ -168,11 +172,11 @@ class TicketController extends Controller
         $nocUsers = User::whereIn('role', ['super_admin', 'admin', 'noc'])->orderBy('name')->get();
         $allLabels = Label::orderBy('name')->get();
 
-        $mentionUsers = User::orderBy('name')->get()->map(fn($u) => [
-            'id'       => $u->id,
-            'value'    => $u->name,
-            'avatar'   => $u->avatarUrl(),
-            'role'     => $u->role,
+        $mentionUsers = User::orderBy('name')->get()->map(fn ($u) => [
+            'id' => $u->id,
+            'value' => $u->name,
+            'avatar' => $u->avatarUrl(),
+            'role' => $u->role,
         ])->values();
 
         return view('tickets.show', compact('ticket', 'nocUsers', 'allLabels', 'mentionUsers'));
@@ -181,7 +185,7 @@ class TicketController extends Controller
     public function storeSubtask(Request $request, Ticket $ticket)
     {
         $user = auth()->user();
-        if (!$user->isAdmin() && !$user->isNoc()) {
+        if (! $user->isAdmin() && ! $user->isNoc()) {
             abort(403);
         }
 
@@ -190,23 +194,23 @@ class TicketController extends Controller
         ]);
 
         $subtask = Ticket::create([
-            'ticket_key'  => Ticket::generateKey(),
-            'title'       => $validated['title'],
+            'ticket_key' => Ticket::generateKey(),
+            'title' => $validated['title'],
             'description' => '',
-            'category'    => $ticket->category,
-            'priority'    => $ticket->priority,
-            'status'      => 'in_progress',
-            'created_by'  => auth()->id(),
+            'category' => $ticket->category,
+            'priority' => $ticket->priority,
+            'status' => 'in_progress',
+            'created_by' => auth()->id(),
             'assigned_to' => $ticket->assigned_to,
-            'parent_id'   => $ticket->id,
+            'parent_id' => $ticket->id,
         ]);
 
         TicketHistory::create([
-            'ticket_id'       => $ticket->id,
-            'action'          => 'Subtask ' . $subtask->ticket_key . ' created: ' . $subtask->title,
+            'ticket_id' => $ticket->id,
+            'action' => 'Subtask '.$subtask->ticket_key.' created: '.$subtask->title,
             'old_assignee_id' => null,
             'new_assignee_id' => null,
-            'changed_by'      => $user->id,
+            'changed_by' => $user->id,
         ]);
 
         return redirect()->route('tickets.show', $ticket)->with('success', 'Subtask created.');
@@ -231,18 +235,21 @@ class TicketController extends Controller
     {
         $user = auth()->user();
         $canView = Ticket::where('id', $id)->forUser($user)->exists();
-        if (!$canView || $user->isReseller()) {
+        if (! $canView || $user->isReseller()) {
             abort(403);
         }
         $ticket = Ticket::findOrFail($id);
         $nocUsers = User::whereIn('role', ['super_admin', 'admin', 'noc'])->orderBy('name')->get();
+
         return view('tickets.edit', compact('ticket', 'nocUsers'));
     }
 
     public function updateStatus(Request $request, string $id)
     {
         $user = auth()->user();
-        if ($user->isReseller()) abort(403);
+        if ($user->isReseller()) {
+            abort(403);
+        }
 
         $ticket = Ticket::findOrFail($id);
 
@@ -263,8 +270,8 @@ class TicketController extends Controller
         $label = ucfirst(str_replace('_', ' ', $newStatus));
 
         TicketHistory::create([
-            'ticket_id'  => $ticket->id,
-            'action'     => "Status changed to {$newStatus}",
+            'ticket_id' => $ticket->id,
+            'action' => "Status changed to {$newStatus}",
             'changed_by' => $user->id,
         ]);
 
@@ -288,26 +295,24 @@ class TicketController extends Controller
 
         TicketNote::create([
             'ticket_id' => $ticket->id,
-            'user_id'   => $user->id,
-            'note'      => $validated['resolution_note'],
-            'type'      => 'resolution',
+            'user_id' => $user->id,
+            'note' => $validated['resolution_note'],
+            'type' => 'resolution',
         ]);
 
         TicketHistory::create([
-            'ticket_id'       => $ticket->id,
-            'action'          => 'Ticket resolved by NOC',
+            'ticket_id' => $ticket->id,
+            'action' => 'Ticket resolved by NOC',
             'old_assignee_id' => null,
             'new_assignee_id' => null,
-            'changed_by'      => $user->id,
+            'changed_by' => $user->id,
         ]);
 
         if ($ticket->creator && $ticket->creator->email && $ticket->creator->notify_on_resolve) {
-            try { Mail::to($ticket->creator->email)->send(new TicketResolved($ticket)); } catch (\Exception $e) {}
-        }
-
-        $whatsapp = new WhatsAppService();
-        if ($ticket->creator && $ticket->creator->phone) {
-            $whatsapp->send($ticket->creator->phone, "Your ticket #{$ticket->id} '{$ticket->title}' has been resolved. Please check and confirm.");
+            try {
+                Mail::to($ticket->creator->email)->send(new TicketResolved($ticket));
+            } catch (\Exception $e) {
+            }
         }
 
         // DB notification to ticket creator
@@ -318,9 +323,9 @@ class TicketController extends Controller
         $staffToNotify = User::where('id', '!=', $user->id)
             ->where('role', '!=', 'reseller')
             ->get()
-            ->filter(fn($u) => Ticket::where('id', $ticket->id)->forUser($u)->exists());
+            ->filter(fn ($u) => Ticket::where('id', $ticket->id)->forUser($u)->exists());
         foreach ($staffToNotify as $staff) {
-            if ($staff->id !== (int)$ticket->created_by) {
+            if ($staff->id !== (int) $ticket->created_by) {
                 NotificationService::send($staff->id, "✅ Ticket #{$ticket->ticket_key} resolved by {$user->name}", $ticket->id);
             }
         }
@@ -333,7 +338,7 @@ class TicketController extends Controller
         $user = auth()->user();
         $ticket = Ticket::findOrFail($id);
 
-        if (!$user->isAdmin() && $ticket->created_by !== $user->id) {
+        if (! $user->isAdmin() && $ticket->created_by !== $user->id) {
             abort(403);
         }
 
@@ -345,42 +350,40 @@ class TicketController extends Controller
 
         TicketNote::create([
             'ticket_id' => $ticket->id,
-            'user_id'   => $user->id,
-            'note'      => $validated['reopen_reason'],
-            'type'      => 'reopen',
+            'user_id' => $user->id,
+            'note' => $validated['reopen_reason'],
+            'type' => 'reopen',
         ]);
 
         TicketHistory::create([
-            'ticket_id'       => $ticket->id,
-            'action'          => 'Ticket reopened',
+            'ticket_id' => $ticket->id,
+            'action' => 'Ticket reopened',
             'old_assignee_id' => null,
             'new_assignee_id' => null,
-            'changed_by'      => $user->id,
+            'changed_by' => $user->id,
         ]);
 
         if ($ticket->assignee && $ticket->assignee->email && $ticket->assignee->notify_on_assign) {
-            try { Mail::to($ticket->assignee->email)->send(new TicketReopened($ticket)); } catch (\Exception $e) {}
-        }
-
-        $whatsapp = new WhatsAppService();
-        if ($ticket->assignee && $ticket->assignee->phone) {
-            $whatsapp->send($ticket->assignee->phone, "Ticket #{$ticket->id} has been reopened. Please check.");
+            try {
+                Mail::to($ticket->assignee->email)->send(new TicketReopened($ticket));
+            } catch (\Exception $e) {
+            }
         }
 
         // Notify staff / assignee / creator who have access to this ticket
         $staffToNotify = User::where('id', '!=', $user->id)
             ->where('role', '!=', 'reseller')
             ->get()
-            ->filter(fn($u) => Ticket::where('id', $ticket->id)->forUser($u)->exists());
+            ->filter(fn ($u) => Ticket::where('id', $ticket->id)->forUser($u)->exists());
 
         foreach ($staffToNotify as $staff) {
-            if ($staff->id === (int)$ticket->assigned_to) {
+            if ($staff->id === (int) $ticket->assigned_to) {
                 NotificationService::send($staff->id, "🔁 Ticket #{$ticket->ticket_key} \"{$ticket->title}\" has been reopened. Please check.", $ticket->id);
-            } elseif ($staff->id !== (int)$ticket->created_by) {
+            } elseif ($staff->id !== (int) $ticket->created_by) {
                 NotificationService::send($staff->id, "🔁 Ticket #{$ticket->ticket_key} reopened by {$user->name}", $ticket->id);
             }
         }
-        if ($ticket->created_by && $ticket->created_by !== $user->id && !$staffToNotify->contains('id', $ticket->created_by)) {
+        if ($ticket->created_by && $ticket->created_by !== $user->id && ! $staffToNotify->contains('id', $ticket->created_by)) {
             NotificationService::send($ticket->created_by, "🔁 Your ticket #{$ticket->ticket_key} has been reopened by {$user->name}.", $ticket->id);
         }
 
@@ -392,18 +395,18 @@ class TicketController extends Controller
         $user = auth()->user();
         $ticket = Ticket::findOrFail($id);
 
-        if (!$user->isAdmin() && $ticket->created_by !== $user->id) {
+        if (! $user->isAdmin() && $ticket->created_by !== $user->id) {
             abort(403);
         }
 
         $ticket->update(['status' => 'resolved', 'resolved_at' => $ticket->resolved_at ?? now()]);
 
         TicketHistory::create([
-            'ticket_id'       => $ticket->id,
-            'action'          => 'Ticket closed',
+            'ticket_id' => $ticket->id,
+            'action' => 'Ticket closed',
             'old_assignee_id' => null,
             'new_assignee_id' => null,
-            'changed_by'      => $user->id,
+            'changed_by' => $user->id,
         ]);
 
         return redirect()->route('tickets.show', $ticket)->with('success', 'Ticket closed.');
@@ -419,8 +422,8 @@ class TicketController extends Controller
         $ticket = Ticket::findOrFail($id);
 
         $validated = $request->validate([
-            'status'      => 'required|in:in_progress,pending,waiting_for_customer_feedback,resolved',
-            'priority'    => 'required|in:low,medium,high,critical',
+            'status' => 'required|in:in_progress,pending,waiting_for_customer_feedback,resolved',
+            'priority' => 'required|in:low,medium,high,critical',
             'assigned_to' => 'nullable|exists:users,id',
         ]);
 
@@ -435,12 +438,15 @@ class TicketController extends Controller
 
         $ticket->update($validated);
 
-        $action = 'Status changed to ' . $validated['status'];
+        $action = 'Status changed to '.$validated['status'];
         if ($oldAssignee != $validated['assigned_to']) {
             $action .= '; Reassigned';
             $ticket->refresh();
             if ($ticket->assignee && $ticket->assignee->email && $ticket->assignee->notify_on_assign) {
-                try { Mail::to($ticket->assignee->email)->send(new TicketAssigned($ticket)); } catch (\Exception $e) {}
+                try {
+                    Mail::to($ticket->assignee->email)->send(new TicketAssigned($ticket));
+                } catch (\Exception $e) {
+                }
             }
             if ($ticket->assigned_to) {
                 NotificationService::send($ticket->assigned_to, "📋 Ticket #{$ticket->id} \"{$ticket->title}\" has been assigned to you.", $ticket->id);
@@ -448,16 +454,19 @@ class TicketController extends Controller
         }
 
         TicketHistory::create([
-            'ticket_id'       => $ticket->id,
-            'action'          => $action,
+            'ticket_id' => $ticket->id,
+            'action' => $action,
             'old_assignee_id' => $oldAssignee,
             'new_assignee_id' => $validated['assigned_to'] ?? null,
-            'changed_by'      => auth()->id(),
+            'changed_by' => auth()->id(),
         ]);
 
         if ($oldStatus !== 'resolved' && $validated['status'] === 'resolved') {
             if ($ticket->creator && $ticket->creator->email && $ticket->creator->notify_on_resolve) {
-                try { Mail::to($ticket->creator->email)->send(new TicketResolved($ticket)); } catch (\Exception $e) {}
+                try {
+                    Mail::to($ticket->creator->email)->send(new TicketResolved($ticket));
+                } catch (\Exception $e) {
+                }
             }
             if ($ticket->created_by && $ticket->created_by !== $user->id) {
                 NotificationService::send($ticket->created_by, "✅ Ticket #{$ticket->ticket_key} \"{$ticket->title}\" has been resolved by {$user->name}. Please review and close or reopen.", $ticket->id);
@@ -465,10 +474,10 @@ class TicketController extends Controller
             $staffToNotify = User::where('id', '!=', $user->id)
                 ->where('role', '!=', 'reseller')
                 ->get()
-                ->filter(fn($u) => Ticket::where('id', $ticket->id)->forUser($u)->exists());
+                ->filter(fn ($u) => Ticket::where('id', $ticket->id)->forUser($u)->exists());
 
             foreach ($staffToNotify as $staff) {
-                if ($staff->id !== (int)$ticket->created_by) {
+                if ($staff->id !== (int) $ticket->created_by) {
                     NotificationService::send($staff->id, "✅ Ticket #{$ticket->ticket_key} resolved by {$user->name}", $ticket->id);
                 }
             }
@@ -481,14 +490,14 @@ class TicketController extends Controller
     {
         $authUser = auth()->user();
         $canView = Ticket::where('id', $id)->forUser($authUser)->exists();
-        if (!$canView || $authUser->isReseller()) {
+        if (! $canView || $authUser->isReseller()) {
             abort(403);
         }
 
         $ticket = Ticket::findOrFail($id);
         $validated = $request->validate([
-            'assigned_to' => ['required', 'exists:users,id', function($attr, $val, $fail) {
-                $targetUser = \App\Models\User::find($val);
+            'assigned_to' => ['required', 'exists:users,id', function ($attr, $val, $fail) {
+                $targetUser = User::find($val);
                 if ($targetUser && in_array($targetUser->role, ['reseller', 'call_center'])) {
                     $fail('Tickets can only be assigned to Admin or NOC users.');
                 }
@@ -499,16 +508,19 @@ class TicketController extends Controller
         $ticket->update(['assigned_to' => $validated['assigned_to']]);
 
         TicketHistory::create([
-            'ticket_id'       => $ticket->id,
-            'action'          => 'Ticket reassigned',
+            'ticket_id' => $ticket->id,
+            'action' => 'Ticket reassigned',
             'old_assignee_id' => $oldAssignee,
             'new_assignee_id' => $validated['assigned_to'],
-            'changed_by'      => auth()->id(),
+            'changed_by' => auth()->id(),
         ]);
 
         $ticket->refresh();
         if ($ticket->assignee && $ticket->assignee->email && $ticket->assignee->notify_on_assign) {
-            try { Mail::to($ticket->assignee->email)->send(new TicketAssigned($ticket)); } catch (\Exception $e) {}
+            try {
+                Mail::to($ticket->assignee->email)->send(new TicketAssigned($ticket));
+            } catch (\Exception $e) {
+            }
         }
 
         // DB notification to the new assignee (if changed)
@@ -526,7 +538,7 @@ class TicketController extends Controller
     public function attachLabel(Request $request, Ticket $ticket)
     {
         $user = auth()->user();
-        if (!$user->isAdmin() && !$user->isNoc()) {
+        if (! $user->isAdmin() && ! $user->isNoc()) {
             abort(403);
         }
 
@@ -539,7 +551,7 @@ class TicketController extends Controller
     public function detachLabel(Ticket $ticket, Label $label)
     {
         $user = auth()->user();
-        if (!$user->isAdmin() && !$user->isNoc()) {
+        if (! $user->isAdmin() && ! $user->isNoc()) {
             abort(403);
         }
 
@@ -550,20 +562,20 @@ class TicketController extends Controller
 
     public function bulkAction(Request $request)
     {
-        if (!auth()->user()->isAdmin()) {
+        if (! auth()->user()->isAdmin()) {
             abort(403);
         }
 
         $request->validate([
-            'ticket_ids'  => 'required|array',
+            'ticket_ids' => 'required|array',
             'ticket_ids.*' => 'exists:tickets,id',
-            'action'      => 'required|in:assign,status,delete',
+            'action' => 'required|in:assign,status,delete',
             'assigned_to' => 'nullable|exists:users,id',
             'bulk_status' => 'nullable|in:in_progress,pending,waiting_for_customer_feedback,resolved',
         ]);
 
         if ($request->action === 'delete') {
-            if (!auth()->user()->isSuperAdmin()) {
+            if (! auth()->user()->isSuperAdmin()) {
                 abort(403, 'Only Super Admin can permanently delete tickets.');
             }
             $tickets = Ticket::with(['attachments', 'messages', 'notes', 'history', 'labels', 'subtasks'])->whereIn('id', $request->ticket_ids)->get();
@@ -572,6 +584,7 @@ class TicketController extends Controller
                 $this->purgeTicket($ticket);
                 $count++;
             }
+
             return redirect()->route('tickets.index')->with('success', "{$count} ticket(s) permanently deleted.");
         }
 
@@ -591,18 +604,18 @@ class TicketController extends Controller
                     $statusUpdate['resolved_at'] = null;
                 }
                 $ticket->update($statusUpdate);
-                $action = 'Status changed to ' . $request->bulk_status . ' (bulk action)';
+                $action = 'Status changed to '.$request->bulk_status.' (bulk action)';
                 $newAssignee = null;
             } else {
                 continue;
             }
 
             TicketHistory::create([
-                'ticket_id'       => $ticket->id,
-                'action'          => $action,
+                'ticket_id' => $ticket->id,
+                'action' => $action,
                 'old_assignee_id' => null,
                 'new_assignee_id' => $newAssignee ?? null,
-                'changed_by'      => auth()->id(),
+                'changed_by' => auth()->id(),
             ]);
 
             $count++;
@@ -619,7 +632,7 @@ class TicketController extends Controller
         if ($ticket->created_by !== $user->id) {
             abort(403);
         }
-        if (!in_array($ticket->status, ['resolved', 'closed'])) {
+        if (! in_array($ticket->status, ['resolved', 'closed'])) {
             abort(422, 'Ticket is not resolved yet.');
         }
         if ($ticket->csat_submitted_at) {
@@ -627,19 +640,19 @@ class TicketController extends Controller
         }
 
         $validated = $request->validate([
-            'csat_rating'  => 'required|integer|min:1|max:5',
+            'csat_rating' => 'required|integer|min:1|max:5',
             'csat_comment' => 'nullable|string|max:1000',
         ]);
 
         $ticket->update([
-            'csat_rating'       => $validated['csat_rating'],
-            'csat_comment'      => $validated['csat_comment'] ?? null,
+            'csat_rating' => $validated['csat_rating'],
+            'csat_comment' => $validated['csat_comment'] ?? null,
             'csat_submitted_at' => now(),
         ]);
 
         TicketHistory::create([
-            'ticket_id'  => $ticket->id,
-            'action'     => "Customer rated {$validated['csat_rating']}/5",
+            'ticket_id' => $ticket->id,
+            'action' => "Customer rated {$validated['csat_rating']}/5",
             'changed_by' => $user->id,
         ]);
 
@@ -649,7 +662,9 @@ class TicketController extends Controller
     public function showMergeForm(string $id)
     {
         $user = auth()->user();
-        if (!$user->isAdmin() && !$user->isNoc()) abort(403);
+        if (! $user->isAdmin() && ! $user->isNoc()) {
+            abort(403);
+        }
 
         $ticket = Ticket::with('creator')->findOrFail($id);
         $candidates = Ticket::where('id', '!=', $ticket->id)
@@ -665,7 +680,9 @@ class TicketController extends Controller
     public function merge(Request $request, string $id)
     {
         $user = auth()->user();
-        if (!$user->isAdmin() && !$user->isNoc()) abort(403);
+        if (! $user->isAdmin() && ! $user->isNoc()) {
+            abort(403);
+        }
 
         $validated = $request->validate([
             'target_id' => 'required|exists:tickets,id|different:id',
@@ -678,25 +695,25 @@ class TicketController extends Controller
             return back()->withErrors(['target_id' => 'One of these tickets is already merged.']);
         }
 
-        \Illuminate\Support\Facades\DB::transaction(function () use ($source, $target, $user) {
+        DB::transaction(function () use ($source, $target, $user) {
             $source->messages()->update(['ticket_id' => $target->id]);
             $source->notes()->update(['ticket_id' => $target->id]);
             $source->attachments()->update(['ticket_id' => $target->id]);
 
             TicketHistory::create([
-                'ticket_id'  => $target->id,
-                'action'     => "Merged ticket #{$source->id} ({$source->title}) into this ticket",
+                'ticket_id' => $target->id,
+                'action' => "Merged ticket #{$source->id} ({$source->title}) into this ticket",
                 'changed_by' => $user->id,
             ]);
 
             $source->update([
-                'status'         => 'closed',
+                'status' => 'closed',
                 'merged_into_id' => $target->id,
             ]);
 
             TicketHistory::create([
-                'ticket_id'  => $source->id,
-                'action'     => "Merged into ticket #{$target->id} ({$target->title})",
+                'ticket_id' => $source->id,
+                'action' => "Merged into ticket #{$target->id} ({$target->title})",
                 'changed_by' => $user->id,
             ]);
         });
@@ -707,11 +724,11 @@ class TicketController extends Controller
     public function destroy(Ticket $ticket)
     {
         $user = auth()->user();
-        if (!$user->isSuperAdmin()) {
+        if (! $user->isSuperAdmin()) {
             abort(403, 'Only Super Admin can delete tickets.');
         }
 
-        $ticketKey = $ticket->ticket_key ?? '#' . $ticket->id;
+        $ticketKey = $ticket->ticket_key ?? '#'.$ticket->id;
         $this->purgeTicket($ticket);
 
         return redirect()->route('tickets.index')->with('success', "Ticket {$ticketKey} and all associated data permanently deleted.");
@@ -721,16 +738,16 @@ class TicketController extends Controller
     {
         // 1. Delete attachments and physical files
         foreach ($ticket->attachments as $att) {
-            if ($att->file_path && \Illuminate\Support\Facades\Storage::disk('public')->exists($att->file_path)) {
-                \Illuminate\Support\Facades\Storage::disk('public')->delete($att->file_path);
+            if ($att->file_path && Storage::disk('public')->exists($att->file_path)) {
+                Storage::disk('public')->delete($att->file_path);
             }
             $att->delete();
         }
 
         // 2. Delete messages, message images, and reactions
         foreach ($ticket->messages as $msg) {
-            if ($msg->image_path && \Illuminate\Support\Facades\Storage::disk('public')->exists($msg->image_path)) {
-                \Illuminate\Support\Facades\Storage::disk('public')->delete($msg->image_path);
+            if ($msg->image_path && Storage::disk('public')->exists($msg->image_path)) {
+                Storage::disk('public')->delete($msg->image_path);
             }
             $msg->reactions()->delete();
             $msg->delete();
@@ -746,15 +763,15 @@ class TicketController extends Controller
         $ticket->labels()->detach();
 
         // 6. Delete links
-        \App\Models\TicketLink::where('ticket_id', $ticket->id)
+        TicketLink::where('ticket_id', $ticket->id)
             ->orWhere('linked_ticket_id', $ticket->id)
             ->delete();
 
         // 7. Delete subtasks
         foreach ($ticket->subtasks as $subtask) {
             foreach ($subtask->attachments as $subAtt) {
-                if ($subAtt->file_path && \Illuminate\Support\Facades\Storage::disk('public')->exists($subAtt->file_path)) {
-                    \Illuminate\Support\Facades\Storage::disk('public')->delete($subAtt->file_path);
+                if ($subAtt->file_path && Storage::disk('public')->exists($subAtt->file_path)) {
+                    Storage::disk('public')->delete($subAtt->file_path);
                 }
                 $subAtt->delete();
             }
@@ -766,7 +783,7 @@ class TicketController extends Controller
         }
 
         // 8. Delete notifications
-        \App\Models\Notification::where('ticket_id', $ticket->id)->delete();
+        Notification::where('ticket_id', $ticket->id)->delete();
 
         // 9. Delete ticket record
         $ticket->delete();

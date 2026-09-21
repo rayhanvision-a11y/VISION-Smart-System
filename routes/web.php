@@ -61,6 +61,9 @@ Route::get('/', function () {
 Route::post('/locale/{locale}', function (string $locale) {
     if (in_array($locale, ['en', 'bn'], true)) {
         session(['locale' => $locale]);
+        if (auth()->check()) {
+            auth()->user()->forceFill(['locale' => $locale])->save();
+        }
     }
     return redirect()->back();
 })->middleware(['auth', 'throttle:10,1'])->name('locale.set');
@@ -336,9 +339,17 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/settings/favicon', [SettingController::class, 'updateFavicon'])->name('settings.favicon.update');
     Route::delete('/settings/favicon', [SettingController::class, 'destroyFavicon'])->name('settings.favicon.destroy');
     Route::post('/settings/notice', [SettingController::class, 'updateNotice'])->name('settings.notice.update');
+    Route::post('/settings/notice/toggle', [SettingController::class, 'toggleNotice'])->name('settings.notice.toggle');
     Route::post('/settings/theme', [SettingController::class, 'updateTheme'])->name('settings.theme.update');
     Route::get('/settings/backup/export', [SettingController::class, 'backupExport'])->name('settings.backup.export');
     Route::post('/settings/backup/restore', [SettingController::class, 'backupRestore'])->name('settings.backup.restore');
+
+    // ── Database Backup System ─────────────────────────────────────
+    Route::post('/settings/backup/create', [\App\Http\Controllers\BackupController::class, 'create'])->name('settings.backup.create');
+    Route::get('/settings/backup/download/{filename}', [\App\Http\Controllers\BackupController::class, 'download'])->name('settings.backup.download');
+    Route::post('/settings/backup/restore/{filename}', [\App\Http\Controllers\BackupController::class, 'restore'])->name('settings.backup.restore');
+    Route::delete('/settings/backup/{filename}', [\App\Http\Controllers\BackupController::class, 'destroy'])->name('settings.backup.destroy');
+
 
     // ── Activity Logs ─────────────────────────────────────────────
     Route::get('/activity-logs', [ActivityLogController::class, 'index'])->name('activity-logs.index');

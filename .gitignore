@@ -27,3 +27,6 @@ baileys_store*.json
 global_templates.json
 environment.php
 .agents/
+/deploy/*.zip
+/scratch
+.claude/

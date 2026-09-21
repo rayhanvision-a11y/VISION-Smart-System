@@ -4,56 +4,71 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-VISION Smart System — a Laravel 12 (PHP 8.2) ISP helpdesk/ticketing app ("VISION Technologies Limited") with an integrated WhatsApp broadcast/chat module. Blade + Alpine.js + Tailwind frontend (no SPA framework). SQLite by default (`DB_CONNECTION=sqlite`).
+VISION Smart System: a Laravel 12 (PHP 8.2) helpdesk and ticketing app for an ISP ("VISION Technologies Limited"). The frontend is Blade, Alpine.js and Tailwind, with no SPA framework. The UI is bilingual, English and Bengali (`lang/bn.json`).
+
+- Local dev runs on Laragon with **MySQL** (`.env` has `DB_CONNECTION=mysql`).
+- Tests run on **in-memory SQLite** (`phpunit.xml`). Keep migrations and queries portable across both databases.
+- Production is cPanel shared hosting with MySQL (see the section on deployment below).
 
 ## Common commands
 
 ```bash
-composer install
-npm install
+composer run setup           # first-time setup: install, .env, key, migrate, npm build
+composer run dev             # serve + queue:listen + pail + vite, run together
 
-php artisan serve            # app server
-npm run dev                  # Vite dev server (Tailwind/Alpine assets)
-composer run dev             # runs serve + queue:listen + pail + vite concurrently
-
-php artisan test             # full test suite (also: composer run test)
-php artisan test --filter=TestName   # single test
+php artisan test                                   # full suite (composer run test clears config first)
+php artisan test --filter=NotificationScopingTest  # single test class or method
 php artisan test tests/Feature/SomeTest.php
 
-vendor/bin/pint               # PHP code style (Laravel Pint)
+vendor/bin/pint              # code style (Laravel Pint)
+npm run build                # production assets (Vite)
 
-php artisan migrate
-php artisan queue:listen --tries=1 --timeout=0
-
-node whatsapp_server.cjs      # standalone WhatsApp bridge (Express + Baileys), must run on port 3000 alongside Laravel
+php artisan app:check-sla-breaches   # the scheduled SLA check (runs every 15 min via routes/console.php)
 ```
+
+## Agent rules (from `.agents/rules/git_rules.md`)
+
+- Work on `main`.
+- **Never run `git push` unless the user explicitly asks.** For example, the user may say "git push koro".
+- Run `php artisan test` before presenting changes.
 
 ## Architecture
 
-### Core ticketing domain
-Standard Laravel MVC under `app/Http/Controllers`, `app/Models`, `routes/web.php`. Key model: `Ticket` (`app/Models/Ticket.php`) — has a human-readable `ticket_key` (format `YYMMDDNNN`, generated in `Ticket::generateKey()`), supports parent/subtask relations, ticket-to-ticket links (`TicketLink`), merging (`merged_into_id`), labels (many-to-many), attachments, notes, messages, and history (audit trail via `TicketHistory`, written by `TicketObserver`/`TicketMessageObserver`).
+### Roles and ticket visibility (the core rule)
+`User::role` has these values: `super_admin`, `admin`, `noc`, `reseller`, `call_center`, `supervisor` and `senior_supervisor`. Helpers include `isAdmin()` (which also returns true for super_admin), `isSuperAdmin()`, `isNoc()`, `isReseller()`, `isCallCenter()`, `isSupervisorLevel()` and similar.
 
-Roles live on `User::role` (`super_admin`, `admin`, `noc`, `reseller`) with helper methods (`isAdmin()`, `isNoc()`, `isReseller()`, `isSuperAdminOnly()`). Route-level role gating uses `RoleMiddleware` (`role:admin,noc` style). Dashboard/reporting behavior branches heavily by role — see the `/dashboard` closure in `routes/web.php` for the pattern of per-role aggregated stats queries (admin sees global stats, NOC sees only tickets assigned to them, reseller sees only tickets they created).
+Ticket visibility is centralized in **`Ticket::scopeForUser()`** (`app/Models/Ticket.php`):
+- super_admin sees everything.
+- A reseller sees only the tickets it created.
+- Every other role sees tickets assigned to them or created by them, plus *unassigned* tickets. The exception is call_center, which never sees unassigned tickets created by resellers.
 
-SLA handling: `app/Console/Commands/CheckSlaBreaches.php` (scheduled command) + `SlaPolicy` model/controller compute `due_at` and flag breaches.
+Reuse `->forUser($user)` for any new ticket query, list, search or report instead of re-implementing the rules. `NotificationService::send()` also checks `forUser` before it creates a notification (covered by `tests/Feature/NotificationScopingTest.php`).
 
-Notifications: `app/Services/NotificationService.php` centralizes creating `Notification` records and dispatching related mail (`app/Mail/*`, e.g. `TicketAssigned`, `TicketResolved`, `TicketReopened`).
+Authorization is mostly enforced **inside controllers** with `abort(403)` checks. The `role` middleware alias (`RoleMiddleware`) exists but routes rarely use it. The `/dashboard` route closure in `routes/web.php` builds different aggregated stats per role, so follow that per-role branching when you add dashboard or report logic.
 
-Inbound email → ticket: `InboundEmailController@handle` is a public webhook (`/webhooks/inbound-email`, no auth, protected by a shared secret) that creates ticket messages from replies.
+### Ticket domain
+- `ticket_key` uses the format `YYMMDDNNN` and comes from `Ticket::generateKey()`. The key scans existing keys for the day's max sequence to avoid duplicate-key collisions, so don't simplify it to a count.
+- Tickets support subtasks (`parent_id`), links between tickets (`TicketLink`), merging (`merged_into_id`), labels, categories (`TicketCategory`), POP offices (`PopOffice`), attachments, internal notes, messages (with replies, reactions and private messages), CSAT and SLA `due_at`.
+- The audit trail lives in `TicketHistory`. `TicketObserver` and `TicketMessageObserver` write it, and `AppServiceProvider` registers both observers.
+- In-app notifications go through `NotificationService`. **Email is sent separately, directly from controllers.** For example, `TicketController` calls `Mail::to(...)->send(new TicketResolved(...))` inside a try/catch, gated on user preferences such as `notify_on_resolve` and `notify_on_assign`.
+- SLA: `SlaPolicy` together with `CheckSlaBreaches` (a scheduled command) flags breaches and sets `sla_notified_at`.
+- Team roster and on-duty status: `User::TEAMS`, `User::SHIFTS`, `isOnDuty()`, `ensureCurrentShiftDate()` and `RosterController`.
 
-Knowledge Base module (`BlogPostController`, `KbArticleController`) is mounted at `/knowledge-base` with legacy aliased routes (`/knowledge-base-blogs-*`, and redirects from old `/blogs` and `/kb` paths) kept for backward compatibility — don't remove these without checking for external links/bookmarks.
+### Cross-cutting behavior in `AppServiceProvider`
+- `Model::preventLazyLoading()` is on outside production, so eager-load relations or you'll get exceptions in dev and tests.
+- A global `View::composer('*')` shares `customMenuLinks`, the header notice settings (from the `Setting` model) and `unreadKbCount` with every view.
+- The `Carbon::toBn()` macro converts dates and digits to Bengali when the locale is `bn`. The `SetLocale` middleware picks the locale from the session, then `user->locale`, then falls back to `en`.
+- HTTPS is forced when `APP_URL` is https or when `X-Forwarded-Proto` is set.
 
-### WhatsApp integration (two-process architecture)
-This is the non-obvious part of the system: WhatsApp features run as a **separate Node.js process**, not inside Laravel.
+### Knowledge Base
+`BlogPostController`, `KbArticleController` and `KbCategoryController` are mounted at `/knowledge-base`. Legacy routes (`/knowledge-base-blogs-*`) and redirects from `/blogs` and `/kb` stay for backward compatibility with external links, so don't remove them.
 
-- `whatsapp_server.cjs` — standalone Express server (port 3000) using `@whiskeysockets/baileys` for the WhatsApp Web protocol. Keeps **per-user sessions** in memory (`sessions` Map keyed by user id), each with its own Baileys auth folder (`auth_info_<userId>/`) and JSON store file (`baileys_store_<userId>.json`) persisted to disk. Handles QR login, chat/contact sync, sending messages/images, scheduled broadcasts (cron via `setInterval`, checked every minute), saved contact lists, and message templates (global/admin-shared vs personal per-user).
-- `app/Http/Controllers/WhatsAppController.php` — Laravel proxy. Every request from the browser hits this controller first, which forwards to the Node server via `Illuminate\Support\Facades\Http`, attaching `X-WA-User` (from `auth()->id()`), `X-WA-Admin` (from role), and `X-Internal-Token` (shared secret, `WA_INTERNAL_SECRET` env var) headers. The Node server rejects any request missing/mismatching that internal token — it must never be exposed directly to the internet.
-- Because sessions are per-user and in-memory in the Node process, **both processes must be running together** for WhatsApp features to work; restarting `whatsapp_server.cjs` drops in-flight (non-persisted) state but reloads persisted store/auth files from disk.
-- Global (admin) vs personal templates/saved-lists distinction is enforced by the `X-WA-Admin` header set by the Laravel side, not re-checked independently by Node beyond that header.
+### Disabled or removed modules (stale references)
+- **WhatsApp:** the WhatsApp routes in `routes/web.php` are commented out. `WhatsAppController` and the Node bridge (`whatsapp_server.cjs`) are no longer in the repo, and `App\Services\WhatsAppService::send()` is a stub that returns `false`. `.env` still has `WA_INTERNAL_SECRET`, and `bootstrap/app.php` still exempts `api/whatsapp/*` from CSRF. Don't assume the feature works.
+- **Inbound email:** `bootstrap/app.php` exempts `webhooks/inbound-email` from CSRF, but no such route or controller exists.
 
-### cPanel / shared-hosting considerations
-`.cpanel.yml` and `environment.php` (see recent commit history) exist for deploying to shared cPanel hosting; there's a standalone diagnostic script for checking the cPanel PHP environment. Keep deploy-related scripts working if touched — this app appears to run in a constrained shared-hosting environment in addition to local dev.
-
-## Notes for future changes
-- `auth_info_*/` directories and `baileys_store_*.json`/`global_templates.json` files are runtime WhatsApp session state, not source — don't hand-edit or commit sensitive contents.
-- When adding new dashboard/report logic, follow the existing per-role branching pattern in `routes/web.php` rather than introducing a generic query for all roles.
+## Deployment (cPanel)
+- Production target is `portal.visiontech.com.bd`. Deployment uses cPanel's File Manager to upload a zip and phpMyAdmin for the database. The guide is `DEPLOY_CPANEL.md` (in Bengali); also see `deploy/DEPLOY_GUIDE.md` and `deploy/.env.cpanel-template`.
+- `.cpanel.yml` copies the repo to the deploy path.
+- `environment.php` is a standalone script you open in a browser to check PHP and server requirements on the host.
+- Shared hosting constrains production: no long-running processes can be assumed, and queue workers and the scheduler depend on cron. Keep these deploy scripts working when you touch them.

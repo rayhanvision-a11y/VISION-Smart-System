@@ -9,3 +9,4 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('app:check-sla-breaches')->everyFifteenMinutes();
+Schedule::command('backup:database')->dailyAt('23:59');

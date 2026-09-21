@@ -848,12 +848,77 @@
                         @endisset
                     </div>
 
-                    {{-- Dynamic Header Notice Marquee Ticker (Supports Multiple Notices & Continuous Position across pages) --}}
+                    {{-- Dynamic Role-Targeted Header Notice Marquee Ticker (Supports Global, Reseller-Specific & NOC-Specific in EN & BN) --}}
                     @php
-                        $hNoticeActive = \App\Models\Setting::get('header_notice_active', '1') === '1';
-                        $hNoticeRaw = \App\Models\Setting::get('header_notice_text');
-                        $hNoticeSpeed = \App\Models\Setting::get('header_notice_speed', '8');
-                        
+                        $currentUser   = auth()->user();
+                        $currentLocale = app()->getLocale();
+
+                        // Helper to retrieve localized notice
+                        $getChannelNotice = function(string $prefix, string $defaultBadgeEn, string $defaultBadgeBn) use ($currentLocale) {
+                            $textEn      = trim((string) \App\Models\Setting::get("{$prefix}_text_en"));
+                            $textBn      = trim((string) \App\Models\Setting::get("{$prefix}_text_bn"));
+                            $legacy      = trim((string) \App\Models\Setting::get("{$prefix}_text"));
+                            $legacyBadge = trim((string) \App\Models\Setting::get("{$prefix}_badge"));
+
+                            // Pick according to current locale with fallback
+                            if ($currentLocale === 'bn') {
+                                $text = $textBn !== '' ? $textBn : ($legacy !== '' ? $legacy : $textEn);
+                                $badge = \App\Models\Setting::get("{$prefix}_badge_bn") ?: ($legacyBadge !== '' ? $legacyBadge : (\App\Models\Setting::get("{$prefix}_badge_en") ?: $defaultBadgeBn));
+                            } else {
+                                $text = $textEn !== '' ? $textEn : ($legacy !== '' ? $legacy : $textBn);
+                                $badge = \App\Models\Setting::get("{$prefix}_badge_en") ?: ($legacyBadge !== '' ? $legacyBadge : (\App\Models\Setting::get("{$prefix}_badge_bn") ?: $defaultBadgeEn));
+                            }
+
+                            return [
+                                'text'  => $text,
+                                'badge' => $badge,
+                                'has_content' => ($textEn !== '' || $textBn !== '' || $legacy !== ''),
+                            ];
+                        };
+
+                        $resellerNotice = $getChannelNotice('header_notice_reseller', 'RESELLER ALERT', 'রিসেলার নোটিশ');
+                        $nocNotice      = $getChannelNotice('header_notice_noc', 'NOC DISPATCH', 'এনওসি নোটিশ');
+                        $globalNotice   = $getChannelNotice('header_notice', 'GLOBAL NOTICE', 'সাধারণ নোটিশ');
+
+                        $masterActive = \App\Models\Setting::get('header_notice_master_active', '1') === '1';
+
+                        $activeNoticeType = null;
+                        $hNoticeRaw   = null;
+                        $hNoticeBadge = '';
+                        $hNoticeSpeed = '8';
+                        $hNoticeTheme = 'danger';
+
+                        if ($masterActive) {
+                            if ($currentUser?->isReseller()) {
+                                // Resellers only see notice when Reseller toggle is ON
+                                if (\App\Models\Setting::get('header_notice_reseller_active', '0') === '1' && $resellerNotice['has_content']) {
+                                    $activeNoticeType = 'reseller';
+                                    $hNoticeRaw   = $resellerNotice['text'];
+                                    $hNoticeBadge = $resellerNotice['badge'];
+                                    $hNoticeSpeed = \App\Models\Setting::get('header_notice_reseller_speed', '8');
+                                    $hNoticeTheme = \App\Models\Setting::get('header_notice_reseller_theme', 'warning');
+                                }
+                            } elseif ($currentUser?->isNoc()) {
+                                // NOC only sees notice when NOC toggle is ON
+                                if (\App\Models\Setting::get('header_notice_noc_active', '0') === '1' && $nocNotice['has_content']) {
+                                    $activeNoticeType = 'noc';
+                                    $hNoticeRaw   = $nocNotice['text'];
+                                    $hNoticeBadge = $nocNotice['badge'];
+                                    $hNoticeSpeed = \App\Models\Setting::get('header_notice_noc_speed', '8');
+                                    $hNoticeTheme = \App\Models\Setting::get('header_notice_noc_theme', 'indigo');
+                                }
+                            } else {
+                                // Admin and all other staff only see notice when Global toggle is ON
+                                if (\App\Models\Setting::get('header_notice_active', '0') === '1' && $globalNotice['has_content']) {
+                                    $activeNoticeType = 'global';
+                                    $hNoticeRaw   = $globalNotice['text'];
+                                    $hNoticeBadge = $globalNotice['badge'];
+                                    $hNoticeSpeed = \App\Models\Setting::get('header_notice_speed', '8');
+                                    $hNoticeTheme = \App\Models\Setting::get('header_notice_theme', 'danger');
+                                }
+                            }
+                        }
+
                         $hNoticeItems = [];
                         if (!empty($hNoticeRaw)) {
                             $splitItems = preg_split('/\r\n|\r|\n|\|/', $hNoticeRaw);
@@ -864,18 +929,48 @@
                                 }
                             }
                         }
+
+                        // Themes mapping
+                        $themeStyles = [
+                            'danger' => [
+                                'border' => 'border-rose-200 dark:border-rose-900/60',
+                                'badge'  => 'bg-rose-600 text-white',
+                                'dot'    => 'text-rose-600',
+                            ],
+                            'warning' => [
+                                'border' => 'border-amber-300 dark:border-amber-900/60',
+                                'badge'  => 'bg-amber-500 text-white',
+                                'dot'    => 'text-amber-500',
+                            ],
+                            'info' => [
+                                'border' => 'border-sky-200 dark:border-sky-900/60',
+                                'badge'  => 'bg-sky-600 text-white',
+                                'dot'    => 'text-sky-500',
+                            ],
+                            'success' => [
+                                'border' => 'border-emerald-200 dark:border-emerald-900/60',
+                                'badge'  => 'bg-emerald-600 text-white',
+                                'dot'    => 'text-emerald-500',
+                            ],
+                            'indigo' => [
+                                'border' => 'border-indigo-200 dark:border-indigo-900/60',
+                                'badge'  => 'bg-indigo-600 text-white',
+                                'dot'    => 'text-indigo-600',
+                            ],
+                        ];
+                        $curTheme = $themeStyles[$hNoticeTheme ?? 'danger'] ?? $themeStyles['danger'];
                     @endphp
 
-                    @if($hNoticeActive && count($hNoticeItems) > 0)
-                    <div class="flex-1 min-w-0 mx-2 flex items-center gap-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-1.5 shadow-sm">
-                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-black bg-red-600 text-white shadow-sm flex-shrink-0 uppercase tracking-wide">
-                            📢 NOTICE {{ count($hNoticeItems) > 1 ? '('.count($hNoticeItems).')' : '' }}
+                    @if($activeNoticeType !== null && count($hNoticeItems) > 0)
+                    <div class="flex-1 min-w-0 mx-2 flex items-center gap-2.5 bg-white dark:bg-slate-900 border {{ $curTheme['border'] }} rounded-xl px-3 py-1.5 shadow-sm transition-colors">
+                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-black {{ $curTheme['badge'] }} shadow-xs flex-shrink-0 uppercase tracking-wide">
+                            📢 {{ $hNoticeBadge }} {{ count($hNoticeItems) > 1 ? '('.count($hNoticeItems).')' : '' }}
                         </span>
                         <div class="flex-1 min-w-0 overflow-hidden text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100">
                             <marquee id="header-notice-marquee" scrollamount="{{ $hNoticeSpeed }}" onmouseover="this.stop();" onmouseout="this.start();" class="block whitespace-nowrap">
                                 @foreach($hNoticeItems as $index => $noticeItem)
                                     <span class="inline-block">{{ $noticeItem }}</span>
-                                    <span class="inline-block px-14 sm:px-20 text-red-600 font-extrabold text-sm sm:text-base">•</span>
+                                    <span class="inline-block px-14 sm:px-20 {{ $curTheme['dot'] }} font-extrabold text-sm sm:text-base">•</span>
                                 @endforeach
                             </marquee>
                             <script>
