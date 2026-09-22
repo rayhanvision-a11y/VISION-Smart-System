@@ -163,4 +163,46 @@ class MobileApiTest extends TestCase
 
         $this->assertFalse($firebase->syncTicket($ticket));
     }
+
+    public function test_user_can_authenticate_via_x_authorization_header(): void
+    {
+        $user = User::factory()->create(['role' => 'noc']);
+        $token = $user->createToken('test_token')->plainTextToken;
+
+        $response = $this->withHeaders([
+            'X-Authorization' => 'Bearer ' . $token,
+            'Accept' => 'application/json',
+        ])->getJson('/api/user');
+
+        $response->assertStatus(200)
+            ->assertJsonPath('user.id', $user->id);
+    }
+
+    public function test_user_can_authenticate_via_x_api_token_header(): void
+    {
+        $user = User::factory()->create(['role' => 'noc']);
+        $token = $user->createToken('test_token')->plainTextToken;
+
+        $response = $this->withHeaders([
+            'X-Api-Token' => $token,
+            'Accept' => 'application/json',
+        ])->getJson('/api/user');
+
+        $response->assertStatus(200)
+            ->assertJsonPath('user.id', $user->id);
+    }
+
+    public function test_user_can_authenticate_via_query_token_fallback(): void
+    {
+        $user = User::factory()->create(['role' => 'noc']);
+        $token = $user->createToken('test_token')->plainTextToken;
+
+        $response = $this->withHeaders([
+            'Accept' => 'application/json',
+        ])->getJson('/api/user?token=' . urlencode($token));
+
+        $response->assertStatus(200)
+            ->assertJsonPath('user.id', $user->id);
+    }
 }
+

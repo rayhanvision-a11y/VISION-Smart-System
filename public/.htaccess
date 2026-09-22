@@ -5,9 +5,20 @@
 
     RewriteEngine On
 
+    # Ensure Authorization header is passed to PHP in FastCGI / cPanel
+    CGIPassAuth On
+    <IfModule mod_setenvif.c>
+        SetEnvIfNoCase ^Authorization$ "(.+)" HTTP_AUTHORIZATION=$1
+        SetEnvIfNoCase ^X-Authorization$ "(.+)" HTTP_AUTHORIZATION=$1
+    </IfModule>
+
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+    # Handle Custom X-Authorization Header
+    RewriteCond %{HTTP:X-Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:X-Authorization}]
 
     # Handle X-XSRF-Token Header
     RewriteCond %{HTTP:x-xsrf-token} .

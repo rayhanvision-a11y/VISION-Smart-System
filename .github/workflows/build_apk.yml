@@ -9,6 +9,9 @@ on:
     branches:
       - main
 
+permissions:
+  contents: write
+
 jobs:
   build:
     name: Build Flutter APK
@@ -39,8 +42,26 @@ jobs:
           cd mobile_app
           flutter build apk --release --no-tree-shake-icons
 
+      - name: Copy Named APK
+        run: |
+          cp mobile_app/build/app/outputs/flutter-apk/app-release.apk mobile_app/build/app/outputs/flutter-apk/VISION-Smart-System.apk
+
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: vision-smart-system-apk
           path: mobile_app/build/app/outputs/flutter-apk/app-release.apk
+
+      - name: Publish Direct APK Release
+        uses: softprops/action-gh-release@v2
+        if: github.ref == 'refs/heads/main'
+        with:
+          tag_name: latest
+          name: "VISION Smart System APK (Direct Download)"
+          body: "Official Android APK build for VISION Smart System. Download VISION-Smart-System.apk directly without extracting."
+          draft: false
+          prerelease: false
+          files: |
+            mobile_app/build/app/outputs/flutter-apk/VISION-Smart-System.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

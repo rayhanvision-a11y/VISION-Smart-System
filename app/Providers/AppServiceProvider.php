@@ -15,6 +15,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
+use Laravel\Sanctum\Sanctum;
+use Illuminate\Http\Request;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -51,6 +53,30 @@ class AppServiceProvider extends ServiceProvider
         if (str_starts_with(config('app.url'), 'https://') || request()->header('x-forwarded-proto') === 'https') {
             URL::forceScheme('https');
         }
+
+        // Support token extraction when Apache/cPanel FastCGI strips the standard Authorization header
+        Sanctum::getAccessTokenFromRequestUsing(function (Request $request) {
+            $token = $request->bearerToken();
+            if ($token) {
+                return $token;
+            }
+
+            $rawToken = $request->header('X-Authorization')
+                ?? $request->header('X-Api-Token')
+                ?? $request->server('HTTP_AUTHORIZATION')
+                ?? $request->server('REDIRECT_HTTP_AUTHORIZATION')
+                ?? $request->query('token')
+                ?? $request->query('api_token');
+
+            if ($rawToken) {
+                if (str_starts_with($rawToken, 'Bearer ')) {
+                    return substr($rawToken, 7);
+                }
+                return $rawToken;
+            }
+
+            return null;
+        });
 
         // Share active custom menu links and header notice with all views
         View::composer('*', function ($view) {

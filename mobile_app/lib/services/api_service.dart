@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../config/app_config.dart';
 import '../models/ticket.dart';
@@ -20,8 +21,31 @@ class ApiService {
     return {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
-      if (token != null) 'Authorization': 'Bearer $token',
+      if (token != null && token.isNotEmpty) ...{
+        'Authorization': 'Bearer $token',
+        'X-Authorization': 'Bearer $token',
+        'X-Api-Token': token,
+      },
     };
+  }
+
+  static Future<Uri> _buildUri(String path, [Map<String, String?>? queryParams]) async {
+    final baseUrl = await getBaseUrl();
+    final token = await StorageService.getToken();
+    final params = <String, String>{};
+    if (queryParams != null) {
+      queryParams.forEach((k, v) {
+        if (v != null && v.isNotEmpty) {
+          params[k] = v;
+        }
+      });
+    }
+    // Also include token in query parameters as a bulletproof fallback for Apache/cPanel FastCGI
+    if (token != null && token.isNotEmpty) {
+      params['token'] = token;
+    }
+    final base = Uri.parse('$baseUrl$path');
+    return base.replace(queryParameters: params.isNotEmpty ? params : null);
   }
 
   // 1. User Login
@@ -54,8 +78,7 @@ class ApiService {
   // 2. Fetch Tickets list from Laravel API
   static Future<List<TicketModel>> fetchTickets({String? status, String? search}) async {
     try {
-      final baseUrl = await getBaseUrl();
-      var uri = Uri.parse('$baseUrl/tickets').replace(queryParameters: {
+      final uri = await _buildUri('/tickets', {
         if (status != null && status.isNotEmpty) 'status': status,
         if (search != null && search.isNotEmpty) 'search': search,
       });
@@ -71,12 +94,18 @@ class ApiService {
           if (item is Map) {
             try {
               results.add(TicketModel.fromJson(item));
-            } catch (_) {}
+            } catch (e) {
+              debugPrint('TicketModel parse error: $e');
+            }
           }
         }
         return results;
+      } else {
+        debugPrint('fetchTickets error ${response.statusCode}: ${response.body}');
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('fetchTickets exception: $e');
+    }
     return [];
   }
 
@@ -88,9 +117,9 @@ class ApiService {
     String? category,
   }) async {
     try {
-      final baseUrl = await getBaseUrl();
+      final uri = await _buildUri('/tickets');
       final response = await http.post(
-        Uri.parse('$baseUrl/tickets'),
+        uri,
         headers: await _headers(),
         body: jsonEncode({
           'title': title,
@@ -113,9 +142,9 @@ class ApiService {
   // 4. Update Ticket Status
   static Future<bool> updateTicketStatus(int ticketId, String status) async {
     try {
-      final baseUrl = await getBaseUrl();
+      final uri = await _buildUri('/tickets/$ticketId/status');
       final response = await http.post(
-        Uri.parse('$baseUrl/tickets/$ticketId/status'),
+        uri,
         headers: await _headers(),
         body: jsonEncode({'status': status}),
       );
@@ -128,9 +157,9 @@ class ApiService {
   // 5. Add Message / Reply
   static Future<TicketMessageModel?> addMessage(int ticketId, String message, {bool isPrivate = false}) async {
     try {
-      final baseUrl = await getBaseUrl();
+      final uri = await _buildUri('/tickets/$ticketId/messages');
       final response = await http.post(
-        Uri.parse('$baseUrl/tickets/$ticketId/messages'),
+        uri,
         headers: await _headers(),
         body: jsonEncode({
           'message': message,
@@ -149,9 +178,9 @@ class ApiService {
   // 6. Update Device FCM Token
   static Future<void> updateFcmToken(String fcmToken) async {
     try {
-      final baseUrl = await getBaseUrl();
+      final uri = await _buildUri('/user/fcm-token');
       await http.post(
-        Uri.parse('$baseUrl/user/fcm-token'),
+        uri,
         headers: await _headers(),
         body: jsonEncode({'fcm_token': fcmToken}),
       );
@@ -161,24 +190,28 @@ class ApiService {
   // 7. Dashboard Stats & Duty Teams
   static Future<Map<String, dynamic>?> getDashboard() async {
     try {
-      final baseUrl = await getBaseUrl();
+      final uri = await _buildUri('/dashboard');
       final response = await http.get(
-        Uri.parse('$baseUrl/dashboard'),
+        uri,
         headers: await _headers(),
       );
       if (response.statusCode == 200) {
         return jsonDecode(response.body) as Map<String, dynamic>;
+      } else {
+        debugPrint('getDashboard error ${response.statusCode}: ${response.body}');
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('getDashboard exception: $e');
+    }
     return null;
   }
 
   // 8. Duty Roster List
   static Future<Map<String, dynamic>?> getRoster() async {
     try {
-      final baseUrl = await getBaseUrl();
+      final uri = await _buildUri('/roster');
       final response = await http.get(
-        Uri.parse('$baseUrl/roster'),
+        uri,
         headers: await _headers(),
       );
       if (response.statusCode == 200) {
@@ -191,8 +224,7 @@ class ApiService {
   // 9. Users Directory (Admin / Super Admin)
   static Future<List<dynamic>> getUsers({String? search, String? role, String? team}) async {
     try {
-      final baseUrl = await getBaseUrl();
-      var uri = Uri.parse('$baseUrl/users').replace(queryParameters: {
+      final uri = await _buildUri('/users', {
         if (search != null && search.isNotEmpty) 'search': search,
         if (role != null && role.isNotEmpty) 'role': role,
         if (team != null && team.isNotEmpty) 'team': team,
@@ -209,8 +241,8 @@ class ApiService {
   // 10. Metadata: Ticket Categories
   static Future<List<dynamic>> getCategories() async {
     try {
-      final baseUrl = await getBaseUrl();
-      final response = await http.get(Uri.parse('$baseUrl/categories'), headers: await _headers());
+      final uri = await _buildUri('/categories');
+      final response = await http.get(uri, headers: await _headers());
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         return data['categories'] as List? ?? [];
@@ -222,8 +254,8 @@ class ApiService {
   // 11. Metadata: POP Offices
   static Future<List<dynamic>> getPopOffices() async {
     try {
-      final baseUrl = await getBaseUrl();
-      final response = await http.get(Uri.parse('$baseUrl/pop-offices'), headers: await _headers());
+      final uri = await _buildUri('/pop-offices');
+      final response = await http.get(uri, headers: await _headers());
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         return data['pop_offices'] as List? ?? [];
@@ -235,8 +267,8 @@ class ApiService {
   // 12. Metadata: Staff Members for Assignment
   static Future<List<dynamic>> getStaff() async {
     try {
-      final baseUrl = await getBaseUrl();
-      final response = await http.get(Uri.parse('$baseUrl/staff'), headers: await _headers());
+      final uri = await _buildUri('/staff');
+      final response = await http.get(uri, headers: await _headers());
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         return data['staff'] as List? ?? [];
@@ -248,9 +280,9 @@ class ApiService {
   // 13. Assign Ticket
   static Future<bool> assignTicket(int ticketId, int assignedToId) async {
     try {
-      final baseUrl = await getBaseUrl();
+      final uri = await _buildUri('/tickets/$ticketId/assign');
       final response = await http.post(
-        Uri.parse('$baseUrl/tickets/$ticketId/assign'),
+        uri,
         headers: await _headers(),
         body: jsonEncode({'assigned_to': assignedToId}),
       );
@@ -263,9 +295,9 @@ class ApiService {
   // 14. Update Ticket Priority
   static Future<bool> updateTicketPriority(int ticketId, String priority) async {
     try {
-      final baseUrl = await getBaseUrl();
+      final uri = await _buildUri('/tickets/$ticketId/priority');
       final response = await http.post(
-        Uri.parse('$baseUrl/tickets/$ticketId/priority'),
+        uri,
         headers: await _headers(),
         body: jsonEncode({'priority': priority}),
       );
@@ -278,9 +310,9 @@ class ApiService {
   // 15. Logout
   static Future<void> logout() async {
     try {
-      final baseUrl = await getBaseUrl();
+      final uri = await _buildUri('/logout');
       await http.post(
-        Uri.parse('$baseUrl/logout'),
+        uri,
         headers: await _headers(),
       );
     } catch (_) {}
