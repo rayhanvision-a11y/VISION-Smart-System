@@ -19,11 +19,11 @@ class SearchController extends Controller
         }
 
         if ($q) {
-            $query->where(function($sq) use ($q) {
+            $query->where(function ($sq) use ($q) {
                 $sq->where('title', 'like', "%{$q}%")
-                   ->orWhere('description', 'like', "%{$q}%")
-                   ->orWhere('id', is_numeric($q) ? $q : 0)
-                   ->orWhereHas('creator', fn($uq) => $uq->where('name', 'like', "%{$q}%"));
+                    ->orWhere('description', 'like', "%{$q}%")
+                    ->orWhere('id', is_numeric($q) ? $q : 0)
+                    ->orWhereHas('creator', fn ($uq) => $uq->where('name', 'like', "%{$q}%"));
             });
         }
 

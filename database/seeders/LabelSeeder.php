@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\Label;
 use Illuminate\Database\Seeder;
 
 class LabelSeeder extends Seeder
@@ -22,7 +22,7 @@ class LabelSeeder extends Seeder
         ];
 
         foreach ($labels as $label) {
-            \App\Models\Label::firstOrCreate(['name' => $label['name']], ['color' => $label['color']]);
+            Label::firstOrCreate(['name' => $label['name']], ['color' => $label['color']]);
         }
     }
 }

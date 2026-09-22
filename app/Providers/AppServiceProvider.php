@@ -2,14 +2,19 @@
 
 namespace App\Providers;
 
+use App\Models\BlogPost;
 use App\Models\CustomMenuLink;
+use App\Models\Setting;
 use App\Models\Ticket;
 use App\Models\TicketMessage;
-use App\Observers\TicketObserver;
 use App\Observers\TicketMessageObserver;
+use App\Observers\TicketObserver;
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Facades\URL;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -26,15 +31,17 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        \Illuminate\Database\Eloquent\Model::preventLazyLoading(! app()->isProduction());
+        Model::preventLazyLoading(! app()->isProduction());
 
-        \Carbon\Carbon::macro('toBn', function ($format = null) {
-            /** @var \Carbon\Carbon $this */
+        Carbon::macro('toBn', function ($format = null) {
+            /** @var Carbon $this */
             $locale = app()->getLocale();
             if ($locale === 'bn') {
                 $str = $format ? $this->translatedFormat($format) : $this->diffForHumans();
-                return str_replace(['0','1','2','3','4','5','6','7','8','9'], ['০','১','২','৩','৪','৫','৬','৭','৮','৯'], $str);
+
+                return str_replace(['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'], ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'], $str);
             }
+
             return $format ? $this->format($format) : $this->diffForHumans();
         });
 
@@ -56,9 +63,9 @@ class AppServiceProvider extends ServiceProvider
                 }
 
                 try {
-                    $noticeText = \App\Models\Setting::get('header_notice_text', 'Alert — সম্মানিত POP ম্যানেজার ও রিসেলারদের দৃষ্টি আকর্ষণ করা যাচ্ছে: আমাদের পোর্টালে সরাসরি সকল সেবা সচল রয়েছে।');
-                    $noticeActive = \App\Models\Setting::get('header_notice_active', '1') === '1';
-                    $noticeSpeed = \App\Models\Setting::get('header_notice_speed', '8');
+                    $noticeText = Setting::get('header_notice_text', 'Alert — সম্মানিত POP ম্যানেজার ও রিসেলারদের দৃষ্টি আকর্ষণ করা যাচ্ছে: আমাদের পোর্টালে সরাসরি সকল সেবা সচল রয়েছে।');
+                    $noticeActive = Setting::get('header_notice_active', '1') === '1';
+                    $noticeSpeed = Setting::get('header_notice_speed', '8');
 
                     $view->with('headerNoticeText', $noticeText);
                     $view->with('headerNoticeActive', $noticeActive);
@@ -69,8 +76,8 @@ class AppServiceProvider extends ServiceProvider
 
                 try {
                     $userId = auth()->id();
-                    $readIds = \Illuminate\Support\Facades\DB::table('knowledge_base_reads')->where('user_id', $userId)->pluck('article_id');
-                    $unreadKbCount = \App\Models\BlogPost::where('is_published', true)
+                    $readIds = DB::table('knowledge_base_reads')->where('user_id', $userId)->pluck('article_id');
+                    $unreadKbCount = BlogPost::where('is_published', true)
                         ->whereNotIn('id', $readIds)
                         ->count();
                     $view->with('unreadKbCount', $unreadKbCount);

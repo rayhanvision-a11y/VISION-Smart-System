@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class Ticket extends Model
 {
@@ -30,10 +30,10 @@ class Ticket extends Model
     ];
 
     protected $casts = [
-        'resolved_at'        => 'datetime',
-        'due_at'             => 'datetime',
-        'sla_notified_at'    => 'datetime',
-        'csat_submitted_at'  => 'datetime',
+        'resolved_at' => 'datetime',
+        'due_at' => 'datetime',
+        'sla_notified_at' => 'datetime',
+        'csat_submitted_at' => 'datetime',
     ];
 
     /**
@@ -45,7 +45,7 @@ class Ticket extends Model
         $prefix = now()->format('ymd'); // e.g. 260920
 
         // Find the maximum existing numerical sequence for this prefix
-        $keys = static::where('ticket_key', 'like', $prefix . '%')
+        $keys = static::where('ticket_key', 'like', $prefix.'%')
             ->pluck('ticket_key');
 
         $maxSeq = 0;
@@ -59,11 +59,11 @@ class Ticket extends Model
         $nextSeq = $maxSeq + 1;
 
         // Extra safety: guarantee key never collides with any existing key
-        while (static::where('ticket_key', $prefix . str_pad($nextSeq, 3, '0', STR_PAD_LEFT))->exists()) {
+        while (static::where('ticket_key', $prefix.str_pad($nextSeq, 3, '0', STR_PAD_LEFT))->exists()) {
             $nextSeq++;
         }
 
-        return $prefix . str_pad($nextSeq, 3, '0', STR_PAD_LEFT);
+        return $prefix.str_pad($nextSeq, 3, '0', STR_PAD_LEFT);
     }
 
     /**
@@ -72,7 +72,7 @@ class Ticket extends Model
     public function scopeForUser($query, ?User $user = null)
     {
         $user = $user ?? auth()->user();
-        if (!$user) {
+        if (! $user) {
             return $query;
         }
 
@@ -93,16 +93,16 @@ class Ticket extends Model
         //   except Call Center cannot see reseller tickets.
         return $query->where(function ($q) use ($user) {
             $q->where('assigned_to', $user->id)
-              ->orWhere('created_by', $user->id)
-              ->orWhere(function ($unassignedQuery) use ($user) {
-                  $unassignedQuery->whereNull('assigned_to');
+                ->orWhere('created_by', $user->id)
+                ->orWhere(function ($unassignedQuery) use ($user) {
+                    $unassignedQuery->whereNull('assigned_to');
 
-                  if ($user->isCallCenter()) {
-                      $unassignedQuery->whereHas('creator', function ($cq) {
-                          $cq->where('role', '!=', 'reseller');
-                      });
-                  }
-              });
+                    if ($user->isCallCenter()) {
+                        $unassignedQuery->whereHas('creator', function ($cq) {
+                            $cq->where('role', '!=', 'reseller');
+                        });
+                    }
+                });
         });
     }
 
@@ -111,9 +111,24 @@ class Ticket extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    public function user()
+    {
+        return $this->creator();
+    }
+
     public function assignee()
     {
         return $this->belongsTo(User::class, 'assigned_to');
+    }
+
+    public function assignedTo()
+    {
+        return $this->assignee();
+    }
+
+    public function ticketCategory()
+    {
+        return $this->belongsTo(TicketCategory::class, 'category_id');
     }
 
     public function messages()

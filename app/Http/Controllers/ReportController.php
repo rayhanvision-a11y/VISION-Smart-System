@@ -3,34 +3,41 @@
 namespace App\Http\Controllers;
 
 use App\Models\Ticket;
+use App\Models\TicketHistory;
+use App\Models\TicketMessage;
+use App\Models\TicketMessageReaction;
 use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 
 class ReportController extends Controller
 {
     public function index(Request $request)
     {
-        if (!auth()->user()->isAdmin()) abort(403);
+        if (! auth()->user()->isAdmin()) {
+            abort(403);
+        }
 
         [$from, $to] = $this->periodDates($request);
 
-        $tab      = $request->get('tab', 'team');
+        $tab = $request->get('tab', 'team');
         $personId = $request->get('person_id');
 
         // --- Team members (super_admin, admin, noc, call_center) ---
-        $teamUsers   = User::whereIn('role', ['super_admin', 'admin', 'noc', 'call_center'])->orderBy('name')->get();
+        $teamUsers = User::whereIn('role', ['super_admin', 'admin', 'noc', 'call_center'])->orderBy('name')->get();
         $teamMembers = $this->bulkMemberStats($teamUsers, $from, $to);
 
         // --- Resellers ---
         $resellerUsers = User::where('role', 'reseller')->orderBy('name')->get();
-        $resellers     = $this->bulkMemberStats($resellerUsers, $from, $to);
+        $resellers = $this->bulkMemberStats($resellerUsers, $from, $to);
 
         // --- Selected person drill-down ---
         $selectedPerson = null;
-        $personTickets  = collect();
-        $personChartDays   = [];
+        $personTickets = collect();
+        $personChartDays = [];
         $personChartCounts = [];
 
         if ($personId) {
@@ -43,7 +50,7 @@ class ReportController extends Controller
                 ]);
 
                 // Base closure for reuse
-                $baseQuery = fn() => $tab === 'reseller'
+                $baseQuery = fn () => $tab === 'reseller'
                     ? Ticket::where('created_by', $person->id)
                     : Ticket::where('assigned_to', $person->id);
 
@@ -62,14 +69,14 @@ class ReportController extends Controller
                         ->pluck('count', 'date');
 
                     for ($d = $from->copy(); $d->lte($to); $d->addDay()) {
-                        $personChartDays[]   = $d->format('d M');
+                        $personChartDays[] = $d->format('d M');
                         $personChartCounts[] = (int) ($pData[$d->format('Y-m-d')] ?? 0);
                     }
                 } elseif ($diff <= 92) {
                     $cur = $from->copy()->startOfWeek();
                     while ($cur->lte($to)) {
                         $wEnd = $cur->copy()->endOfWeek()->min($to);
-                        $personChartDays[]   = $cur->format('d M');
+                        $personChartDays[] = $cur->format('d M');
                         $personChartCounts[] = $baseQuery()->whereBetween('created_at', [$cur, $wEnd])->count();
                         $cur->addWeek();
                     }
@@ -77,7 +84,7 @@ class ReportController extends Controller
                     $cur = $from->copy()->startOfMonth();
                     while ($cur->lte($to)) {
                         $mEnd = $cur->copy()->endOfMonth()->min($to);
-                        $personChartDays[]   = $cur->format('M Y');
+                        $personChartDays[] = $cur->format('M Y');
                         $personChartCounts[] = $baseQuery()->whereBetween('created_at', [$cur, $mEnd])->count();
                         $cur->addMonth();
                     }
@@ -100,13 +107,13 @@ class ReportController extends Controller
         ", [$from, $to])->first();
 
         $periodStats = [
-            'total'                         => (int) ($periodAgg->total ?? 0),
-            'in_progress'                   => (int) ($periodAgg->in_progress ?? 0),
-            'pending'                       => (int) ($periodAgg->pending ?? 0),
+            'total' => (int) ($periodAgg->total ?? 0),
+            'in_progress' => (int) ($periodAgg->in_progress ?? 0),
+            'pending' => (int) ($periodAgg->pending ?? 0),
             'waiting_for_customer_feedback' => (int) ($periodAgg->waiting_for_customer_feedback ?? 0),
-            'resolved'                      => (int) ($periodAgg->resolved_period ?? 0),
-            'resolved_all_time'             => (int) ($periodAgg->resolved_all_time ?? 0),
-            'avg_resolution_time'          => $this->formatDuration($periodAgg->avg_res),
+            'resolved' => (int) ($periodAgg->resolved_period ?? 0),
+            'resolved_all_time' => (int) ($periodAgg->resolved_all_time ?? 0),
+            'avg_resolution_time' => $this->formatDuration($periodAgg->avg_res),
         ];
 
         // --- Previous period, same length, for trend comparison ---
@@ -114,21 +121,21 @@ class ReportController extends Controller
         // signal) since the KPI value itself is now a static grand total. "resolved" trend
         // compares resolutions (via resolved_at) in both windows, matching the KPI above.
         $periodLengthDays = $from->diffInDays($to) ?: 1;
-        $prevTo   = $from->copy()->subSecond();
+        $prevTo = $from->copy()->subSecond();
         $prevFrom = $prevTo->copy()->subDays($periodLengthDays)->startOfDay();
         $currentCreated = Ticket::whereBetween('created_at', [$from, $to])->count();
         $prevStats = [
-            'created'  => Ticket::whereBetween('created_at', [$prevFrom, $prevTo])->count(),
+            'created' => Ticket::whereBetween('created_at', [$prevFrom, $prevTo])->count(),
             'resolved' => Ticket::whereBetween('resolved_at', [$prevFrom, $prevTo])->where('status', 'resolved')->count(),
         ];
         $trend = [
-            'total'    => $this->pctChange($prevStats['created'], $currentCreated),
+            'total' => $this->pctChange($prevStats['created'], $currentCreated),
             'resolved' => $this->pctChange($prevStats['resolved'], $periodStats['resolved']),
         ];
 
-        $period   = $request->get('period', 'month');
+        $period = $request->get('period', 'month');
         $dateFrom = $from->format('Y-m-d');
-        $dateTo   = $to->format('Y-m-d');
+        $dateTo = $to->format('Y-m-d');
 
         return view('reports.index', compact(
             'tab', 'period', 'dateFrom', 'dateTo',
@@ -141,7 +148,9 @@ class ReportController extends Controller
 
     public function downloadPdf(Request $request)
     {
-        if (!auth()->user()->isAdmin()) abort(403);
+        if (! auth()->user()->isAdmin()) {
+            abort(403);
+        }
         [$from, $to] = $this->periodDates($request);
 
         $personId = $request->get('person_id');
@@ -157,26 +166,30 @@ class ReportController extends Controller
 
             $filters = "Person: {$person->name} ({$person->role}) | Period: {$from->format('d M Y')} — {$to->format('d M Y')}";
             $pdf = Pdf::loadView('reports.pdf', compact('tickets', 'filters', 'person', 'personStats'))->setPaper('a4', 'landscape');
-            $safeName = \Illuminate\Support\Str::slug($person->name);
-            return $pdf->download("report-{$safeName}-" . now()->format('Y-m-d') . ".pdf");
+            $safeName = Str::slug($person->name);
+
+            return $pdf->download("report-{$safeName}-".now()->format('Y-m-d').'.pdf');
         }
 
         $tickets = Ticket::with(['creator', 'assignee'])->whereBetween('created_at', [$from, $to])->latest()->get();
-        $stats   = [
-            'total'       => $tickets->count(),
-            'open'        => $tickets->where('status', 'open')->count(),
+        $stats = [
+            'total' => $tickets->count(),
+            'open' => $tickets->where('status', 'open')->count(),
             'in_progress' => $tickets->where('status', 'in_progress')->count(),
-            'resolved'    => $tickets->where('status', 'resolved')->count(),
-            'closed'      => $tickets->where('status', 'closed')->count(),
+            'resolved' => $tickets->where('status', 'resolved')->count(),
+            'closed' => $tickets->where('status', 'closed')->count(),
         ];
         $filters = "Period: {$from->format('d M Y')} — {$to->format('d M Y')}";
         $pdf = Pdf::loadView('reports.pdf', compact('tickets', 'stats', 'filters'))->setPaper('a4', 'landscape');
-        return $pdf->download('ticket-report-' . now()->format('Y-m-d') . '.pdf');
+
+        return $pdf->download('ticket-report-'.now()->format('Y-m-d').'.pdf');
     }
 
     public function downloadExcel(Request $request)
     {
-        if (!auth()->user()->isAdmin()) abort(403);
+        if (! auth()->user()->isAdmin()) {
+            abort(403);
+        }
         [$from, $to] = $this->periodDates($request);
 
         $personId = $request->get('person_id');
@@ -185,8 +198,9 @@ class ReportController extends Controller
         $csvEscape = function ($value): string {
             $value = (string) $value;
             if ($value !== '' && in_array($value[0], ['=', '+', '-', '@'], true)) {
-                $value = "\t" . $value;
+                $value = "\t".$value;
             }
+
             return $value;
         };
 
@@ -198,8 +212,8 @@ class ReportController extends Controller
                 ->latest()
                 ->get();
 
-            $safeName = \Illuminate\Support\Str::slug($person->name);
-            $filename = "report-{$safeName}-" . now()->format('Y-m-d') . '.csv';
+            $safeName = Str::slug($person->name);
+            $filename = "report-{$safeName}-".now()->format('Y-m-d').'.csv';
 
             $callback = function () use ($tickets, $person, $personStats, $csvEscape, $from, $to) {
                 $h = fopen('php://output', 'w');
@@ -207,7 +221,7 @@ class ReportController extends Controller
                 fputcsv($h, ['Name', $person->name]);
                 fputcsv($h, ['Role', strtoupper(str_replace('_', ' ', $person->role))]);
                 fputcsv($h, ['Email', $person->email]);
-                fputcsv($h, ['Period', $from->format('Y-m-d') . ' to ' . $to->format('Y-m-d')]);
+                fputcsv($h, ['Period', $from->format('Y-m-d').' to '.$to->format('Y-m-d')]);
                 fputcsv($h, []);
                 fputcsv($h, ['METRICS SUMMARY']);
                 fputcsv($h, ['Created Tickets', $personStats['created'] ?? 0]);
@@ -218,14 +232,14 @@ class ReportController extends Controller
                 fputcsv($h, ['Resolved Tickets', $personStats['resolved'] ?? 0]);
                 fputcsv($h, ['In Progress', $personStats['in_progress'] ?? 0]);
                 fputcsv($h, ['Pending', $personStats['pending'] ?? 0]);
-                fputcsv($h, ['Resolution Rate', ($personStats['rate'] ?? 0) . '%']);
+                fputcsv($h, ['Resolution Rate', ($personStats['rate'] ?? 0).'%']);
                 fputcsv($h, ['Avg Resolution Time', $personStats['avg_resolution_time'] ?? 'N/A']);
                 fputcsv($h, []);
                 fputcsv($h, ['TICKETS DETAIL']);
                 fputcsv($h, ['ID', 'Title', 'Category', 'Priority', 'Status', 'Created By', 'Assigned To', 'Created At', 'Resolved At']);
                 foreach ($tickets as $t) {
                     fputcsv($h, [
-                        '#' . $t->id,
+                        '#'.$t->id,
                         $csvEscape($t->title),
                         $csvEscape(ucfirst(str_replace('_', ' ', $t->category))),
                         $csvEscape(ucfirst($t->priority)),
@@ -240,20 +254,20 @@ class ReportController extends Controller
             };
 
             return response()->stream($callback, 200, [
-                'Content-Type'        => 'text/csv',
-                'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+                'Content-Type' => 'text/csv',
+                'Content-Disposition' => 'attachment; filename="'.$filename.'"',
             ]);
         }
 
         $tickets = Ticket::with(['creator', 'assignee', 'popOffice'])->whereBetween('created_at', [$from, $to])->latest()->get();
-        $filename = 'ticket-report-' . now()->format('Y-m-d') . '.csv';
+        $filename = 'ticket-report-'.now()->format('Y-m-d').'.csv';
 
         $callback = function () use ($tickets, $csvEscape) {
             $h = fopen('php://output', 'w');
             fputcsv($h, ['ID', 'Title', 'Category', 'Priority', 'Status', 'Created By', 'Assigned To', 'Created At', 'Resolved At']);
             foreach ($tickets as $t) {
                 fputcsv($h, [
-                    '#' . $t->id,
+                    '#'.$t->id,
                     $csvEscape($t->title),
                     $csvEscape(ucfirst(str_replace('_', ' ', $t->category))),
                     $csvEscape(ucfirst($t->priority)),
@@ -266,18 +280,21 @@ class ReportController extends Controller
             }
             fclose($h);
         };
+
         return response()->stream($callback, 200, [
-            'Content-Type'        => 'text/csv',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
         ]);
     }
 
     // ── helpers ──────────────────────────────────────────────
 
-    private function bulkMemberStats($users, Carbon $from, Carbon $to): \Illuminate\Support\Collection
+    private function bulkMemberStats($users, Carbon $from, Carbon $to): Collection
     {
         $userIds = $users->pluck('id');
-        if ($userIds->isEmpty()) return collect();
+        if ($userIds->isEmpty()) {
+            return collect();
+        }
 
         $assignedStats = Ticket::whereIn('assigned_to', $userIds)
             ->selectRaw("
@@ -313,26 +330,26 @@ class ReportController extends Controller
             ->groupBy('created_by')
             ->pluck('count', 'created_by');
 
-        $transferredStats = \App\Models\TicketHistory::whereIn('changed_by', $userIds)
+        $transferredStats = TicketHistory::whereIn('changed_by', $userIds)
             ->whereBetween('created_at', [$from, $to])
             ->where(function ($q) {
                 $q->whereNotNull('old_assignee_id')
-                  ->orWhereNotNull('new_assignee_id')
-                  ->orWhere('action', 'LIKE', '%assigned%')
-                  ->orWhere('action', 'LIKE', '%reassigned%')
-                  ->orWhere('action', 'LIKE', '%transferred%');
+                    ->orWhereNotNull('new_assignee_id')
+                    ->orWhere('action', 'LIKE', '%assigned%')
+                    ->orWhere('action', 'LIKE', '%reassigned%')
+                    ->orWhere('action', 'LIKE', '%transferred%');
             })
             ->selectRaw('changed_by, COUNT(*) as count')
             ->groupBy('changed_by')
             ->pluck('count', 'changed_by');
 
-        $commentsStats = \App\Models\TicketMessage::whereIn('sender_id', $userIds)
+        $commentsStats = TicketMessage::whereIn('sender_id', $userIds)
             ->whereBetween('created_at', [$from, $to])
             ->selectRaw('sender_id, COUNT(*) as count')
             ->groupBy('sender_id')
             ->pluck('count', 'sender_id');
 
-        $reactionsStats = \App\Models\TicketMessageReaction::whereIn('user_id', $userIds)
+        $reactionsStats = TicketMessageReaction::whereIn('user_id', $userIds)
             ->whereBetween('created_at', [$from, $to])
             ->selectRaw('user_id, COUNT(*) as count')
             ->groupBy('user_id')
@@ -342,17 +359,17 @@ class ReportController extends Controller
             $isReseller = $u->isReseller();
             $stats = $isReseller ? ($createdStats[$u->id] ?? null) : ($assignedStats[$u->id] ?? null);
 
-            $total    = (int) ($stats->total ?? 0);
-            $inProg   = (int) ($stats->in_progress ?? 0);
-            $pending  = (int) ($stats->pending ?? 0);
-            $waiting  = (int) ($stats->waiting ?? 0);
+            $total = (int) ($stats->total ?? 0);
+            $inProg = (int) ($stats->in_progress ?? 0);
+            $pending = (int) ($stats->pending ?? 0);
+            $waiting = (int) ($stats->waiting ?? 0);
             $resolved = (int) ($stats->resolved ?? 0);
 
-            $created     = (int) ($periodCreated[$u->id] ?? 0);
-            $assigned    = $isReseller ? 0 : $total;
+            $created = (int) ($periodCreated[$u->id] ?? 0);
+            $assigned = $isReseller ? 0 : $total;
             $transferred = (int) ($transferredStats[$u->id] ?? 0);
-            $comments    = (int) ($commentsStats[$u->id] ?? 0);
-            $reactions   = (int) ($reactionsStats[$u->id] ?? 0);
+            $comments = (int) ($commentsStats[$u->id] ?? 0);
+            $reactions = (int) ($reactionsStats[$u->id] ?? 0);
 
             $rate = ($isReseller ? $created : $assigned) > 0
                 ? round($resolved / ($isReseller ? $created : $assigned) * 100) : 0;
@@ -360,21 +377,21 @@ class ReportController extends Controller
             $avgMin = $stats ? $stats->avg_res : null;
 
             return [
-                'id'                  => $u->id,
-                'name'                => $u->name,
-                'role'                => $u->role,
-                'avatarUrl'           => $u->avatarUrl(),
-                'total'               => $total,
-                'created'             => $created,
-                'assigned'            => $assigned,
-                'transferred'         => $transferred,
-                'comments'            => $comments,
-                'reactions'           => $reactions,
-                'in_progress'         => $inProg,
-                'pending'             => $pending,
-                'waiting'             => $waiting,
-                'resolved'            => $resolved,
-                'rate'                => $rate,
+                'id' => $u->id,
+                'name' => $u->name,
+                'role' => $u->role,
+                'avatarUrl' => $u->avatarUrl(),
+                'total' => $total,
+                'created' => $created,
+                'assigned' => $assigned,
+                'transferred' => $transferred,
+                'comments' => $comments,
+                'reactions' => $reactions,
+                'in_progress' => $inProg,
+                'pending' => $pending,
+                'waiting' => $waiting,
+                'resolved' => $resolved,
+                'rate' => $rate,
                 'avg_resolution_time' => $this->formatDuration($avgMin),
             ];
         });
@@ -387,21 +404,28 @@ class ReportController extends Controller
 
     private function formatDuration(?float $minutes): string
     {
-        if (!$minutes || $minutes <= 0) return 'N/A';
+        if (! $minutes || $minutes <= 0) {
+            return 'N/A';
+        }
         $m = (int) round($minutes);
         $d = floor($m / 1440);
         $h = floor(($m % 1440) / 60);
         $mins = $m % 60;
-        if ($d > 0) return "{$d}d {$h}h";
-        if ($h > 0) return "{$h}h {$mins}m";
+        if ($d > 0) {
+            return "{$d}d {$h}h";
+        }
+        if ($h > 0) {
+            return "{$h}h {$mins}m";
+        }
+
         return "{$mins}m";
     }
 
     private function buildTrendChart(Carbon $from, Carbon $to): array
     {
-        $days   = [];
+        $days = [];
         $counts = [];
-        $diff   = $from->diffInDays($to);
+        $diff = $from->diffInDays($to);
 
         if ($diff <= 31) {
             $tData = Ticket::whereBetween('created_at', [$from, $to])
@@ -410,22 +434,22 @@ class ReportController extends Controller
                 ->pluck('count', 'date');
 
             for ($d = $from->copy(); $d->lte($to); $d->addDay()) {
-                $days[]   = $d->format('d M');
+                $days[] = $d->format('d M');
                 $counts[] = (int) ($tData[$d->format('Y-m-d')] ?? 0);
             }
         } elseif ($diff <= 92) {
             $cur = $from->copy()->startOfWeek();
             while ($cur->lte($to)) {
-                $wEnd     = $cur->copy()->endOfWeek()->min($to);
-                $days[]   = $cur->format('d M');
+                $wEnd = $cur->copy()->endOfWeek()->min($to);
+                $days[] = $cur->format('d M');
                 $counts[] = Ticket::whereBetween('created_at', [$cur, $wEnd])->count();
                 $cur->addWeek();
             }
         } else {
             $cur = $from->copy()->startOfMonth();
             while ($cur->lte($to)) {
-                $mEnd     = $cur->copy()->endOfMonth()->min($to);
-                $days[]   = $cur->format('M Y');
+                $mEnd = $cur->copy()->endOfMonth()->min($to);
+                $days[] = $cur->format('M Y');
                 $counts[] = Ticket::whereBetween('created_at', [$cur, $mEnd])->count();
                 $cur->addMonth();
             }
@@ -439,6 +463,7 @@ class ReportController extends Controller
         if ($prev === 0) {
             return $current > 0 ? 100.0 : null;
         }
+
         return round((($current - $prev) / $prev) * 100, 1);
     }
 
@@ -447,19 +472,20 @@ class ReportController extends Controller
         $period = $request->get('period', 'month');
         if ($period === 'custom') {
             $from = Carbon::parse($request->get('date_from', now()->subMonth()))->startOfDay();
-            $to   = Carbon::parse($request->get('date_to',   now()))->endOfDay();
+            $to = Carbon::parse($request->get('date_to', now()))->endOfDay();
         } else {
-            $to   = now()->endOfDay();
-            $from = match($period) {
-                'today'   => now()->startOfDay(),
-                'week'    => now()->subWeek()->startOfDay(),
-                'month'   => now()->subMonth()->startOfDay(),
+            $to = now()->endOfDay();
+            $from = match ($period) {
+                'today' => now()->startOfDay(),
+                'week' => now()->subWeek()->startOfDay(),
+                'month' => now()->subMonth()->startOfDay(),
                 '3months' => now()->subMonths(3)->startOfDay(),
                 '6months' => now()->subMonths(6)->startOfDay(),
-                'year'    => now()->subYear()->startOfDay(),
-                default   => now()->subMonth()->startOfDay(),
+                'year' => now()->subYear()->startOfDay(),
+                default => now()->subMonth()->startOfDay(),
             };
         }
+
         return [$from, $to];
     }
 }

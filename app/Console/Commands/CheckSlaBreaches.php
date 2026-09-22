@@ -37,6 +37,7 @@ class CheckSlaBreaches extends Command
 
         if ($breached->isEmpty()) {
             $this->info('No new SLA breaches.');
+
             return self::SUCCESS;
         }
 
@@ -49,8 +50,9 @@ class CheckSlaBreaches extends Command
             // Default to escalating when no policy is configured for this priority yet.
             $shouldEscalate = $policy ? $policy->escalate_on_breach : true;
 
-            if (!$shouldEscalate) {
+            if (! $shouldEscalate) {
                 $ticket->update(['sla_notified_at' => now()]);
+
                 continue;
             }
 

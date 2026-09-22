@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Mail\WelcomeUser;
-use App\Models\Ticket;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -15,7 +14,7 @@ class UserController extends Controller
 {
     private function adminOnly()
     {
-        if (!auth()->user()->isAdmin()) {
+        if (! auth()->user()->isAdmin()) {
             abort(403);
         }
     }
@@ -26,7 +25,7 @@ class UserController extends Controller
 
         $users = User::withCount([
             'tickets as created_count',
-            'assignedTickets as resolved_count' => fn($q) => $q->where('status', 'resolved'),
+            'assignedTickets as resolved_count' => fn ($q) => $q->where('status', 'resolved'),
         ])->paginate(20);
 
         return view('users.index', compact('users'));
@@ -35,6 +34,7 @@ class UserController extends Controller
     public function create()
     {
         $this->adminOnly();
+
         return view('users.create');
     }
 
@@ -50,33 +50,33 @@ class UserController extends Controller
             : 'required|in:admin,noc,supervisor,senior_supervisor,call_center,reseller';
 
         $validated = $request->validate([
-            'name'     => 'required|string|max:255',
-            'email'    => 'required|email|unique:users,email',
-            'role'     => $allowedRoles,
-            'team'     => 'nullable|string|max:100',
-            'phone'    => 'nullable|string|max:20',
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email',
+            'role' => $allowedRoles,
+            'team' => 'nullable|string|max:100',
+            'phone' => 'nullable|string|max:20',
         ]);
 
         $user = User::create([
-            'name'      => $validated['name'],
-            'email'     => $validated['email'],
-            'password'  => Hash::make(Str::random(32)), // temporary; user sets via reset link
-            'role'      => $validated['role'],
-            'team'      => $validated['team'] ?? null,
-            'phone'     => $validated['phone'] ?? null,
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'password' => Hash::make(Str::random(32)), // temporary; user sets via reset link
+            'role' => $validated['role'],
+            'team' => $validated['team'] ?? null,
+            'phone' => $validated['phone'] ?? null,
             'is_active' => true,
         ]);
 
         try {
             Mail::to($user->email)->send(new WelcomeUser($user));
         } catch (\Exception $e) {
-            \Log::warning('Welcome email failed: ' . $e->getMessage());
+            \Log::warning('Welcome email failed: '.$e->getMessage());
         }
 
         try {
             Password::sendResetLink(['email' => $user->email]);
         } catch (\Exception $e) {
-            \Log::warning('Password reset link email failed: ' . $e->getMessage());
+            \Log::warning('Password reset link email failed: '.$e->getMessage());
         }
 
         return redirect()->route('users.index')->with('success', 'User created successfully.');
@@ -86,6 +86,7 @@ class UserController extends Controller
     {
         $this->adminOnly();
         $editUser = User::findOrFail($id);
+
         return view('users.edit', compact('editUser'));
     }
 
@@ -97,7 +98,7 @@ class UserController extends Controller
         $editUser = User::findOrFail($id);
 
         // Non-super-admins cannot edit super_admin accounts
-        if ($editUser->isSuperAdmin() && !$authUser->isSuperAdmin()) {
+        if ($editUser->isSuperAdmin() && ! $authUser->isSuperAdmin()) {
             abort(403, 'Only super admins can edit super admin accounts.');
         }
 
@@ -106,26 +107,26 @@ class UserController extends Controller
             : 'required|in:noc,supervisor,senior_supervisor,call_center,reseller';
 
         $validated = $request->validate([
-            'name'      => 'required|string|max:255',
-            'email'     => 'required|email|unique:users,email,' . $editUser->id,
-            'role'      => $allowedRoles,
-            'team'      => 'nullable|string|max:100',
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,'.$editUser->id,
+            'role' => $allowedRoles,
+            'team' => 'nullable|string|max:100',
             'is_active' => 'boolean',
-            'phone'     => 'nullable|string|max:20',
-            'password'  => 'nullable|min:8',
-            'avatar'    => 'nullable|image|max:2048',
+            'phone' => 'nullable|string|max:20',
+            'password' => 'nullable|min:8',
+            'avatar' => 'nullable|image|max:2048',
         ]);
 
         $data = [
-            'name'      => $validated['name'],
-            'email'     => $validated['email'],
-            'role'      => $validated['role'],
-            'team'      => $validated['team'] ?? null,
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'role' => $validated['role'],
+            'team' => $validated['team'] ?? null,
             'is_active' => $request->boolean('is_active'),
-            'phone'     => $validated['phone'] ?? null,
+            'phone' => $validated['phone'] ?? null,
         ];
 
-        if (!empty($validated['password'])) {
+        if (! empty($validated['password'])) {
             $data['password'] = Hash::make($validated['password']);
         }
 
@@ -144,7 +145,7 @@ class UserController extends Controller
     public function destroy(string $id)
     {
         $authUser = auth()->user();
-        if (!$authUser->isSuperAdmin()) {
+        if (! $authUser->isSuperAdmin()) {
             abort(403);
         }
 
@@ -173,9 +174,9 @@ class UserController extends Controller
         try {
             Password::sendResetLink(['email' => $editUser->email]);
         } catch (\Exception $e) {
-            \Log::warning('Password reset link email failed: ' . $e->getMessage());
+            \Log::warning('Password reset link email failed: '.$e->getMessage());
         }
 
-        return redirect()->route('users.index')->with('success', 'Password reset link sent to ' . $editUser->email . '.');
+        return redirect()->route('users.index')->with('success', 'Password reset link sent to '.$editUser->email.'.');
     }
 }

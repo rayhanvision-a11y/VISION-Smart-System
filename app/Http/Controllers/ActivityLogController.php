@@ -10,7 +10,9 @@ class ActivityLogController extends Controller
 {
     public function index(Request $request)
     {
-        if (!auth()->user()->isAdmin()) abort(403);
+        if (! auth()->user()->isAdmin()) {
+            abort(403);
+        }
 
         $query = ActivityLog::with('user')->latest();
 
@@ -24,7 +26,7 @@ class ActivityLogController extends Controller
             $query->where('user_id', $userId);
         }
 
-        $logs  = $query->paginate(50)->withQueryString();
+        $logs = $query->paginate(50)->withQueryString();
         $users = User::orderBy('name')->get(['id', 'name']);
 
         return view('activity-logs.index', compact('logs', 'users'));
@@ -32,8 +34,11 @@ class ActivityLogController extends Controller
 
     public function clear()
     {
-        if (!auth()->user()->isSuperAdminOnly()) abort(403);
+        if (! auth()->user()->isSuperAdminOnly()) {
+            abort(403);
+        }
         ActivityLog::where('created_at', '<', now()->subDays(90))->delete();
+
         return back()->with('status', 'Logs older than 90 days cleared.');
     }
 }

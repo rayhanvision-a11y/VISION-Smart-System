@@ -25,8 +25,8 @@ class RosterController extends Controller
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhere('role', 'like', "%{$search}%");
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('role', 'like', "%{$search}%");
             });
         }
 
@@ -38,43 +38,43 @@ class RosterController extends Controller
             if ($u->shift_date !== $today) {
                 $u->forceFill([
                     'current_shift' => 'unassigned',
-                    'shift_date'    => $today,
+                    'shift_date' => $today,
                 ])->save();
             }
         }
 
         // Group by current_shift
         $grouped = [
-            'unassigned'  => $allUsers->whereIn('current_shift', ['unassigned', null]),
-            'day_shift'   => $allUsers->where('current_shift', 'day_shift'),
+            'unassigned' => $allUsers->whereIn('current_shift', ['unassigned', null]),
+            'day_shift' => $allUsers->where('current_shift', 'day_shift'),
             'night_shift' => $allUsers->where('current_shift', 'night_shift'),
-            'day_off'     => $allUsers->where('current_shift', 'day_off'),
+            'day_off' => $allUsers->where('current_shift', 'day_off'),
         ];
 
         $shifts = [
-            'unassigned'  => [
+            'unassigned' => [
                 'label' => __('All Staff'),
-                'time'  => __('Unassigned Pool'),
+                'time' => __('Unassigned Pool'),
                 'color' => 'indigo',
-                'icon'  => '👥',
+                'icon' => '👥',
             ],
-            'day_shift'   => [
+            'day_shift' => [
                 'label' => __('Day Shift'),
-                'time'  => '9:00 AM - 6:00 PM',
+                'time' => '9:00 AM - 6:00 PM',
                 'color' => 'amber',
-                'icon'  => '☀️',
+                'icon' => '☀️',
             ],
             'night_shift' => [
                 'label' => __('Night Shift'),
-                'time'  => '2:00 PM - 10:00 PM',
+                'time' => '2:00 PM - 10:00 PM',
                 'color' => 'orange',
-                'icon'  => '🌙',
+                'icon' => '🌙',
             ],
-            'day_off'     => [
+            'day_off' => [
                 'label' => __('Day Off'),
-                'time'  => __('Off Duty'),
+                'time' => __('Off Duty'),
                 'color' => 'violet',
-                'icon'  => '🏖️',
+                'icon' => '🏖️',
             ],
         ];
 
@@ -87,19 +87,19 @@ class RosterController extends Controller
     {
         $request->validate([
             'user_id' => 'required|exists:users,id',
-            'shift'   => 'required|in:unassigned,day_shift,night_shift,day_off',
+            'shift' => 'required|in:unassigned,day_shift,night_shift,day_off',
         ]);
 
         $user = User::findOrFail($request->user_id);
         $user->update([
             'current_shift' => $request->shift,
-            'shift_date'    => now()->toDateString(),
+            'shift_date' => now()->toDateString(),
         ]);
 
         return response()->json([
-            'status'     => 'ok',
-            'user_id'    => $user->id,
-            'shift'      => $user->current_shift,
+            'status' => 'ok',
+            'user_id' => $user->id,
+            'shift' => $user->current_shift,
             'is_on_duty' => $user->isOnDuty(),
         ]);
     }

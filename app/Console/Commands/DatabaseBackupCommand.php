@@ -2,8 +2,8 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
 use App\Services\DatabaseBackupService;
+use Illuminate\Console\Command;
 
 class DatabaseBackupCommand extends Command
 {
@@ -30,10 +30,12 @@ class DatabaseBackupCommand extends Command
 
         try {
             $result = $backupService->createBackup('auto');
-            $this->info("Backup created successfully: {$result['filename']} (" . round($result['size'] / 1024, 2) . " KB)");
+            $this->info("Backup created successfully: {$result['filename']} (".round($result['size'] / 1024, 2).' KB)');
+
             return Command::SUCCESS;
         } catch (\Exception $e) {
-            $this->error("Backup failed: " . $e->getMessage());
+            $this->error('Backup failed: '.$e->getMessage());
+
             return Command::FAILURE;
         }
     }

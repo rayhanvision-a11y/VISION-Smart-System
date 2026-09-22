@@ -16,23 +16,23 @@ class RoleTargetedNoticeTest extends TestCase
         $admin = User::factory()->create(['role' => 'admin']);
 
         $response = $this->actingAs($admin)->post('/settings/notice', [
-            'notice_active'          => '1',
-            'notice_text'            => 'Global Maintenance Tonight',
-            'notice_speed'           => '8',
-            'notice_theme'           => 'danger',
-            'notice_badge'           => 'GLOBAL ALERT',
+            'notice_active' => '1',
+            'notice_text' => 'Global Maintenance Tonight',
+            'notice_speed' => '8',
+            'notice_theme' => 'danger',
+            'notice_badge' => 'GLOBAL ALERT',
 
             'notice_reseller_active' => '1',
-            'notice_reseller_text'   => 'Reseller Bandwidth Update',
-            'notice_reseller_speed'  => '6',
-            'notice_reseller_theme'  => 'warning',
-            'notice_reseller_badge'  => 'RESELLER INFO',
+            'notice_reseller_text' => 'Reseller Bandwidth Update',
+            'notice_reseller_speed' => '6',
+            'notice_reseller_theme' => 'warning',
+            'notice_reseller_badge' => 'RESELLER INFO',
 
-            'notice_noc_active'      => '1',
-            'notice_noc_text'        => 'NOC Switch Config Maintenance',
-            'notice_noc_speed'       => '10',
-            'notice_noc_theme'       => 'indigo',
-            'notice_noc_badge'       => 'NOC DISPATCH',
+            'notice_noc_active' => '1',
+            'notice_noc_text' => 'NOC Switch Config Maintenance',
+            'notice_noc_speed' => '10',
+            'notice_noc_theme' => 'indigo',
+            'notice_noc_badge' => 'NOC DISPATCH',
         ]);
 
         $response->assertRedirect();
@@ -166,7 +166,7 @@ class RoleTargetedNoticeTest extends TestCase
         // Toggle NOC off
         $res = $this->actingAs($admin)->postJson('/settings/notice/toggle', [
             'channel' => 'noc',
-            'active'  => false,
+            'active' => false,
         ]);
         $res->assertStatus(200);
         $res->assertJson(['success' => true, 'channel' => 'noc', 'active' => false]);
@@ -175,7 +175,7 @@ class RoleTargetedNoticeTest extends TestCase
         // Toggle NOC on
         $res2 = $this->actingAs($admin)->postJson('/settings/notice/toggle', [
             'channel' => 'noc',
-            'active'  => true,
+            'active' => true,
         ]);
         $res2->assertStatus(200);
         $res2->assertJson(['success' => true, 'channel' => 'noc', 'active' => true]);
@@ -187,11 +187,11 @@ class RoleTargetedNoticeTest extends TestCase
         $admin = User::factory()->create(['role' => 'admin']);
 
         $response = $this->actingAs($admin)->post('/settings/notice', [
-            'notice_master_active'   => '1',
-            'notice_active'          => '0',
+            'notice_master_active' => '1',
+            'notice_active' => '0',
             'notice_reseller_active' => '0',
-            'notice_noc_active'      => '0',
-            'notice_text_en'         => 'Test',
+            'notice_noc_active' => '0',
+            'notice_text_en' => 'Test',
         ]);
 
         $response->assertRedirect();
@@ -201,4 +201,3 @@ class RoleTargetedNoticeTest extends TestCase
         $this->assertEquals('0', Setting::get('header_notice_noc_active'));
     }
 }
-

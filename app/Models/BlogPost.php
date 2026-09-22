@@ -28,8 +28,8 @@ class BlogPost extends Model
     {
         return [
             'is_published' => 'boolean',
-            'views_count'  => 'integer',
-            'likes_count'  => 'integer',
+            'views_count' => 'integer',
+            'likes_count' => 'integer',
         ];
     }
 
@@ -55,14 +55,20 @@ class BlogPost extends Model
 
     public function userReaction(?User $user): ?string
     {
-        if (!$user) return null;
+        if (! $user) {
+            return null;
+        }
         $like = $this->likes()->where('user_id', $user->id)->first();
+
         return $like ? ($like->reaction_type ?? 'like') : null;
     }
 
     public function isLikedBy(?User $user): bool
     {
-        if (!$user) return false;
+        if (! $user) {
+            return false;
+        }
+
         return $this->likes()->where('user_id', $user->id)->exists();
     }
 
@@ -78,7 +84,7 @@ class BlogPost extends Model
         $url = trim($this->youtube_video_url);
 
         if (preg_match('/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/', $url, $matches)) {
-            return 'https://www.youtube.com/embed/' . $matches[1];
+            return 'https://www.youtube.com/embed/'.$matches[1];
         }
 
         return null;
@@ -88,7 +94,8 @@ class BlogPost extends Model
     {
         $slug = Str::slug($title);
         $count = static::where('slug', 'LIKE', "{$slug}%")->count();
-        return $count ? "{$slug}-" . ($count + 1) : $slug;
+
+        return $count ? "{$slug}-".($count + 1) : $slug;
     }
 
     public function getYoutubeThumbnailUrlAttribute(): ?string
@@ -97,8 +104,9 @@ class BlogPost extends Model
             return null;
         }
         if (preg_match('/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/', trim($this->youtube_video_url), $matches)) {
-            return 'https://img.youtube.com/vi/' . $matches[1] . '/maxresdefault.jpg';
+            return 'https://img.youtube.com/vi/'.$matches[1].'/maxresdefault.jpg';
         }
+
         return null;
     }
 
@@ -108,8 +116,10 @@ class BlogPost extends Model
             if (str_starts_with($this->featured_image, 'http://') || str_starts_with($this->featured_image, 'https://')) {
                 return $this->featured_image;
             }
-            return asset('storage/' . $this->featured_image);
+
+            return asset('storage/'.$this->featured_image);
         }
+
         return $this->youtube_thumbnail_url;
     }
 }

@@ -2,8 +2,8 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 return new class extends Migration
@@ -37,15 +37,15 @@ return new class extends Migration
 
         foreach ($defaults as $name) {
             $slug = Str::slug($name);
-            if (!$slug) {
+            if (! $slug) {
                 $slug = Str::slug(str_replace(' ', '-', $name));
             }
-            if (!$slug) {
-                $slug = 'cat-' . md5($name);
+            if (! $slug) {
+                $slug = 'cat-'.md5($name);
             }
             DB::table('kb_categories')->insertOrIgnore([
-                'name'       => $name,
-                'slug'       => $slug,
+                'name' => $name,
+                'slug' => $slug,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);

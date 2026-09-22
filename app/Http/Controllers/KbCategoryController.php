@@ -10,7 +10,7 @@ class KbCategoryController extends Controller
 {
     private function adminOnly()
     {
-        if (!auth()->user()->isAdmin()) {
+        if (! auth()->user()->isAdmin()) {
             abort(403);
         }
     }
@@ -19,6 +19,7 @@ class KbCategoryController extends Controller
     {
         $this->adminOnly();
         $categories = KbCategory::orderBy('name')->get();
+
         return response()->json($categories);
     }
 
@@ -27,13 +28,13 @@ class KbCategoryController extends Controller
         $this->adminOnly();
 
         $validated = $request->validate([
-            'name'        => 'required|string|max:100|unique:kb_categories,name',
+            'name' => 'required|string|max:100|unique:kb_categories,name',
             'description' => 'nullable|string|max:500',
         ]);
 
         $category = KbCategory::create([
-            'name'        => $validated['name'],
-            'slug'        => KbCategory::generateSlug($validated['name']),
+            'name' => $validated['name'],
+            'slug' => KbCategory::generateSlug($validated['name']),
             'description' => $validated['description'] ?? null,
         ]);
 
@@ -49,7 +50,7 @@ class KbCategoryController extends Controller
         $this->adminOnly();
 
         $validated = $request->validate([
-            'name'        => 'required|string|max:100|unique:kb_categories,name,' . $category->id,
+            'name' => 'required|string|max:100|unique:kb_categories,name,'.$category->id,
             'description' => 'nullable|string|max:500',
         ]);
 
@@ -57,8 +58,8 @@ class KbCategoryController extends Controller
         $newName = $validated['name'];
 
         $category->update([
-            'name'        => $newName,
-            'slug'        => KbCategory::generateSlug($newName),
+            'name' => $newName,
+            'slug' => KbCategory::generateSlug($newName),
             'description' => $validated['description'] ?? null,
         ]);
 

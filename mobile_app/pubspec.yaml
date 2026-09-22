@@ -1,0 +1,27 @@
+name: vision_smart_system
+description: "VISION Smart System Helpdesk & Ticket Management Mobile Application"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  http: ^1.2.1
+  shared_preferences: ^2.2.3
+  firebase_core: ^2.30.1
+  firebase_database: ^10.5.1
+  firebase_messaging: ^14.9.1
+  intl: ^0.19.0
+  google_fonts: ^6.2.1
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true

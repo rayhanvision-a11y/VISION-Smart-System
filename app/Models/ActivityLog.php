@@ -27,11 +27,11 @@ class ActivityLog extends Model
     ): void {
         try {
             static::create([
-                'user_id'    => auth()->id(),
-                'action'     => $action,
+                'user_id' => auth()->id(),
+                'action' => $action,
                 'model_type' => $model ? class_basename($model) : null,
-                'model_id'   => $model?->getKey(),
-                'description'=> $description,
+                'model_id' => $model?->getKey(),
+                'description' => $description,
                 'properties' => empty($properties) ? null : $properties,
                 'ip_address' => request()->ip(),
                 'user_agent' => substr(request()->userAgent() ?? '', 0, 300),

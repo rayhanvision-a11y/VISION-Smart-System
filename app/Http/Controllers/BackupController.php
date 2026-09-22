@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Services\DatabaseBackupService;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 
 class BackupController extends Controller
@@ -22,9 +22,10 @@ class BackupController extends Controller
     {
         try {
             $result = $this->backupService->createBackup();
-            return redirect()->back()->with('success', __("Database backup created successfully: :filename", ['filename' => $result['filename']]));
+
+            return redirect()->back()->with('success', __('Database backup created successfully: :filename', ['filename' => $result['filename']]));
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', __("Failed to create database backup: :msg", ['msg' => $e->getMessage()]));
+            return redirect()->back()->with('error', __('Failed to create database backup: :msg', ['msg' => $e->getMessage()]));
         }
     }
 
@@ -35,9 +36,9 @@ class BackupController extends Controller
     {
         // Sanitize filename to prevent directory traversal
         $filename = basename($filename);
-        $filepath = DatabaseBackupService::getBackupDir() . DIRECTORY_SEPARATOR . $filename;
+        $filepath = DatabaseBackupService::getBackupDir().DIRECTORY_SEPARATOR.$filename;
 
-        if (!File::exists($filepath)) {
+        if (! File::exists($filepath)) {
             return redirect()->back()->with('error', __('Backup file not found.'));
         }
 
@@ -52,17 +53,18 @@ class BackupController extends Controller
     public function restore(Request $request, string $filename)
     {
         $filename = basename($filename);
-        $filepath = DatabaseBackupService::getBackupDir() . DIRECTORY_SEPARATOR . $filename;
+        $filepath = DatabaseBackupService::getBackupDir().DIRECTORY_SEPARATOR.$filename;
 
-        if (!File::exists($filepath)) {
+        if (! File::exists($filepath)) {
             return redirect()->back()->with('error', __('Backup file not found.'));
         }
 
         try {
             $this->backupService->restoreBackup($filepath);
-            return redirect()->back()->with('success', __("Database successfully restored from :filename", ['filename' => $filename]));
+
+            return redirect()->back()->with('success', __('Database successfully restored from :filename', ['filename' => $filename]));
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', __("Database restore failed: :msg", ['msg' => $e->getMessage()]));
+            return redirect()->back()->with('error', __('Database restore failed: :msg', ['msg' => $e->getMessage()]));
         }
     }
 
@@ -72,10 +74,11 @@ class BackupController extends Controller
     public function destroy(string $filename)
     {
         $filename = basename($filename);
-        $filepath = DatabaseBackupService::getBackupDir() . DIRECTORY_SEPARATOR . $filename;
+        $filepath = DatabaseBackupService::getBackupDir().DIRECTORY_SEPARATOR.$filename;
 
         if (File::exists($filepath)) {
             File::delete($filepath);
+
             return redirect()->back()->with('success', __('Backup file deleted successfully.'));
         }
 

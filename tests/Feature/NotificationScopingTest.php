@@ -5,7 +5,6 @@ namespace Tests\Feature;
 use App\Models\Notification;
 use App\Models\Ticket;
 use App\Models\User;
-use App\Services\NotificationService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -23,10 +22,10 @@ class NotificationScopingTest extends TestCase
         $reseller = User::factory()->create(['role' => 'reseller']);
 
         $response = $this->actingAs($creator)->post('/tickets', [
-            'title'       => 'Assigned Ticket Test',
+            'title' => 'Assigned Ticket Test',
             'description' => 'Testing notification scoping on assigned ticket',
-            'category'    => 'Fiber Issue',
-            'priority'    => 'medium',
+            'category' => 'Fiber Issue',
+            'priority' => 'medium',
             'assigned_to' => $assignedNoc->id,
         ]);
 
@@ -35,31 +34,31 @@ class NotificationScopingTest extends TestCase
 
         // Super Admin should have received notification
         $this->assertDatabaseHas('notifications', [
-            'user_id'   => $superAdmin->id,
+            'user_id' => $superAdmin->id,
             'ticket_id' => $ticket->id,
         ]);
 
         // Assigned NOC should have received notification
         $this->assertDatabaseHas('notifications', [
-            'user_id'   => $assignedNoc->id,
+            'user_id' => $assignedNoc->id,
             'ticket_id' => $ticket->id,
         ]);
 
         // Other NOC must NOT have received notification
         $this->assertDatabaseMissing('notifications', [
-            'user_id'   => $otherNoc->id,
+            'user_id' => $otherNoc->id,
             'ticket_id' => $ticket->id,
         ]);
 
         // Other Admin must NOT have received notification
         $this->assertDatabaseMissing('notifications', [
-            'user_id'   => $otherAdmin->id,
+            'user_id' => $otherAdmin->id,
             'ticket_id' => $ticket->id,
         ]);
 
         // Reseller must NOT have received notification
         $this->assertDatabaseMissing('notifications', [
-            'user_id'   => $reseller->id,
+            'user_id' => $reseller->id,
             'ticket_id' => $ticket->id,
         ]);
     }
@@ -72,10 +71,10 @@ class NotificationScopingTest extends TestCase
         $superAdmin = User::factory()->create(['role' => 'super_admin']);
 
         $response = $this->actingAs($reseller)->post('/tickets', [
-            'title'       => 'Reseller Customer Outage',
+            'title' => 'Reseller Customer Outage',
             'description' => 'Link is down',
-            'category'    => 'Link Down',
-            'priority'    => 'high',
+            'category' => 'Link Down',
+            'priority' => 'high',
         ]);
 
         $response->assertRedirect();
@@ -83,17 +82,17 @@ class NotificationScopingTest extends TestCase
 
         // Call Center cannot see reseller tickets, so they must NOT get a notification
         $this->assertDatabaseMissing('notifications', [
-            'user_id'   => $callCenter->id,
+            'user_id' => $callCenter->id,
             'ticket_id' => $ticket->id,
         ]);
 
         // NOC and Super Admin can see unassigned reseller tickets
         $this->assertDatabaseHas('notifications', [
-            'user_id'   => $noc->id,
+            'user_id' => $noc->id,
             'ticket_id' => $ticket->id,
         ]);
         $this->assertDatabaseHas('notifications', [
-            'user_id'   => $superAdmin->id,
+            'user_id' => $superAdmin->id,
             'ticket_id' => $ticket->id,
         ]);
     }
@@ -106,22 +105,22 @@ class NotificationScopingTest extends TestCase
 
         // Ticket assigned to Bob
         $ticket = Ticket::create([
-            'ticket_key'  => '260920555',
-            'title'       => 'Bob Ticket',
+            'ticket_key' => '260920555',
+            'title' => 'Bob Ticket',
             'description' => 'Only for bob and superadmin',
-            'category'    => 'Fiber',
-            'priority'    => 'medium',
-            'status'      => 'in_progress',
-            'created_by'  => $superAdmin->id,
+            'category' => 'Fiber',
+            'priority' => 'medium',
+            'status' => 'in_progress',
+            'created_by' => $superAdmin->id,
             'assigned_to' => $nocBob->id,
         ]);
 
         // Suppose a legacy or rogue notification exists in DB for Alice
         Notification::create([
-            'user_id'   => $nocAlice->id,
+            'user_id' => $nocAlice->id,
             'ticket_id' => $ticket->id,
-            'message'   => 'Secret ticket notification',
-            'is_read'   => false,
+            'message' => 'Secret ticket notification',
+            'is_read' => false,
         ]);
 
         // Alice cannot see Bob's ticket
@@ -140,10 +139,10 @@ class NotificationScopingTest extends TestCase
 
         // But for SuperAdmin, if a notification is created for them, it appears
         Notification::create([
-            'user_id'   => $superAdmin->id,
+            'user_id' => $superAdmin->id,
             'ticket_id' => $ticket->id,
-            'message'   => 'Super admin notification',
-            'is_read'   => false,
+            'message' => 'Super admin notification',
+            'is_read' => false,
         ]);
 
         $response = $this->actingAs($superAdmin)->getJson('/notifications/unread-count');
@@ -158,19 +157,19 @@ class NotificationScopingTest extends TestCase
 
         // Ticket created by reseller
         $ticket = Ticket::create([
-            'ticket_key'  => '260920556',
-            'title'       => 'Reseller Ticket for Private Chat',
+            'ticket_key' => '260920556',
+            'title' => 'Reseller Ticket for Private Chat',
             'description' => 'Test private msg',
-            'category'    => 'Fiber',
-            'priority'    => 'medium',
-            'status'      => 'in_progress',
-            'created_by'  => $reseller->id,
+            'category' => 'Fiber',
+            'priority' => 'medium',
+            'status' => 'in_progress',
+            'created_by' => $reseller->id,
             'assigned_to' => $noc->id,
         ]);
 
         // NOC posts an internal private message
         $response = $this->actingAs($noc)->postJson("/tickets/{$ticket->id}/messages", [
-            'message'    => 'Internal NOC investigation note',
+            'message' => 'Internal NOC investigation note',
             'is_private' => 1,
         ]);
 
@@ -178,7 +177,7 @@ class NotificationScopingTest extends TestCase
 
         // Reseller should NOT receive any notification about this private note
         $this->assertDatabaseMissing('notifications', [
-            'user_id'   => $reseller->id,
+            'user_id' => $reseller->id,
             'ticket_id' => $ticket->id,
         ]);
     }

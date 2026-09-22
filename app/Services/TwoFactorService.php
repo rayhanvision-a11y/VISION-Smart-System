@@ -9,6 +9,7 @@ namespace App\Services;
 class TwoFactorService
 {
     private const DIGITS = 6;
+
     private const PERIOD = 30;
 
     public static function generateSecret(int $length = 20): string
@@ -19,14 +20,14 @@ class TwoFactorService
     public static function generateRecoveryCodes(int $count = 8): array
     {
         return collect(range(1, $count))
-            ->map(fn () => strtoupper(bin2hex(random_bytes(4))) . '-' . strtoupper(bin2hex(random_bytes(4))))
+            ->map(fn () => strtoupper(bin2hex(random_bytes(4))).'-'.strtoupper(bin2hex(random_bytes(4))))
             ->all();
     }
 
     public static function qrCodeUrl(string $secret, string $email, string $issuer = 'ISP Tickets'): string
     {
         $label = rawurlencode("{$issuer}:{$email}");
-        $otpauth = "otpauth://totp/{$label}?secret={$secret}&issuer=" . rawurlencode($issuer) . "&digits=" . self::DIGITS . "&period=" . self::PERIOD;
+        $otpauth = "otpauth://totp/{$label}?secret={$secret}&issuer=".rawurlencode($issuer).'&digits='.self::DIGITS.'&period='.self::PERIOD;
 
         // Rendered client-side via a QR library; this URL is what gets encoded.
         return $otpauth;
@@ -35,7 +36,7 @@ class TwoFactorService
     public static function verify(string $secret, string $code, int $window = 1): bool
     {
         $code = preg_replace('/\s+/', '', $code);
-        if (!preg_match('/^\d{6}$/', $code)) {
+        if (! preg_match('/^\d{6}$/', $code)) {
             return false;
         }
 
@@ -53,7 +54,7 @@ class TwoFactorService
     private static function generateCode(string $secret, int $timeStep): string
     {
         $key = self::base32Decode($secret);
-        $time = pack('N*', 0) . pack('N*', $timeStep);
+        $time = pack('N*', 0).pack('N*', $timeStep);
 
         $hash = hash_hmac('sha1', $time, $key, true);
         $offset = ord($hash[strlen($hash) - 1]) & 0x0F;
@@ -66,6 +67,7 @@ class TwoFactorService
         );
 
         $code = $truncated % (10 ** self::DIGITS);
+
         return str_pad((string) $code, self::DIGITS, '0', STR_PAD_LEFT);
     }
 
@@ -94,13 +96,17 @@ class TwoFactorService
 
         foreach (str_split($secret) as $char) {
             $pos = strpos($alphabet, $char);
-            if ($pos === false) continue;
+            if ($pos === false) {
+                continue;
+            }
             $binaryString .= str_pad(decbin($pos), 5, '0', STR_PAD_LEFT);
         }
 
         $bytes = '';
         foreach (str_split($binaryString, 8) as $chunk) {
-            if (strlen($chunk) < 8) continue;
+            if (strlen($chunk) < 8) {
+                continue;
+            }
             $bytes .= chr(bindec($chunk));
         }
 

@@ -14,11 +14,11 @@ class TicketMessage extends Model
 
     public function canViewPrivate(?User $user = null): bool
     {
-        if (!$this->is_private) {
+        if (! $this->is_private) {
             return true;
         }
 
-        if (!$user) {
+        if (! $user) {
             return false;
         }
 
@@ -33,24 +33,24 @@ class TicketMessage extends Model
         }
 
         // Author/Sender of the private comment
-        if ((int)$this->sender_id === (int)$user->id) {
+        if ((int) $this->sender_id === (int) $user->id) {
             return true;
         }
 
         $ticket = $this->ticket;
         if ($ticket) {
             // Ticket Creator / Assigner
-            if ((int)$ticket->created_by === (int)$user->id) {
+            if ((int) $ticket->created_by === (int) $user->id) {
                 return true;
             }
             // Ticket Assignee
-            if ((int)$ticket->assigned_to === (int)$user->id) {
+            if ((int) $ticket->assigned_to === (int) $user->id) {
                 return true;
             }
         }
 
         // Mentioned users (@mention chip with data-id="X")
-        if (!empty($this->message) && preg_match('/data-id="' . $user->id . '"/', $this->message)) {
+        if (! empty($this->message) && preg_match('/data-id="'.$user->id.'"/', $this->message)) {
             return true;
         }
 
@@ -88,7 +88,7 @@ class TicketMessage extends Model
         $summary = [];
         foreach ($this->reactions as $reaction) {
             $emoji = $reaction->emoji;
-            if (!isset($summary[$emoji])) {
+            if (! isset($summary[$emoji])) {
                 $summary[$emoji] = ['count' => 0, 'reacted' => false, 'names' => []];
             }
             $summary[$emoji]['count']++;
@@ -97,6 +97,7 @@ class TicketMessage extends Model
                 $summary[$emoji]['reacted'] = true;
             }
         }
+
         return $summary;
     }
 
@@ -114,7 +115,7 @@ class TicketMessage extends Model
 
         static $usersSorted = null;
         if ($usersSorted === null) {
-            $usersSorted = User::all(['id', 'name'])->sortByDesc(fn($u) => strlen($u->name));
+            $usersSorted = User::all(['id', 'name'])->sortByDesc(fn ($u) => strlen($u->name));
         }
 
         $result = '';
@@ -132,8 +133,8 @@ class TicketMessage extends Model
                 foreach ($usersSorted as $user) {
                     $safeName = preg_quote(e($user->name), '/');
                     $clean = preg_replace(
-                        '/@' . $safeName . '\b/i',
-                        '<span class="mention-chip" data-id="' . $user->id . '">@' . e($user->name) . '</span>',
+                        '/@'.$safeName.'\b/i',
+                        '<span class="mention-chip" data-id="'.$user->id.'">@'.e($user->name).'</span>',
                         $clean
                     );
                 }
@@ -146,13 +147,15 @@ class TicketMessage extends Model
 
     public function getImageUrlsAttribute(): array
     {
-        if (!$this->image_path) {
+        if (! $this->image_path) {
             return [];
         }
         if (str_starts_with($this->image_path, '[')) {
             $paths = json_decode($this->image_path, true) ?: [];
-            return array_map(fn($p) => asset('storage/' . $p), $paths);
+
+            return array_map(fn ($p) => asset('storage/'.$p), $paths);
         }
-        return [asset('storage/' . $this->image_path)];
+
+        return [asset('storage/'.$this->image_path)];
     }
 }

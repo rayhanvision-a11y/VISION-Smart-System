@@ -31,17 +31,18 @@ class TicketNote extends Model
 
         static $usersSorted = null;
         if ($usersSorted === null) {
-            $usersSorted = User::all(['id', 'name'])->sortByDesc(fn($u) => strlen($u->name));
+            $usersSorted = User::all(['id', 'name'])->sortByDesc(fn ($u) => strlen($u->name));
         }
 
         foreach ($usersSorted as $user) {
             $name = preg_quote($user->name, '/');
-            $pattern = '/(<span class="mention-chip"[^>]*>.*?<\/span>)|@(' . $name . ')\b/i';
-            $note = preg_replace_callback($pattern, function($m) use ($user) {
-                if (!empty($m[1])) {
+            $pattern = '/(<span class="mention-chip"[^>]*>.*?<\/span>)|@('.$name.')\b/i';
+            $note = preg_replace_callback($pattern, function ($m) use ($user) {
+                if (! empty($m[1])) {
                     return $m[1];
                 }
-                return '<span class="mention-chip" data-id="' . $user->id . '">@' . e($user->name) . '</span>';
+
+                return '<span class="mention-chip" data-id="'.$user->id.'">@'.e($user->name).'</span>';
             }, $note);
         }
 

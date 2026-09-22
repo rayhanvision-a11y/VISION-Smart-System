@@ -25,16 +25,16 @@ class Notification extends Model
     public function scopeForUser($query, ?User $user = null)
     {
         $user = $user ?? auth()->user();
-        if (!$user) {
+        if (! $user) {
             return $query;
         }
 
         return $query->where('user_id', $user->id)
             ->where(function ($q) use ($user) {
                 $q->whereNull('ticket_id')
-                  ->orWhereHas('ticket', function ($tq) use ($user) {
-                      $tq->forUser($user);
-                  });
+                    ->orWhereHas('ticket', function ($tq) use ($user) {
+                        $tq->forUser($user);
+                    });
             });
     }
 }

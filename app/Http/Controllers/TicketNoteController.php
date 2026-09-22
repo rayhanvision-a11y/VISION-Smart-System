@@ -18,10 +18,10 @@ class TicketNoteController extends Controller
         $request->validate(['note' => 'required|string']);
 
         TicketNote::create([
-            'ticket_id'   => $ticket->id,
-            'user_id'     => $user->id,
-            'note'        => $request->note,
-            'type'        => 'internal',
+            'ticket_id' => $ticket->id,
+            'user_id' => $user->id,
+            'note' => $request->note,
+            'type' => 'internal',
             'is_internal' => true,
         ]);
 

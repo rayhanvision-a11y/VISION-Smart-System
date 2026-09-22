@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Notification;
-use Illuminate\Http\Request;
 
 class NotificationController extends Controller
 {
@@ -32,6 +31,7 @@ class NotificationController extends Controller
         if ($notification->ticket_id) {
             return redirect()->route('tickets.show', $notification->ticket_id);
         }
+
         return back();
     }
 
@@ -56,14 +56,14 @@ class NotificationController extends Controller
             ->latest()
             ->take(10)
             ->get()
-            ->map(fn($n) => [
-                'id'      => $n->id,
+            ->map(fn ($n) => [
+                'id' => $n->id,
                 'message' => $n->message,
-                'url'     => $n->ticket_id ? route('tickets.show', $n->ticket_id) : route('notifications.index'),
+                'url' => $n->ticket_id ? route('tickets.show', $n->ticket_id) : route('notifications.index'),
             ]);
 
         return response()->json([
-            'count'  => $count,
+            'count' => $count,
             'latest' => $latest,
         ])->header('Cache-Control', 'no-store');
     }
@@ -87,11 +87,11 @@ class NotificationController extends Controller
         } else {
             foreach ($notifications as $n) {
                 $dot = $n->is_read ? '' : '<span class="w-2 h-2 rounded-full bg-indigo-500 flex-shrink-0 mt-1.5"></span>';
-                $bg  = $n->is_read ? 'bg-white' : 'bg-indigo-50';
-                $fw  = $n->is_read ? '' : 'font-semibold';
+                $bg = $n->is_read ? 'bg-white' : 'bg-indigo-50';
+                $fw = $n->is_read ? '' : 'font-semibold';
                 $time = $n->created_at->diffForHumans();
                 $link = $n->ticket_id
-                    ? '<form method="POST" action="' . route('notifications.read', $n->id) . '" class="mt-1"><input type="hidden" name="_token" value="' . csrf_token() . '"><button type="submit" class="text-xs text-indigo-600 hover:underline">View ticket →</button></form>'
+                    ? '<form method="POST" action="'.route('notifications.read', $n->id).'" class="mt-1"><input type="hidden" name="_token" value="'.csrf_token().'"><button type="submit" class="text-xs text-indigo-600 hover:underline">View ticket →</button></form>'
                     : '';
                 $html .= "<div class=\"flex gap-3 px-4 py-3 {$bg}\">
                     <div class=\"flex-1 min-w-0\">

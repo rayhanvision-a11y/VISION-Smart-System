@@ -27,23 +27,23 @@ class CustomMenuLinkController extends Controller
         $this->authorizeAdmin();
 
         $validated = $request->validate([
-            'name'            => 'required|string|max:255',
-            'url'             => 'required|string|max:500',
-            'icon'            => 'nullable|string|max:100',
-            'is_important'    => 'nullable|boolean',
-            'is_active'       => 'nullable|boolean',
+            'name' => 'required|string|max:255',
+            'url' => 'required|string|max:500',
+            'icon' => 'nullable|string|max:100',
+            'is_important' => 'nullable|boolean',
+            'is_active' => 'nullable|boolean',
             'open_in_new_tab' => 'nullable|boolean',
-            'sort_order'      => 'nullable|integer',
+            'sort_order' => 'nullable|integer',
         ]);
 
         CustomMenuLink::create([
-            'name'            => $validated['name'],
-            'url'             => $validated['url'],
-            'icon'            => $validated['icon'] ?? 'link',
-            'is_important'    => $request->has('is_important') ? (bool) $request->is_important : false,
-            'is_active'       => $request->has('is_active') ? (bool) $request->is_active : true,
+            'name' => $validated['name'],
+            'url' => $validated['url'],
+            'icon' => $validated['icon'] ?? 'link',
+            'is_important' => $request->has('is_important') ? (bool) $request->is_important : false,
+            'is_active' => $request->has('is_active') ? (bool) $request->is_active : true,
             'open_in_new_tab' => $request->has('open_in_new_tab') ? (bool) $request->open_in_new_tab : true,
-            'sort_order'      => $validated['sort_order'] ?? 0,
+            'sort_order' => $validated['sort_order'] ?? 0,
         ]);
 
         return redirect()->route('custom-menu-links.index')->with('success', __('Custom menu link created successfully!'));
@@ -57,23 +57,23 @@ class CustomMenuLinkController extends Controller
         $this->authorizeAdmin();
 
         $validated = $request->validate([
-            'name'            => 'required|string|max:255',
-            'url'             => 'required|string|max:500',
-            'icon'            => 'nullable|string|max:100',
-            'is_important'    => 'nullable|boolean',
-            'is_active'       => 'nullable|boolean',
+            'name' => 'required|string|max:255',
+            'url' => 'required|string|max:500',
+            'icon' => 'nullable|string|max:100',
+            'is_important' => 'nullable|boolean',
+            'is_active' => 'nullable|boolean',
             'open_in_new_tab' => 'nullable|boolean',
-            'sort_order'      => 'nullable|integer',
+            'sort_order' => 'nullable|integer',
         ]);
 
         $customMenuLink->update([
-            'name'            => $validated['name'],
-            'url'             => $validated['url'],
-            'icon'            => $validated['icon'] ?? 'link',
-            'is_important'    => $request->boolean('is_important'),
-            'is_active'       => $request->boolean('is_active'),
+            'name' => $validated['name'],
+            'url' => $validated['url'],
+            'icon' => $validated['icon'] ?? 'link',
+            'is_important' => $request->boolean('is_important'),
+            'is_active' => $request->boolean('is_active'),
             'open_in_new_tab' => $request->boolean('open_in_new_tab'),
-            'sort_order'      => $validated['sort_order'] ?? 0,
+            'sort_order' => $validated['sort_order'] ?? 0,
         ]);
 
         return redirect()->route('custom-menu-links.index')->with('success', __('Custom menu link updated successfully!'));
@@ -87,12 +87,12 @@ class CustomMenuLinkController extends Controller
         $this->authorizeAdmin();
 
         $customMenuLink->update([
-            'is_important' => !$customMenuLink->is_important,
+            'is_important' => ! $customMenuLink->is_important,
         ]);
 
         if (request()->ajax() || request()->wantsJson()) {
             return response()->json([
-                'success'      => true,
+                'success' => true,
                 'is_important' => $customMenuLink->is_important,
             ]);
         }
@@ -108,12 +108,12 @@ class CustomMenuLinkController extends Controller
         $this->authorizeAdmin();
 
         $customMenuLink->update([
-            'is_active' => !$customMenuLink->is_active,
+            'is_active' => ! $customMenuLink->is_active,
         ]);
 
         if (request()->ajax() || request()->wantsJson()) {
             return response()->json([
-                'success'   => true,
+                'success' => true,
                 'is_active' => $customMenuLink->is_active,
             ]);
         }
@@ -138,7 +138,7 @@ class CustomMenuLinkController extends Controller
      */
     private function authorizeAdmin(): void
     {
-        if (!auth()->user()->isSuperAdminOnly()) {
+        if (! auth()->user()->isSuperAdminOnly()) {
             abort(403, 'Unauthorized access. Only Super Admin can manage Important URLs.');
         }
     }

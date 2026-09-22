@@ -1,15 +1,15 @@
 <x-app-layout>
     {{-- Page Header --}}
-    <div class="flex items-center justify-between mb-4">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
         <div>
-            <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100">
+            <h1 class="text-xl sm:text-2xl font-bold text-slate-800 dark:text-slate-100">
                 {{ (request('assigned') === 'me' || auth()->user()->isReseller()) ? __('My Tickets') : __('All Tickets') }}
             </h1>
             <p class="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
                 {{ trans_choice(':count ticket found|:count tickets found', $tickets->total(), ['count' => $tickets->total()]) }}
             </p>
         </div>
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
             {{-- View Switcher --}}
             <div class="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
                 <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-white dark:bg-slate-700 shadow-sm text-slate-700 dark:text-slate-100 text-sm font-medium">

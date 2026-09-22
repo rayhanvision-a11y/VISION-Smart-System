@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use Carbon\Carbon;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
@@ -22,7 +23,7 @@ class SetLocale
 
         if (in_array($locale, self::SUPPORTED, true)) {
             App::setLocale($locale);
-            \Carbon\Carbon::setLocale($locale);
+            Carbon::setLocale($locale);
         }
 
         if ($tz = $request->user()?->timezone) {

@@ -1,0 +1,55 @@
+import 'package:flutter/material.dart';
+
+class AppConfig {
+  static const String appName = 'VISION Smart System';
+  
+  // Base URL for Laravel Backend API
+  // Change to your production domain (e.g. https://portal.visiontech.com.bd/api)
+  static const String apiBaseUrl = 'https://portal.visiontech.com.bd/api';
+  
+  // Firebase Realtime Database URL
+  static const String firebaseDbUrl = 'https://vision-smart-systeam-default-rtdb.firebaseio.com';
+
+  // App Theme Colors
+  static const Color primaryColor = Color(0xFF2563EB); // Modern Royal Blue
+  static const Color primaryDark = Color(0xFF1D4ED8);
+  static const Color accentColor = Color(0xFF06B6D4);
+  static const Color backgroundLight = Color(0xFFF8FAFC);
+  static const Color cardLight = Colors.white;
+  static const Color backgroundDark = Color(0xFF0F172A);
+  static const Color cardDark = Color(0xFF1E293B);
+
+  // Status Colors
+  static Color statusColor(String? status) {
+    switch (status?.toLowerCase()) {
+      case 'open':
+        return Colors.blue;
+      case 'in_progress':
+        return Colors.orange;
+      case 'on_hold':
+        return Colors.purple;
+      case 'resolved':
+        return Colors.green;
+      case 'closed':
+        return Colors.grey;
+      default:
+        return Colors.blueGrey;
+    }
+  }
+
+  // Priority Colors
+  static Color priorityColor(String? priority) {
+    switch (priority?.toLowerCase()) {
+      case 'urgent':
+        return Colors.red;
+      case 'high':
+        return Colors.deepOrange;
+      case 'medium':
+        return Colors.amber.shade800;
+      case 'low':
+        return Colors.teal;
+      default:
+        return Colors.grey;
+    }
+  }
+}

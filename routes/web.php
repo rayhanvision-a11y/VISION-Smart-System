@@ -1,16 +1,15 @@
 <?php
 
 use App\Http\Controllers\ActivityLogController;
+use App\Http\Controllers\BackupController;
 use App\Http\Controllers\BlogPostController;
 use App\Http\Controllers\BoardController;
 use App\Http\Controllers\CannedResponseController;
 use App\Http\Controllers\CustomMenuLinkController;
 use App\Http\Controllers\KbCategoryController;
-use App\Http\Controllers\KnowledgeBaseController;
-use App\Http\Controllers\KbArticleController;
-use App\Http\Controllers\PopOfficeController;
 use App\Http\Controllers\LabelController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\PopOfficeController;
 use App\Http\Controllers\ProfileAvatarController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportController;
@@ -19,30 +18,30 @@ use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\SlaPolicyController;
 use App\Http\Controllers\TicketAttachmentController;
+use App\Http\Controllers\TicketCategoryController;
 use App\Http\Controllers\TicketController;
 use App\Http\Controllers\TicketLinkController;
-use App\Http\Controllers\TicketCategoryController;
 use App\Http\Controllers\TicketMessageController;
 use App\Http\Controllers\TicketNoteController;
 use App\Http\Controllers\TwoFactorController;
-use App\Http\Controllers\UserController;
 // use App\Http\Controllers\WhatsAppController;
-use App\Models\Label;
-use App\Models\PopOffice;
+use App\Http\Controllers\UserController;
 use App\Models\Ticket;
 use App\Models\TicketHistory;
+use App\Models\User;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-Route::match(['get', 'post'], '/deploy-webhook', function (\Illuminate\Http\Request $request) {
+Route::match(['get', 'post'], '/deploy-webhook', function (Request $request) {
     $secret = env('DEPLOY_WEBHOOK_SECRET', 'visiontech-deploy-secret-2026');
     $provided = $request->query('secret') ?? $request->input('secret');
-    if (!$provided || !hash_equals($secret, (string)$provided)) {
+    if (! $provided || ! hash_equals($secret, (string) $provided)) {
         return response()->json(['error' => 'Forbidden: Invalid deploy secret'], 403);
     }
-    
+
     $repoPath = base_path();
     $sshKey = '/home/visiontech/.ssh/github_deploy_key';
-    $sshCmd = file_exists($sshKey) ? "git config core.sshCommand \"ssh -i {$sshKey} -o StrictHostKeyChecking=no\" && " : "";
+    $sshCmd = file_exists($sshKey) ? "git config core.sshCommand \"ssh -i {$sshKey} -o StrictHostKeyChecking=no\" && " : '';
     $cmd = "cd {$repoPath} && {$sshCmd}git fetch origin main 2>&1 && git reset --hard origin/main 2>&1";
 
     exec($cmd, $output, $returnCode);
@@ -65,6 +64,7 @@ Route::post('/locale/{locale}', function (string $locale) {
             auth()->user()->forceFill(['locale' => $locale])->save();
         }
     }
+
     return redirect()->back();
 })->middleware(['auth', 'throttle:10,1'])->name('locale.set');
 
@@ -106,24 +106,31 @@ Route::middleware(['auth'])->group(function () {
 
 Route::middleware(['auth'])->group(function () {
 
-    Route::get('/dashboard', function (\Illuminate\Http\Request $request) {
+    Route::get('/dashboard', function (Request $request) {
         $user = auth()->user();
 
         // Base query (admin/noc views only)
-        $base = fn() => Ticket::query();
+        $base = fn () => Ticket::query();
 
         $resellersQuick = $user->isAdmin()
-            ? \App\Models\User::where('role', 'reseller')->orderBy('name')->get()
+            ? User::where('role', 'reseller')->orderBy('name')->get()
             : collect();
 
         $formatDuration = function ($minutes) {
-            if (!$minutes || $minutes <= 0) return 'N/A';
+            if (! $minutes || $minutes <= 0) {
+                return 'N/A';
+            }
             $m = (int) round($minutes);
             $d = floor($m / 1440);
             $h = floor(($m % 1440) / 60);
             $mins = $m % 60;
-            if ($d > 0) return "{$d}d {$h}h";
-            if ($h > 0) return "{$h}h {$mins}m";
+            if ($d > 0) {
+                return "{$d}d {$h}h";
+            }
+            if ($h > 0) {
+                return "{$h}h {$mins}m";
+            }
+
             return "{$mins}m";
         };
 
@@ -140,14 +147,14 @@ Route::middleware(['auth'])->group(function () {
             ")->first();
 
             $stats = [
-                'in_progress'                   => (int) ($aggregated->in_progress ?? 0),
-                'pending'                       => (int) ($aggregated->pending ?? 0),
+                'in_progress' => (int) ($aggregated->in_progress ?? 0),
+                'pending' => (int) ($aggregated->pending ?? 0),
                 'waiting_for_customer_feedback' => (int) ($aggregated->waiting_for_customer_feedback ?? 0),
-                'resolved'                      => (int) ($aggregated->resolved ?? 0),
-                'total'                         => (int) ($aggregated->total ?? 0),
-                'critical'                      => (int) ($aggregated->critical ?? 0),
-                'overdue'                       => (int) ($aggregated->overdue ?? 0),
-                'avg_resolution_time'          => $formatDuration($aggregated->avg_res),
+                'resolved' => (int) ($aggregated->resolved ?? 0),
+                'total' => (int) ($aggregated->total ?? 0),
+                'critical' => (int) ($aggregated->critical ?? 0),
+                'overdue' => (int) ($aggregated->overdue ?? 0),
+                'avg_resolution_time' => $formatDuration($aggregated->avg_res),
             ];
             $recentTickets = $base()->with(['creator', 'assignee'])->latest()->take(5)->get();
 
@@ -170,7 +177,7 @@ Route::middleware(['auth'])->group(function () {
                 ->groupBy('category')->pluck('count', 'category');
 
             // NOC Leaderboard - Bulk average query
-            $nocUsers = \App\Models\User::where('role', 'noc')->get();
+            $nocUsers = User::where('role', 'noc')->get();
             $nocUserIds = $nocUsers->pluck('id');
             $nocAvgTimes = Ticket::whereIn('assigned_to', $nocUserIds)
                 ->where('status', 'resolved')
@@ -179,16 +186,16 @@ Route::middleware(['auth'])->group(function () {
                 ->groupBy('assigned_to')
                 ->pluck('avg_res', 'assigned_to');
 
-            $nocLeaderboard = \App\Models\User::where('role', 'noc')
-                ->withCount(['assignedTickets as resolved_count' => fn($q) =>
-                    $q->where('status', 'resolved')
-                      ->whereMonth('resolved_at', now()->month)
-                      ->whereYear('resolved_at', now()->year)
+            $nocLeaderboard = User::where('role', 'noc')
+                ->withCount(['assignedTickets as resolved_count' => fn ($q) => $q->where('status', 'resolved')
+                    ->whereMonth('resolved_at', now()->month)
+                    ->whereYear('resolved_at', now()->year),
                 ])
                 ->get()
                 ->map(function ($noc) use ($nocAvgTimes, $formatDuration) {
                     $avgMin = $nocAvgTimes[$noc->id] ?? null;
                     $noc->avg_resolution_time = $formatDuration($avgMin);
+
                     return $noc;
                 })
                 ->sortByDesc('resolved_count')
@@ -197,7 +204,7 @@ Route::middleware(['auth'])->group(function () {
             $activityFeed = TicketHistory::with(['ticket', 'changedBy'])
                 ->latest()->take(20)->get();
         } elseif ($user->isNoc()) {
-            $myBase = fn() => Ticket::where('assigned_to', $user->id);
+            $myBase = fn () => Ticket::where('assigned_to', $user->id);
             $aggregated = $myBase()->selectRaw("
                 COUNT(*) as total,
                 SUM(CASE WHEN status = 'in_progress' THEN 1 ELSE 0 END) as in_progress,
@@ -211,15 +218,15 @@ Route::middleware(['auth'])->group(function () {
             ")->first();
 
             $stats = [
-                'in_progress'                   => (int) ($aggregated->in_progress ?? 0),
-                'pending'                       => (int) ($aggregated->pending ?? 0),
+                'in_progress' => (int) ($aggregated->in_progress ?? 0),
+                'pending' => (int) ($aggregated->pending ?? 0),
                 'waiting_for_customer_feedback' => (int) ($aggregated->waiting_for_customer_feedback ?? 0),
-                'resolved'                      => (int) ($aggregated->resolved ?? 0),
-                'total'                         => (int) ($aggregated->total ?? 0),
-                'my_assigned'                   => (int) ($aggregated->my_assigned ?? 0),
-                'critical'                      => (int) ($aggregated->critical ?? 0),
-                'overdue'                       => (int) ($aggregated->overdue ?? 0),
-                'avg_resolution_time'          => $formatDuration($aggregated->avg_res),
+                'resolved' => (int) ($aggregated->resolved ?? 0),
+                'total' => (int) ($aggregated->total ?? 0),
+                'my_assigned' => (int) ($aggregated->my_assigned ?? 0),
+                'critical' => (int) ($aggregated->critical ?? 0),
+                'overdue' => (int) ($aggregated->overdue ?? 0),
+                'avg_resolution_time' => $formatDuration($aggregated->avg_res),
             ];
             $recentTickets = $base()->with(['creator', 'assignee'])->latest()->take(5)->get();
 
@@ -252,9 +259,9 @@ Route::middleware(['auth'])->group(function () {
 
             $stats = [
                 'in_progress' => (int) ($aggregated->in_progress ?? 0),
-                'pending'     => (int) ($aggregated->pending ?? 0),
-                'resolved'    => (int) ($aggregated->resolved ?? 0),
-                'total'       => (int) ($aggregated->total ?? 0),
+                'pending' => (int) ($aggregated->pending ?? 0),
+                'resolved' => (int) ($aggregated->resolved ?? 0),
+                'total' => (int) ($aggregated->total ?? 0),
                 'avg_resolution_time' => $formatDuration($aggregated->avg_res),
             ];
             $recentTickets = Ticket::with(['creator', 'assignee'])->where('created_by', $user->id)->latest()->take(5)->get();
@@ -263,7 +270,7 @@ Route::middleware(['auth'])->group(function () {
             $chartByCategory = collect();
             $nocLeaderboard = collect();
             $activityFeed = TicketHistory::with(['ticket', 'changedBy'])
-                ->whereHas('ticket', fn($q) => $q->where('created_by', $user->id))
+                ->whereHas('ticket', fn ($q) => $q->where('created_by', $user->id))
                 ->latest()->take(20)->get();
         }
 
@@ -285,18 +292,18 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/tickets/bulk-action', [TicketController::class, 'bulkAction'])->name('tickets.bulk-action');
 
     Route::resource('tickets', TicketController::class);
-    Route::post('/tickets/{ticket}/assign',  [TicketController::class, 'assign'])->name('tickets.assign');
-    Route::post('/tickets/{ticket}/status',  [TicketController::class, 'updateStatus'])->name('tickets.status');
+    Route::post('/tickets/{ticket}/assign', [TicketController::class, 'assign'])->name('tickets.assign');
+    Route::post('/tickets/{ticket}/status', [TicketController::class, 'updateStatus'])->name('tickets.status');
     Route::post('/tickets/{ticket}/resolve', [TicketController::class, 'resolve'])->name('tickets.resolve');
-    Route::post('/tickets/{ticket}/reopen',  [TicketController::class, 'reopen'])->name('tickets.reopen');
-    Route::post('/tickets/{ticket}/close',   [TicketController::class, 'close'])->name('tickets.close');
+    Route::post('/tickets/{ticket}/reopen', [TicketController::class, 'reopen'])->name('tickets.reopen');
+    Route::post('/tickets/{ticket}/close', [TicketController::class, 'close'])->name('tickets.close');
     Route::post('/tickets/{ticket}/messages', [TicketMessageController::class, 'store'])->name('tickets.messages.store');
     Route::put('/tickets/{ticket}/messages/{message}', [TicketMessageController::class, 'update'])->name('tickets.messages.update');
     Route::get('/tickets/{ticket}/messages/poll', [TicketMessageController::class, 'poll'])->name('tickets.messages.poll');
     Route::post('/tickets/{ticket}/typing', [TicketMessageController::class, 'typing'])->name('tickets.typing');
     Route::post('/tickets/{ticket}/messages/{message}/react', [TicketMessageController::class, 'toggleReaction'])->name('tickets.messages.react');
-    Route::post('/tickets/{ticket}/notes',   [TicketNoteController::class, 'store'])->name('tickets.notes.store');
-    Route::post('/tickets/{ticket}/labels',  [TicketController::class, 'attachLabel'])->name('tickets.labels.attach');
+    Route::post('/tickets/{ticket}/notes', [TicketNoteController::class, 'store'])->name('tickets.notes.store');
+    Route::post('/tickets/{ticket}/labels', [TicketController::class, 'attachLabel'])->name('tickets.labels.attach');
     Route::delete('/tickets/{ticket}/labels/{label}', [TicketController::class, 'detachLabel'])->name('tickets.labels.detach');
     Route::post('/tickets/{ticket}/subtasks', [TicketController::class, 'storeSubtask'])->name('tickets.subtasks.store');
     Route::patch('/tickets/{ticket}/title', [TicketController::class, 'updateTitle'])->name('tickets.title.update');
@@ -310,8 +317,8 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/roster/update-shift', [RosterController::class, 'updateShift'])->name('roster.update-shift');
     Route::post('/roster/users/{user}/team', [RosterController::class, 'updateTeam'])->name('roster.users.team');
 
-    Route::get('/reports',       [ReportController::class, 'index'])->name('reports.index');
-    Route::get('/reports/pdf',   [ReportController::class, 'downloadPdf'])->name('reports.pdf');
+    Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
+    Route::get('/reports/pdf', [ReportController::class, 'downloadPdf'])->name('reports.pdf');
     Route::get('/reports/excel', [ReportController::class, 'downloadExcel'])->name('reports.excel');
 
     Route::resource('users', UserController::class)->except(['show']);
@@ -345,11 +352,10 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/settings/backup/restore', [SettingController::class, 'backupRestore'])->name('settings.backup.restore');
 
     // ── Database Backup System ─────────────────────────────────────
-    Route::post('/settings/backup/create', [\App\Http\Controllers\BackupController::class, 'create'])->name('settings.backup.create');
-    Route::get('/settings/backup/download/{filename}', [\App\Http\Controllers\BackupController::class, 'download'])->name('settings.backup.download');
-    Route::post('/settings/backup/restore/{filename}', [\App\Http\Controllers\BackupController::class, 'restore'])->name('settings.backup.restore');
-    Route::delete('/settings/backup/{filename}', [\App\Http\Controllers\BackupController::class, 'destroy'])->name('settings.backup.destroy');
-
+    Route::post('/settings/backup/create', [BackupController::class, 'create'])->name('settings.backup.create');
+    Route::get('/settings/backup/download/{filename}', [BackupController::class, 'download'])->name('settings.backup.download');
+    Route::post('/settings/backup/restore/{filename}', [BackupController::class, 'restore'])->name('settings.backup.restore');
+    Route::delete('/settings/backup/{filename}', [BackupController::class, 'destroy'])->name('settings.backup.destroy');
 
     // ── Activity Logs ─────────────────────────────────────────────
     Route::get('/activity-logs', [ActivityLogController::class, 'index'])->name('activity-logs.index');

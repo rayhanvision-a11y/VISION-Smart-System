@@ -4,11 +4,19 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
+        <meta name="theme-color" content="#2563EB">
+        <link rel="manifest" href="{{ asset('manifest.json') }}">
+        <link rel="apple-touch-icon" href="{{ asset('images/default-avatar.svg') }}">
         <title>{{ config('app.name', 'ISP Ticket System') }}</title>
         @php $siteFavicon = \App\Models\Setting::get('favicon_path'); @endphp
         @if($siteFavicon)
         <link rel="icon" href="{{ asset('storage/' . $siteFavicon) }}">
         @endif
+        <script>
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('/sw.js').catch(function() {});
+            }
+        </script>
         <script>
             // Applied before first paint to avoid a light-mode flash
             (function () {
@@ -438,11 +446,14 @@
         </style>
     </head>
     <body class="font-sans antialiased bg-slate-50 dark:bg-slate-950">
-        <div x-data="{ sidebarOpen: false, sidebarCollapsed: localStorage.getItem('sidebarCollapsed') === 'true' }" class="flex min-h-screen">
+        <div x-data="{ sidebarOpen: false, sidebarCollapsed: localStorage.getItem('sidebarCollapsed') === 'true' }"
+             x-effect="document.body.classList.toggle('overflow-hidden', sidebarOpen)"
+             class="flex min-h-screen">
 
             {{-- Mobile Overlay --}}
             <div x-show="sidebarOpen" x-cloak @click="sidebarOpen = false"
-                 class="fixed inset-0 bg-black/40 z-20 lg:hidden"></div>            {{-- Sidebar --}}
+                 x-transition.opacity
+                 class="fixed inset-0 bg-black/50 z-20 lg:hidden"></div>            {{-- Sidebar --}}
             <aside id="main-sidebar"
                    :class="(sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0') + (sidebarCollapsed ? ' sidebar-collapsed' : '')"
                    class="bg-white dark:bg-slate-950 text-slate-800 dark:text-white border border-slate-200 dark:border-slate-800 flex flex-col flex-shrink-0 fixed top-0 left-0 h-full z-30 lg:translate-x-0 overflow-visible transition-colors duration-200">
@@ -833,18 +844,18 @@
                  class="flex-1 flex flex-col min-h-screen">
 
                 {{-- Top Bar --}}
-                <header class="h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 px-4 lg:px-6 flex items-center justify-between sticky top-0 z-10 gap-3">
-                    <div class="flex items-center gap-3 flex-shrink-0">
+                <header class="h-14 sm:h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 px-2 sm:px-4 lg:px-6 flex items-center justify-between sticky top-0 z-10 gap-1 sm:gap-3">
+                    <div class="flex items-center gap-1.5 sm:gap-3 flex-shrink-0 min-w-0">
                         {{-- Mobile-only menu toggle --}}
                         <button type="button"
                                 @click="sidebarOpen = !sidebarOpen"
-                                class="lg:hidden flex items-center justify-center p-2.5 rounded-lg bg-indigo-50 dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-600 hover:text-white dark:hover:bg-indigo-600 dark:hover:text-white border border-indigo-200 dark:border-slate-700 shadow-sm transition-all flex-shrink-0 cursor-pointer">
+                                class="lg:hidden flex items-center justify-center p-1.5 sm:p-2.5 rounded-lg bg-indigo-50 dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-600 hover:text-white dark:hover:bg-indigo-600 dark:hover:text-white border border-indigo-200 dark:border-slate-700 shadow-sm transition-all flex-shrink-0 cursor-pointer">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h10M4 18h14"/>
                             </svg>
                         </button>
                         @isset($pageTitle)
-                            <h1 class="text-lg font-semibold text-slate-800 dark:text-slate-100 flex-shrink-0">{{ $pageTitle }}</h1>
+                            <h1 class="text-sm sm:text-lg font-semibold text-slate-800 dark:text-slate-100 flex-shrink truncate">{{ $pageTitle }}</h1>
                         @endisset
                     </div>
 
@@ -962,7 +973,7 @@
                     @endphp
 
                     @if($activeNoticeType !== null && count($hNoticeItems) > 0)
-                    <div class="flex-1 min-w-0 mx-2 flex items-center gap-2.5 bg-white dark:bg-slate-900 border {{ $curTheme['border'] }} rounded-xl px-3 py-1.5 shadow-sm transition-colors">
+                    <div class="hidden sm:flex flex-1 min-w-0 mx-2 items-center gap-2.5 bg-white dark:bg-slate-900 border {{ $curTheme['border'] }} rounded-xl px-3 py-1.5 shadow-sm transition-colors">
                         <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-black {{ $curTheme['badge'] }} shadow-xs flex-shrink-0 uppercase tracking-wide">
                             📢 {{ $hNoticeBadge }} {{ count($hNoticeItems) > 1 ? '('.count($hNoticeItems).')' : '' }}
                         </span>
@@ -992,19 +1003,23 @@
                     </div>
                     @endif
 
-                    <div class="flex items-center gap-3 flex-shrink-0">
+                    <div class="flex items-center gap-0.5 sm:gap-2 md:gap-3 flex-shrink-0">
+                        {{-- Mobile search shortcut --}}
+                        <a href="{{ route('search') }}" class="md:hidden p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg" title="{{ __('Search') }}">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                        </a>
                         {{-- Global Search --}}
-                        <form method="GET" action="{{ route('search') }}" class="flex items-center">
+                        <form method="GET" action="{{ route('search') }}" class="hidden md:flex items-center">
                             <div class="relative">
                                 <input type="text" name="q" value="{{ request('q') }}" placeholder="{{ __('Search tickets...') }}"
-                                       class="border border-slate-200 dark:border-slate-700 rounded-lg pl-8 pr-3 py-1.5 text-sm focus:ring-2 focus:ring-indigo-500 bg-slate-50 dark:bg-slate-800 dark:text-slate-100 w-48 lg:w-64">
+                                       class="border border-slate-200 dark:border-slate-700 rounded-lg pl-8 pr-3 py-1.5 text-sm focus:ring-2 focus:ring-indigo-500 bg-slate-50 dark:bg-slate-800 dark:text-slate-100 w-40 md:w-48 lg:w-64">
                                 <svg class="absolute left-2.5 top-2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                                 </svg>
                             </div>
                         </form>
                         {{-- Language Switcher --}}
-                        <div x-data="{ open: false }" class="relative">
+                        <div x-data="{ open: false }" class="relative hidden sm:block">
                             <button @click="open = !open" @click.outside="open = false"
                                     class="flex items-center gap-1.5 px-2.5 py-1.5 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors text-xs font-semibold select-none">
                                 <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1036,7 +1051,7 @@
                         <button
                             x-data="{ soundOn: localStorage.getItem('soundAlerts') !== 'off' }"
                             @click="soundOn = !soundOn; localStorage.setItem('soundAlerts', soundOn ? 'on' : 'off'); if (soundOn) playNotificationSound();"
-                            class="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                            class="hidden md:inline-flex p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
                             :title="soundOn ? '{{ __('Mute Sound Alerts') }}' : '{{ __('Enable Sound Alerts') }}'">
                             <svg x-show="soundOn" class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/>
@@ -1053,7 +1068,7 @@
                             x-data="{ dark: document.documentElement.classList.contains('dark') }"
                             @click="dark = !dark; document.documentElement.classList.toggle('dark', dark); localStorage.setItem('theme', dark ? 'dark' : 'light');
                                     @auth fetch('{{ route('profile.theme') }}', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content }, body: JSON.stringify({ theme: dark ? 'dark' : 'light' }) }); @endauth"
-                            class="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                            class="p-1.5 sm:p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
                             :title="dark ? '{{ __('Switch to light mode') }}' : '{{ __('Switch to dark mode') }}'">
                             <svg x-show="!dark" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
@@ -1066,7 +1081,7 @@
                         {{-- Notification Bell --}}
                         <div x-data="notificationBell()" class="relative">
                             <button @click="toggle()"
-                                    class="relative p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors">
+                                    class="relative p-1.5 sm:p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
@@ -1078,7 +1093,7 @@
 
                             {{-- Dropdown --}}
                             <div x-show="open" x-cloak @click.outside="open = false"
-                                 class="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg z-50 overflow-hidden">
+                                 class="absolute right-0 top-full mt-2 w-[calc(100vw-1rem)] sm:w-80 max-w-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg z-50 overflow-hidden">
                                 <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-slate-700">
                                     <span class="text-sm font-semibold text-slate-700 dark:text-slate-200">{{ __('Notifications') }}
                                         <span x-show="count > 0" class="ml-1 px-1.5 py-0.5 bg-red-100 text-red-600 rounded-full text-xs font-bold" x-text="count"></span>
@@ -1112,7 +1127,7 @@
                 </header>
 
                 {{-- Flash Messages + Main --}}
-                <main class="flex-1 p-4 lg:p-6 dark:text-slate-200">
+                <main class="flex-1 p-3 sm:p-4 lg:p-6 dark:text-slate-200">
                     @if(session('success'))
                         <div x-data="{ show: true }" x-show="show"
                              class="mb-4 flex items-center justify-between bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-xl">

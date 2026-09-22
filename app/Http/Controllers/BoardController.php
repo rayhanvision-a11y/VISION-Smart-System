@@ -35,10 +35,10 @@ class BoardController extends Controller
         $tickets = $query->orderBy('created_at', 'desc')->get();
 
         $columns = [
-            'in_progress'                   => ['label' => __('In Progress'),              'color' => 'blue'],
-            'pending'                       => ['label' => __('Pending'),                  'color' => 'orange'],
+            'in_progress' => ['label' => __('In Progress'),              'color' => 'blue'],
+            'pending' => ['label' => __('Pending'),                  'color' => 'orange'],
             'waiting_for_customer_feedback' => ['label' => __('Waiting for Feedback'),     'color' => 'violet'],
-            'resolved'                      => ['label' => __('Resolved'),                 'color' => 'emerald'],
+            'resolved' => ['label' => __('Resolved'),                 'color' => 'emerald'],
         ];
 
         $grouped = [];
@@ -56,12 +56,12 @@ class BoardController extends Controller
         $user = auth()->user();
 
         $request->validate([
-            'ticket_id'  => 'required|exists:tickets,id',
+            'ticket_id' => 'required|exists:tickets,id',
             'new_status' => 'required|in:in_progress,pending,waiting_for_customer_feedback,resolved',
         ]);
 
         $canView = Ticket::where('id', $request->ticket_id)->forUser($user)->exists();
-        if (!$canView || $user->isReseller()) {
+        if (! $canView || $user->isReseller()) {
             return response()->json(['error' => 'Forbidden'], 403);
         }
 
@@ -70,16 +70,16 @@ class BoardController extends Controller
         $oldStatus = $ticket->status;
         $ticket->update(['status' => $request->new_status]);
 
-        if ($request->new_status === 'resolved' && !$ticket->resolved_at) {
+        if ($request->new_status === 'resolved' && ! $ticket->resolved_at) {
             $ticket->update(['resolved_at' => now()]);
         }
 
         TicketHistory::create([
-            'ticket_id'       => $ticket->id,
-            'action'          => 'Status changed from ' . $oldStatus . ' to ' . $request->new_status . ' (board drag)',
+            'ticket_id' => $ticket->id,
+            'action' => 'Status changed from '.$oldStatus.' to '.$request->new_status.' (board drag)',
             'old_assignee_id' => null,
             'new_assignee_id' => null,
-            'changed_by'      => $user->id,
+            'changed_by' => $user->id,
         ]);
 
         return response()->json(['success' => true]);

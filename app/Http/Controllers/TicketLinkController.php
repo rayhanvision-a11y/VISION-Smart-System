@@ -11,13 +11,13 @@ class TicketLinkController extends Controller
     public function store(Request $request, Ticket $ticket)
     {
         $user = auth()->user();
-        if (!$user->isAdmin() && !$user->isNoc()) {
+        if (! $user->isAdmin() && ! $user->isNoc()) {
             abort(403);
         }
 
         $request->validate([
             'linked_ticket_id' => 'required|exists:tickets,id|different:ticket_id',
-            'link_type'        => 'required|in:relates_to,blocks,is_blocked_by,duplicates',
+            'link_type' => 'required|in:relates_to,blocks,is_blocked_by,duplicates',
         ]);
 
         if ($request->linked_ticket_id == $ticket->id) {
@@ -36,10 +36,10 @@ class TicketLinkController extends Controller
         }
 
         TicketLink::create([
-            'ticket_id'        => $ticket->id,
+            'ticket_id' => $ticket->id,
             'linked_ticket_id' => $request->linked_ticket_id,
-            'link_type'        => $request->link_type,
-            'created_by'       => $user->id,
+            'link_type' => $request->link_type,
+            'created_by' => $user->id,
         ]);
 
         return back()->with('success', 'Work item linked.');
@@ -48,7 +48,7 @@ class TicketLinkController extends Controller
     public function destroy(Ticket $ticket, TicketLink $link)
     {
         $user = auth()->user();
-        if (!$user->isAdmin() && !$user->isNoc()) {
+        if (! $user->isAdmin() && ! $user->isNoc()) {
             abort(403);
         }
 

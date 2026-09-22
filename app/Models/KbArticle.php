@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class KbArticle extends Model
 {
@@ -19,12 +20,13 @@ class KbArticle extends Model
 
     public static function makeSlug(string $title): string
     {
-        $base = \Illuminate\Support\Str::slug($title);
+        $base = Str::slug($title);
         $slug = $base;
         $i = 1;
         while (static::where('slug', $slug)->exists()) {
-            $slug = $base . '-' . (++$i);
+            $slug = $base.'-'.(++$i);
         }
+
         return $slug;
     }
 }

@@ -9,7 +9,7 @@ class CannedResponseController extends Controller
 {
     private function guard(): void
     {
-        if (!auth()->user()->isAdmin() && !auth()->user()->isNoc()) {
+        if (! auth()->user()->isAdmin() && ! auth()->user()->isNoc()) {
             abort(403);
         }
     }
@@ -18,6 +18,7 @@ class CannedResponseController extends Controller
     {
         $this->guard();
         $responses = CannedResponse::with('creator')->orderBy('title')->get();
+
         return view('canned-responses.index', compact('responses'));
     }
 
@@ -26,7 +27,7 @@ class CannedResponseController extends Controller
         $this->guard();
         $validated = $request->validate([
             'title' => 'required|string|max:100',
-            'body'  => 'required|string|max:5000',
+            'body' => 'required|string|max:5000',
         ]);
 
         CannedResponse::create([
@@ -42,7 +43,7 @@ class CannedResponseController extends Controller
         $this->guard();
         $validated = $request->validate([
             'title' => 'required|string|max:100',
-            'body'  => 'required|string|max:5000',
+            'body' => 'required|string|max:5000',
         ]);
 
         $cannedResponse->update($validated);
@@ -54,6 +55,7 @@ class CannedResponseController extends Controller
     {
         $this->guard();
         $cannedResponse->delete();
+
         return back()->with('success', 'Canned response deleted.');
     }
 
@@ -61,6 +63,7 @@ class CannedResponseController extends Controller
     public function list()
     {
         $this->guard();
+
         return response()->json(
             CannedResponse::orderBy('title')->get(['id', 'title', 'body'])
         );

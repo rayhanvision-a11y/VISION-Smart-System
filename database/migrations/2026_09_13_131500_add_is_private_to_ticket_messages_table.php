@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('ticket_messages', function (Blueprint $table) {
-            if (!Schema::hasColumn('ticket_messages', 'is_private')) {
+            if (! Schema::hasColumn('ticket_messages', 'is_private')) {
                 $table->boolean('is_private')->default(false)->after('image_path');
             }
         });

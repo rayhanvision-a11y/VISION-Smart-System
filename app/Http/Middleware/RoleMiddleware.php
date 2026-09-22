@@ -10,7 +10,7 @@ class RoleMiddleware
 {
     public function handle(Request $request, Closure $next, string ...$roles): Response
     {
-        if (!auth()->check() || !in_array(auth()->user()->role, $roles)) {
+        if (! auth()->check() || ! in_array(auth()->user()->role, $roles)) {
             return redirect()->route('dashboard')->with('error', 'You do not have permission to access that page.');
         }
 

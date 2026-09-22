@@ -27,10 +27,10 @@ $minPhpVersion = '8.2.0';
 $currentPhpVersion = PHP_VERSION;
 $phpPass = version_compare($currentPhpVersion, $minPhpVersion, '>=');
 $results['php'] = [
-    'name' => 'PHP Version (>= ' . $minPhpVersion . ')',
+    'name' => 'PHP Version (>= '.$minPhpVersion.')',
     'current' => $currentPhpVersion,
     'pass' => $phpPass,
-    'required' => 'PHP ' . $minPhpVersion . ' or higher'
+    'required' => 'PHP '.$minPhpVersion.' or higher',
 ];
 
 // 2. Required Extensions Check
@@ -54,20 +54,20 @@ $requiredExtensions = [
 foreach ($requiredExtensions as $ext => $reason) {
     $isLoaded = extension_loaded($ext);
     $results['extensions'][$ext] = [
-        'name' => 'ext-' . $ext,
+        'name' => 'ext-'.$ext,
         'pass' => $isLoaded,
         'reason' => $reason,
-        'required' => 'Installed & Enabled'
+        'required' => 'Installed & Enabled',
     ];
 }
 
 // 3. File & Directory Permissions
 $baseDir = __DIR__;
 $pathsToCheck = [
-    'storage' => $baseDir . '/storage',
-    'storage/framework' => $baseDir . '/storage/framework',
-    'storage/logs' => $baseDir . '/storage/logs',
-    'bootstrap/cache' => $baseDir . '/bootstrap/cache',
+    'storage' => $baseDir.'/storage',
+    'storage/framework' => $baseDir.'/storage/framework',
+    'storage/logs' => $baseDir.'/storage/logs',
+    'bootstrap/cache' => $baseDir.'/bootstrap/cache',
 ];
 
 foreach ($pathsToCheck as $relPath => $fullPath) {
@@ -78,15 +78,15 @@ foreach ($pathsToCheck as $relPath => $fullPath) {
         'exists' => $exists,
         'pass' => $writable,
         'perms' => $exists ? substr(sprintf('%o', fileperms($fullPath)), -4) : 'Missing',
-        'required' => 'Writable (0775 / 0777)'
+        'required' => 'Writable (0775 / 0777)',
     ];
 }
 
 // 4. Essential Project Files
 $essentialFiles = [
-    '.env' => $baseDir . '/.env',
-    'vendor/autoload.php' => $baseDir . '/vendor/autoload.php',
-    'public/build/manifest.json' => $baseDir . '/public/build/manifest.json',
+    '.env' => $baseDir.'/.env',
+    'vendor/autoload.php' => $baseDir.'/vendor/autoload.php',
+    'public/build/manifest.json' => $baseDir.'/public/build/manifest.json',
 ];
 
 foreach ($essentialFiles as $relPath => $fullPath) {
@@ -94,25 +94,27 @@ foreach ($essentialFiles as $relPath => $fullPath) {
     $results['files'][$relPath] = [
         'name' => $relPath,
         'pass' => $exists,
-        'required' => 'File Must Exist'
+        'required' => 'File Must Exist',
     ];
 }
 
 // 5. php.ini Recommendations
-function parseSize($size) {
+function parseSize($size)
+{
     $unit = preg_replace('/[^bkmgtpezy]/i', '', $size);
     $size = preg_replace('/[^0-9\.]/', '', $size);
     if ($unit) {
         return round($size * pow(1024, stripos('bkmgtpezy', $unit[0])));
     }
+
     return round($size);
 }
 
 $iniChecks = [
     'upload_max_filesize' => ['min' => '10M', 'val' => ini_get('upload_max_filesize')],
-    'post_max_size'       => ['min' => '12M', 'val' => ini_get('post_max_size')],
-    'memory_limit'        => ['min' => '128M', 'val' => ini_get('memory_limit')],
-    'max_execution_time'  => ['min' => '60',   'val' => ini_get('max_execution_time')],
+    'post_max_size' => ['min' => '12M', 'val' => ini_get('post_max_size')],
+    'memory_limit' => ['min' => '128M', 'val' => ini_get('memory_limit')],
+    'max_execution_time' => ['min' => '60',   'val' => ini_get('max_execution_time')],
 ];
 
 foreach ($iniChecks as $setting => $data) {
@@ -123,12 +125,12 @@ foreach ($iniChecks as $setting => $data) {
         'name' => $setting,
         'current' => $data['val'],
         'min' => $data['min'],
-        'pass' => $pass
+        'pass' => $pass,
     ];
 }
 
 // 6. Database Connection Check (Read from .env)
-$envPath = $baseDir . '/.env';
+$envPath = $baseDir.'/.env';
 if (file_exists($envPath)) {
     $envContent = file_get_contents($envPath);
     preg_match('/DB_HOST=(.*)/', $envContent, $dbHost);
@@ -143,7 +145,7 @@ if (file_exists($envPath)) {
     $user = trim($dbUser[1] ?? '', "\"' \r\n");
     $pass = trim($dbPass[1] ?? '', "\"' \r\n");
 
-    if (!empty($name) && !empty($user)) {
+    if (! empty($name) && ! empty($user)) {
         try {
             $dsn = "mysql:host={$host};port={$port};dbname={$name};charset=utf8mb4";
             $pdo = new PDO($dsn, $user, $pass, [
@@ -152,41 +154,53 @@ if (file_exists($envPath)) {
             ]);
             $results['db'] = [
                 'pass' => true,
-                'message' => "Successfully connected to MySQL database '{$name}' at {$host}:{$port}!"
+                'message' => "Successfully connected to MySQL database '{$name}' at {$host}:{$port}!",
             ];
         } catch (PDOException $e) {
             $results['db'] = [
                 'pass' => false,
-                'message' => "Database Connection Failed: " . $e->getMessage()
+                'message' => 'Database Connection Failed: '.$e->getMessage(),
             ];
         }
     } else {
         $results['db'] = [
             'pass' => false,
-            'message' => "DB_DATABASE or DB_USERNAME missing in .env file"
+            'message' => 'DB_DATABASE or DB_USERNAME missing in .env file',
         ];
     }
 } else {
     $results['db'] = [
         'pass' => false,
-        'message' => ".env file not found. Create .env file first."
+        'message' => '.env file not found. Create .env file first.',
     ];
 }
 
 // 7. Storage Symlink Check
-$publicStorage = $baseDir . '/public/storage';
+$publicStorage = $baseDir.'/public/storage';
 $symlinkPass = is_link($publicStorage) || is_dir($publicStorage);
 $results['symlink'] = [
     'pass' => $symlinkPass,
-    'message' => $symlinkPass ? "public/storage link exists." : "public/storage link missing! Run 'php artisan storage:link'"
+    'message' => $symlinkPass ? 'public/storage link exists.' : "public/storage link missing! Run 'php artisan storage:link'",
 ];
 
 // Calculate overall score
 $totalChecks = 1 + count($results['extensions']) + count($results['permissions']) + count($results['files']);
 $passedChecks = ($results['php']['pass'] ? 1 : 0);
-foreach ($results['extensions'] as $ext) { if ($ext['pass']) $passedChecks++; }
-foreach ($results['permissions'] as $perm) { if ($perm['pass']) $passedChecks++; }
-foreach ($results['files'] as $file) { if ($file['pass']) $passedChecks++; }
+foreach ($results['extensions'] as $ext) {
+    if ($ext['pass']) {
+        $passedChecks++;
+    }
+}
+foreach ($results['permissions'] as $perm) {
+    if ($perm['pass']) {
+        $passedChecks++;
+    }
+}
+foreach ($results['files'] as $file) {
+    if ($file['pass']) {
+        $passedChecks++;
+    }
+}
 
 $allPassed = ($passedChecks === $totalChecks);
 ?>
@@ -225,10 +239,10 @@ $allPassed = ($passedChecks === $totalChecks);
         </div>
 
         <!-- Pre-Upload / Post-Upload Status Banner -->
-        <?php 
-            $projectFilesUploaded = file_exists($baseDir . '/artisan') || file_exists($baseDir . '/composer.json');
-        ?>
-        <?php if (!$projectFilesUploaded): ?>
+        <?php
+            $projectFilesUploaded = file_exists($baseDir.'/artisan') || file_exists($baseDir.'/composer.json');
+?>
+        <?php if (! $projectFilesUploaded) { ?>
         <div class="bg-indigo-950/60 border border-indigo-700/60 rounded-xl p-4 flex items-start gap-3 text-indigo-200 text-xs sm:text-sm shadow-md">
             <span class="text-xl">🚀</span>
             <div>
@@ -236,7 +250,7 @@ $allPassed = ($passedChecks === $totalChecks);
                 You uploaded <code>environment.php</code> first to test your server. Below you can check if your server's <strong>PHP Version (>= 8.2)</strong>, <strong>Required Extensions</strong>, and <strong>php.ini limits</strong> are ready BEFORE uploading your project files or pulling from Git!
             </div>
         </div>
-        <?php endif; ?>
+        <?php } ?>
 
         <!-- Security Warning Alert -->
         <div class="bg-rose-950/40 border border-rose-800/60 rounded-xl p-4 flex items-start gap-3 text-rose-200 text-xs sm:text-sm">
@@ -266,10 +280,10 @@ $allPassed = ($passedChecks === $totalChecks);
         <!-- 2. PHP Extensions -->
         <div class="bg-slate-800 border border-slate-700 rounded-2xl p-6 shadow-lg">
             <h2 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                <span>🧩</span> Required PHP Extensions (<?php echo count(array_filter($results['extensions'], fn($e) => $e['pass'])); ?> / <?php echo count($results['extensions']); ?>)
+                <span>🧩</span> Required PHP Extensions (<?php echo count(array_filter($results['extensions'], fn ($e) => $e['pass'])); ?> / <?php echo count($results['extensions']); ?>)
             </h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <?php foreach ($results['extensions'] as $ext): ?>
+                <?php foreach ($results['extensions'] as $ext) { ?>
                     <div class="flex items-center justify-between p-3.5 rounded-xl border transition-all <?php echo $ext['pass'] ? 'bg-slate-900/50 border-slate-700/60' : 'bg-rose-950/40 border-rose-800/60'; ?>">
                         <div>
                             <div class="font-mono font-bold text-sm <?php echo $ext['pass'] ? 'text-slate-200' : 'text-rose-300'; ?>">
@@ -281,7 +295,7 @@ $allPassed = ($passedChecks === $totalChecks);
                             <?php echo $ext['pass'] ? '✓ Active' : '✗ Missing'; ?>
                         </span>
                     </div>
-                <?php endforeach; ?>
+                <?php } ?>
             </div>
         </div>
 
@@ -291,7 +305,7 @@ $allPassed = ($passedChecks === $totalChecks);
                 <span>📁</span> Folder Writable Permissions
             </h2>
             <div class="space-y-3">
-                <?php foreach ($results['permissions'] as $perm): ?>
+                <?php foreach ($results['permissions'] as $perm) { ?>
                     <div class="flex items-center justify-between p-3.5 rounded-xl border <?php echo $perm['pass'] ? 'bg-slate-900/50 border-slate-700/60' : 'bg-rose-950/40 border-rose-800/60'; ?>">
                         <div>
                             <div class="font-mono font-semibold text-sm text-slate-200"><?php echo $perm['name']; ?></div>
@@ -301,7 +315,7 @@ $allPassed = ($passedChecks === $totalChecks);
                             <?php echo $perm['pass'] ? '✓ Writable' : '✗ Fix Permission'; ?>
                         </span>
                     </div>
-                <?php endforeach; ?>
+                <?php } ?>
             </div>
         </div>
 
@@ -311,14 +325,14 @@ $allPassed = ($passedChecks === $totalChecks);
                 <span>📄</span> Essential Files Checklist
             </h2>
             <div class="space-y-3">
-                <?php foreach ($results['files'] as $file): ?>
+                <?php foreach ($results['files'] as $file) { ?>
                     <div class="flex items-center justify-between p-3.5 rounded-xl border <?php echo $file['pass'] ? 'bg-slate-900/50 border-slate-700/60' : 'bg-amber-950/40 border-amber-800/60'; ?>">
                         <div class="font-mono font-semibold text-sm text-slate-200"><?php echo $file['name']; ?></div>
                         <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase <?php echo $file['pass'] ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-amber-500 text-slate-950'; ?>">
                             <?php echo $file['pass'] ? '✓ Found' : '⚠️ Missing File'; ?>
                         </span>
                     </div>
-                <?php endforeach; ?>
+                <?php } ?>
             </div>
         </div>
 
@@ -328,7 +342,7 @@ $allPassed = ($passedChecks === $totalChecks);
                 <span>⚙️</span> Recommended php.ini Directives
             </h2>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <?php foreach ($results['ini'] as $ini): ?>
+                <?php foreach ($results['ini'] as $ini) { ?>
                     <div class="p-3.5 rounded-xl border bg-slate-900/50 border-slate-700/60 flex items-center justify-between">
                         <div>
                             <div class="font-mono font-semibold text-xs text-slate-300"><?php echo $ini['name']; ?></div>
@@ -338,7 +352,7 @@ $allPassed = ($passedChecks === $totalChecks);
                             <?php echo $ini['pass'] ? '✓ Good' : '⚠️ Low'; ?>
                         </span>
                     </div>
-                <?php endforeach; ?>
+                <?php } ?>
             </div>
         </div>
 

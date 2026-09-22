@@ -2,9 +2,9 @@
 
 namespace Tests\Feature;
 
-use App\Models\BlogPost;
 use App\Models\KbCategory;
 use App\Models\Ticket;
+use App\Models\TicketCategory;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -19,7 +19,7 @@ class CustomRoleAndKbCategoryTest extends TestCase
 
         // Create category
         $response = $this->actingAs($admin)->post('/knowledge-base/categories', [
-            'name'        => 'Test Network Cat',
+            'name' => 'Test Network Cat',
             'description' => 'Network guides',
         ]);
         $response->assertRedirect();
@@ -29,7 +29,7 @@ class CustomRoleAndKbCategoryTest extends TestCase
 
         // Update category
         $response = $this->actingAs($admin)->put("/knowledge-base/categories/{$category->id}", [
-            'name'        => 'Updated Network Cat',
+            'name' => 'Updated Network Cat',
             'description' => 'Updated desc',
         ]);
         $response->assertRedirect();
@@ -47,21 +47,21 @@ class CustomRoleAndKbCategoryTest extends TestCase
 
         // Create ticket category
         $response = $this->actingAs($admin)->post('/ticket-categories', [
-            'name'        => 'ONU Fiber Issue',
+            'name' => 'ONU Fiber Issue',
             'description' => 'Issues with optical network units',
-            'color'       => '#10b981',
+            'color' => '#10b981',
         ]);
         $response->assertRedirect();
         $this->assertDatabaseHas('ticket_categories', ['name' => 'ONU Fiber Issue']);
 
-        $category = \App\Models\TicketCategory::where('name', 'ONU Fiber Issue')->first();
+        $category = TicketCategory::where('name', 'ONU Fiber Issue')->first();
 
         // Update ticket category
         $response = $this->actingAs($admin)->put("/ticket-categories/{$category->id}", [
-            'name'        => 'Updated ONU Fiber Issue',
+            'name' => 'Updated ONU Fiber Issue',
             'description' => 'Updated details',
-            'color'       => '#ef4444',
-            'is_active'   => 1,
+            'color' => '#ef4444',
+            'is_active' => 1,
         ]);
         $response->assertRedirect();
         $this->assertDatabaseHas('ticket_categories', ['name' => 'Updated ONU Fiber Issue']);
@@ -78,13 +78,13 @@ class CustomRoleAndKbCategoryTest extends TestCase
         $callCenter = User::factory()->create(['role' => 'call_center']);
 
         $resellerTicket = Ticket::create([
-            'ticket_key'  => '260920001',
-            'title'       => 'Reseller Issue',
+            'ticket_key' => '260920001',
+            'title' => 'Reseller Issue',
             'description' => 'Help',
-            'category'    => 'billing',
-            'priority'    => 'medium',
-            'status'      => 'in_progress',
-            'created_by'  => $reseller->id,
+            'category' => 'billing',
+            'priority' => 'medium',
+            'status' => 'in_progress',
+            'created_by' => $reseller->id,
         ]);
 
         $visibleTickets = Ticket::forUser($callCenter)->get();
@@ -94,19 +94,19 @@ class CustomRoleAndKbCategoryTest extends TestCase
     public function test_personal_assigned_ticket_visibility_scoping()
     {
         $superAdmin = User::factory()->create(['role' => 'super_admin']);
-        $admin      = User::factory()->create(['role' => 'admin']);
-        $noc1       = User::factory()->create(['role' => 'noc']);
-        $noc2       = User::factory()->create(['role' => 'noc']);
+        $admin = User::factory()->create(['role' => 'admin']);
+        $noc1 = User::factory()->create(['role' => 'noc']);
+        $noc2 = User::factory()->create(['role' => 'noc']);
 
         // Admin assigns a ticket specifically to NOC1
         $assignedTicket = Ticket::create([
-            'ticket_key'  => '260920002',
-            'title'       => 'Secret NOC1 Task',
+            'ticket_key' => '260920002',
+            'title' => 'Secret NOC1 Task',
             'description' => 'Personal assignment',
-            'category'    => 'line_fault',
-            'priority'    => 'high',
-            'status'      => 'in_progress',
-            'created_by'  => $admin->id,
+            'category' => 'line_fault',
+            'priority' => 'high',
+            'status' => 'in_progress',
+            'created_by' => $admin->id,
             'assigned_to' => $noc1->id,
         ]);
 
@@ -130,13 +130,13 @@ class CustomRoleAndKbCategoryTest extends TestCase
         $seniorSupervisor = User::factory()->create(['role' => 'senior_supervisor']);
 
         $callCenterTicket = Ticket::create([
-            'ticket_key'  => '260920003',
-            'title'       => 'Call Center Customer Issue',
+            'ticket_key' => '260920003',
+            'title' => 'Call Center Customer Issue',
             'description' => 'Help needed',
-            'category'    => 'billing',
-            'priority'    => 'medium',
-            'status'      => 'in_progress',
-            'created_by'  => $callCenter->id,
+            'category' => 'billing',
+            'priority' => 'medium',
+            'status' => 'in_progress',
+            'created_by' => $callCenter->id,
         ]);
 
         $this->assertTrue(Ticket::forUser($supervisor)->get()->contains($callCenterTicket));
@@ -145,28 +145,28 @@ class CustomRoleAndKbCategoryTest extends TestCase
 
     public function test_noc_can_see_reseller_and_call_center_tickets()
     {
-        $reseller   = User::factory()->create(['role' => 'reseller']);
+        $reseller = User::factory()->create(['role' => 'reseller']);
         $callCenter = User::factory()->create(['role' => 'call_center']);
-        $noc        = User::factory()->create(['role' => 'noc']);
+        $noc = User::factory()->create(['role' => 'noc']);
 
         $resellerTicket = Ticket::create([
-            'ticket_key'  => '260920004',
-            'title'       => 'Reseller Line Issue',
+            'ticket_key' => '260920004',
+            'title' => 'Reseller Line Issue',
             'description' => 'Fix line',
-            'category'    => 'line_fault',
-            'priority'    => 'high',
-            'status'      => 'in_progress',
-            'created_by'  => $reseller->id,
+            'category' => 'line_fault',
+            'priority' => 'high',
+            'status' => 'in_progress',
+            'created_by' => $reseller->id,
         ]);
 
         $callCenterTicket = Ticket::create([
-            'ticket_key'  => '260920005',
-            'title'       => 'Call Center Router Issue',
+            'ticket_key' => '260920005',
+            'title' => 'Call Center Router Issue',
             'description' => 'Fix router',
-            'category'    => 'router_issue',
-            'priority'    => 'medium',
-            'status'      => 'in_progress',
-            'created_by'  => $callCenter->id,
+            'category' => 'router_issue',
+            'priority' => 'medium',
+            'status' => 'in_progress',
+            'created_by' => $callCenter->id,
         ]);
 
         $nocTickets = Ticket::forUser($noc)->get();

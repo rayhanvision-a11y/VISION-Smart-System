@@ -6,11 +6,12 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable;
 
     protected $fillable = [
         'name',
@@ -32,6 +33,7 @@ class User extends Authenticatable
         'two_factor_secret',
         'two_factor_enabled',
         'two_factor_recovery_codes',
+        'fcm_token',
     ];
 
     protected $hidden = [
@@ -110,17 +112,17 @@ class User extends Authenticatable
     }
 
     public const TEAMS = [
-        'IT Team'         => 'IT Team',
-        'NOC team'        => 'NOC team',
-        'Call center'     => 'Call center',
+        'IT Team' => 'IT Team',
+        'NOC team' => 'NOC team',
+        'Call center' => 'Call center',
         'Supervisor Team' => 'Supervisor Team',
     ];
 
     public const SHIFTS = [
-        'unassigned'  => 'Unassigned Pool',
-        'day_shift'   => 'Day Shift (9:00 AM - 6:00 PM)',
+        'unassigned' => 'Unassigned Pool',
+        'day_shift' => 'Day Shift (9:00 AM - 6:00 PM)',
         'night_shift' => 'Night Shift (2:00 PM - 10:00 PM)',
-        'day_off'     => 'Day Off',
+        'day_off' => 'Day Off',
     ];
 
     public function ensureCurrentShiftDate(): void
@@ -129,7 +131,7 @@ class User extends Authenticatable
         if ($this->shift_date !== $today) {
             $this->forceFill([
                 'current_shift' => 'unassigned',
-                'shift_date'    => $today,
+                'shift_date' => $today,
             ])->save();
         }
     }
@@ -167,8 +169,8 @@ class User extends Authenticatable
             if (str_starts_with($this->avatar, 'http://') || str_starts_with($this->avatar, 'https://')) {
                 return $this->avatar;
             }
-            if (file_exists(public_path('storage/' . $this->avatar))) {
-                return asset('storage/' . $this->avatar);
+            if (file_exists(public_path('storage/'.$this->avatar))) {
+                return asset('storage/'.$this->avatar);
             }
             if (file_exists(public_path($this->avatar))) {
                 return asset($this->avatar);
@@ -179,11 +181,12 @@ class User extends Authenticatable
         $bgColors = ['f97316', 'ec4899', '6366f1', '8b5cf6', '10b981', '06b6d4', '3b82f6', 'f59e0b', 'ef4444'];
         $colorIndex = abs(crc32($name)) % count($bgColors);
         $bgHex = $bgColors[$colorIndex];
-        $uiAvatarUrl = "https://ui-avatars.com/api/" . urlencode($name) . "/128/{$bgHex}/ffffff?bold=true";
+        $uiAvatarUrl = 'https://ui-avatars.com/api/'.urlencode($name)."/128/{$bgHex}/ffffff?bold=true";
 
         if ($this->email) {
             $hash = md5(strtolower(trim($this->email)));
             $encodedDefault = urlencode($uiAvatarUrl);
+
             return "https://www.gravatar.com/avatar/{$hash}?s=128&d={$encodedDefault}";
         }
 

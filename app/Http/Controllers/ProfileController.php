@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -43,15 +44,15 @@ class ProfileController extends Controller
     public function updatePreferences(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'theme_preference'   => 'required|in:light,dark,system',
-            'locale'             => 'nullable|in:en,bn',
-            'timezone'           => 'nullable|timezone',
-            'notify_on_assign'   => 'nullable|boolean',
-            'notify_on_resolve'  => 'nullable|boolean',
-            'notify_on_message'  => 'nullable|boolean',
+            'theme_preference' => 'required|in:light,dark,system',
+            'locale' => 'nullable|in:en,bn',
+            'timezone' => 'nullable|timezone',
+            'notify_on_assign' => 'nullable|boolean',
+            'notify_on_resolve' => 'nullable|boolean',
+            'notify_on_message' => 'nullable|boolean',
         ]);
 
-        $validated['notify_on_assign']  = $request->boolean('notify_on_assign');
+        $validated['notify_on_assign'] = $request->boolean('notify_on_assign');
         $validated['notify_on_resolve'] = $request->boolean('notify_on_resolve');
         $validated['notify_on_message'] = $request->boolean('notify_on_message');
 
@@ -67,7 +68,7 @@ class ProfileController extends Controller
     /**
      * Update the user's theme preference via the quick toggle.
      */
-    public function updateTheme(Request $request): \Illuminate\Http\JsonResponse
+    public function updateTheme(Request $request): JsonResponse
     {
         $validated = $request->validate([
             'theme' => 'required|in:light,dark,system',

@@ -2,8 +2,8 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -34,13 +34,13 @@ return new class extends Migration
         $now = now();
         foreach ($defaults as $cat) {
             DB::table('ticket_categories')->insert([
-                'name'        => $cat['name'],
-                'slug'        => $cat['slug'],
+                'name' => $cat['name'],
+                'slug' => $cat['slug'],
                 'description' => $cat['description'],
-                'color'       => $cat['color'],
-                'is_active'   => true,
-                'created_at'  => $now,
-                'updated_at'  => $now,
+                'color' => $cat['color'],
+                'is_active' => true,
+                'created_at' => $now,
+                'updated_at' => $now,
             ]);
         }
     }

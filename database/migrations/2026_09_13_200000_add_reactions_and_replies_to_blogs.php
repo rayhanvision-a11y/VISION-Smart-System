@@ -13,7 +13,7 @@ return new class extends Migration
     {
         if (Schema::hasTable('blog_post_likes')) {
             Schema::table('blog_post_likes', function (Blueprint $table) {
-                if (!Schema::hasColumn('blog_post_likes', 'reaction_type')) {
+                if (! Schema::hasColumn('blog_post_likes', 'reaction_type')) {
                     $table->string('reaction_type', 20)->default('like')->after('user_id');
                 }
             });
@@ -21,7 +21,7 @@ return new class extends Migration
 
         if (Schema::hasTable('blog_post_comments')) {
             Schema::table('blog_post_comments', function (Blueprint $table) {
-                if (!Schema::hasColumn('blog_post_comments', 'parent_id')) {
+                if (! Schema::hasColumn('blog_post_comments', 'parent_id')) {
                     $table->foreignId('parent_id')->nullable()->after('blog_post_id')->constrained('blog_post_comments')->onDelete('cascade');
                 }
             });

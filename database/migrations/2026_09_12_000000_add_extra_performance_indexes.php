@@ -13,7 +13,7 @@ return new class extends Migration
                 Schema::table($table, function (Blueprint $t) use ($columns, $name) {
                     $t->index($columns, $name);
                 });
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
                 // Index already exists or skipped
             }
         };
@@ -35,7 +35,7 @@ return new class extends Migration
                 Schema::table($table, function (Blueprint $t) use ($name) {
                     $t->dropIndex($name);
                 });
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
                 // Ignore
             }
         };
