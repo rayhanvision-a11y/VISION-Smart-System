@@ -138,8 +138,9 @@ class _TicketListScreenState extends State<TicketListScreen> {
               child: Row(
                 children: [
                   _filterChip('all', 'All'),
-                  _filterChip('open', 'Open'),
                   _filterChip('in_progress', 'In Progress'),
+                  _filterChip('pending', 'Pending'),
+                  _filterChip('waiting_for_customer_feedback', 'Waiting'),
                   _filterChip('resolved', 'Resolved'),
                 ],
               ),

@@ -83,7 +83,7 @@ class ApiTicketController extends Controller
             'priority' => $validated['priority'],
             'category' => $validated['category'] ?? 'other',
             'pop_office_id' => $validated['pop_office_id'] ?? null,
-            'status' => 'open',
+            'status' => 'in_progress',
             'created_by' => $user->id,
         ]);
 
@@ -103,7 +103,7 @@ class ApiTicketController extends Controller
         $ticket = Ticket::forUser($user)->findOrFail($id);
 
         $validated = $request->validate([
-            'status' => 'required|in:open,in_progress,on_hold,resolved,closed',
+            'status' => 'required|in:in_progress,pending,waiting_for_customer_feedback,resolved',
         ]);
 
         $ticket->update([

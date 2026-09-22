@@ -63,7 +63,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
   }
 
   Future<void> _showStatusDialog() async {
-    final statuses = ['open', 'in_progress', 'on_hold', 'resolved', 'closed'];
+    final statuses = ['in_progress', 'pending', 'waiting_for_customer_feedback', 'resolved'];
 
     final selected = await showModalBottomSheet<String>(
       context: context,

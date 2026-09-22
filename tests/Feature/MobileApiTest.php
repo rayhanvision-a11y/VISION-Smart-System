@@ -98,7 +98,7 @@ class MobileApiTest extends TestCase
             'title' => 'Billing Issue',
             'description' => 'Invoice query',
             'priority' => 'low',
-            'status' => 'open',
+            'status' => 'in_progress',
             'created_by' => $user->id,
         ]);
 
@@ -125,7 +125,7 @@ class MobileApiTest extends TestCase
             'title' => 'Speed Issue',
             'description' => 'Slow connection',
             'priority' => 'medium',
-            'status' => 'open',
+            'status' => 'in_progress',
             'created_by' => $user->id,
         ]);
 
