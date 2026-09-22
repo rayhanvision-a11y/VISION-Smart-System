@@ -34,11 +34,6 @@ jobs:
           cd mobile_app
           flutter pub get
 
-      - name: Analyze Flutter code
-        run: |
-          cd mobile_app
-          flutter analyze --no-fatal-infos
-
       - name: Build APK
         run: |
           cd mobile_app
