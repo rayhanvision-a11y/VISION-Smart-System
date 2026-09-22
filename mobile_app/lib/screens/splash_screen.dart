@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../config/app_config.dart';
 import '../services/storage_service.dart';
 import 'login_screen.dart';
-import 'ticket_list_screen.dart';
+import 'main_navigation_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({Key? key}) : super(key: key);
@@ -27,7 +27,7 @@ class _SplashScreenState extends State<SplashScreen> {
     if (token != null && token.isNotEmpty) {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const TicketListScreen()),
+        MaterialPageRoute(builder: (_) => const MainNavigationScreen()),
       );
     } else {
       Navigator.pushReplacement(

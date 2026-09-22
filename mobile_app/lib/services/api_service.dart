@@ -148,7 +148,124 @@ class ApiService {
     } catch (_) {}
   }
 
-  // 7. Logout
+  // 7. Dashboard Stats & Duty Teams
+  static Future<Map<String, dynamic>?> getDashboard() async {
+    try {
+      final baseUrl = await getBaseUrl();
+      final response = await http.get(
+        Uri.parse('$baseUrl/dashboard'),
+        headers: await _headers(),
+      );
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  // 8. Duty Roster List
+  static Future<Map<String, dynamic>?> getRoster() async {
+    try {
+      final baseUrl = await getBaseUrl();
+      final response = await http.get(
+        Uri.parse('$baseUrl/roster'),
+        headers: await _headers(),
+      );
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  // 9. Users Directory (Admin / Super Admin)
+  static Future<List<dynamic>> getUsers({String? search, String? role, String? team}) async {
+    try {
+      final baseUrl = await getBaseUrl();
+      var uri = Uri.parse('$baseUrl/users').replace(queryParameters: {
+        if (search != null && search.isNotEmpty) 'search': search,
+        if (role != null && role.isNotEmpty) 'role': role,
+        if (team != null && team.isNotEmpty) 'team': team,
+      });
+      final response = await http.get(uri, headers: await _headers());
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data['users'] as List? ?? [];
+      }
+    } catch (_) {}
+    return [];
+  }
+
+  // 10. Metadata: Ticket Categories
+  static Future<List<dynamic>> getCategories() async {
+    try {
+      final baseUrl = await getBaseUrl();
+      final response = await http.get(Uri.parse('$baseUrl/categories'), headers: await _headers());
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data['categories'] as List? ?? [];
+      }
+    } catch (_) {}
+    return [];
+  }
+
+  // 11. Metadata: POP Offices
+  static Future<List<dynamic>> getPopOffices() async {
+    try {
+      final baseUrl = await getBaseUrl();
+      final response = await http.get(Uri.parse('$baseUrl/pop-offices'), headers: await _headers());
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data['pop_offices'] as List? ?? [];
+      }
+    } catch (_) {}
+    return [];
+  }
+
+  // 12. Metadata: Staff Members for Assignment
+  static Future<List<dynamic>> getStaff() async {
+    try {
+      final baseUrl = await getBaseUrl();
+      final response = await http.get(Uri.parse('$baseUrl/staff'), headers: await _headers());
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data['staff'] as List? ?? [];
+      }
+    } catch (_) {}
+    return [];
+  }
+
+  // 13. Assign Ticket
+  static Future<bool> assignTicket(int ticketId, int assignedToId) async {
+    try {
+      final baseUrl = await getBaseUrl();
+      final response = await http.post(
+        Uri.parse('$baseUrl/tickets/$ticketId/assign'),
+        headers: await _headers(),
+        body: jsonEncode({'assigned_to': assignedToId}),
+      );
+      return response.statusCode == 200;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  // 14. Update Ticket Priority
+  static Future<bool> updateTicketPriority(int ticketId, String priority) async {
+    try {
+      final baseUrl = await getBaseUrl();
+      final response = await http.post(
+        Uri.parse('$baseUrl/tickets/$ticketId/priority'),
+        headers: await _headers(),
+        body: jsonEncode({'priority': priority}),
+      );
+      return response.statusCode == 200;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  // 15. Logout
   static Future<void> logout() async {
     try {
       final baseUrl = await getBaseUrl();

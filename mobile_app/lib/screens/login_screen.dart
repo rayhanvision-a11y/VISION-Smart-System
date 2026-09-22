@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../config/app_config.dart';
 import '../services/api_service.dart';
 import '../services/storage_service.dart';
+import 'main_navigation_screen.dart';
 import 'ticket_list_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -103,7 +104,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (res['success'] == true) {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const TicketListScreen()),
+        MaterialPageRoute(builder: (_) => const MainNavigationScreen()),
       );
     } else {
       setState(() {

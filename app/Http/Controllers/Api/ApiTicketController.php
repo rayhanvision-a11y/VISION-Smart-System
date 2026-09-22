@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Ticket;
 use App\Models\TicketMessage;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -142,5 +143,96 @@ class ApiTicketController extends Controller
             'message' => 'Reply added successfully',
             'data' => $message->load('sender:id,name,avatar'),
         ], 201);
+    }
+
+    /**
+     * Assign ticket to a staff member.
+     */
+    public function assign(Request $request, int $id): JsonResponse
+    {
+        $currentUser = $request->user();
+
+        if ($currentUser->isReseller()) {
+            return response()->json(['error' => 'Resellers cannot assign tickets'], 403);
+        }
+
+        $ticket = Ticket::forUser($currentUser)->findOrFail($id);
+
+        $validated = $request->validate([
+            'assigned_to' => 'nullable|exists:users,id',
+        ]);
+
+        $ticket->update([
+            'assigned_to' => $validated['assigned_to'] ?? null,
+        ]);
+
+        return response()->json([
+            'message' => 'Ticket assigned successfully',
+            'ticket' => $ticket->fresh(['assignedTo:id,name,email,role']),
+        ]);
+    }
+
+    /**
+     * Update ticket priority.
+     */
+    public function updatePriority(Request $request, int $id): JsonResponse
+    {
+        $currentUser = $request->user();
+
+        if ($currentUser->isReseller()) {
+            return response()->json(['error' => 'Resellers cannot change priority'], 403);
+        }
+
+        $ticket = Ticket::forUser($currentUser)->findOrFail($id);
+
+        $validated = $request->validate([
+            'priority' => 'required|in:low,medium,high,urgent',
+        ]);
+
+        $ticket->update([
+            'priority' => $validated['priority'],
+        ]);
+
+        return response()->json([
+            'message' => 'Ticket priority updated successfully',
+            'ticket' => $ticket,
+        ]);
+    }
+
+    /**
+     * Get active ticket categories.
+     */
+    public function categories(): JsonResponse
+    {
+        $categories = \App\Models\TicketCategory::where('is_active', true)
+            ->orderBy('sort_order')
+            ->get(['id', 'name', 'slug']);
+
+        return response()->json(['categories' => $categories]);
+    }
+
+    /**
+     * Get POP offices.
+     */
+    public function popOffices(): JsonResponse
+    {
+        $offices = \App\Models\PopOffice::where('is_active', true)
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        return response()->json(['pop_offices' => $offices]);
+    }
+
+    /**
+     * Get eligible staff for ticket assignment.
+     */
+    public function staff(): JsonResponse
+    {
+        $staff = User::whereIn('role', ['admin', 'super_admin', 'noc', 'call_center', 'supervisor', 'senior_supervisor'])
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get(['id', 'name', 'email', 'role', 'team']);
+
+        return response()->json(['staff' => $staff]);
     }
 }
