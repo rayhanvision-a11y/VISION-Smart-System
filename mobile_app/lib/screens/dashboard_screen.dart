@@ -291,7 +291,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildTeamDutyCard(Map<dynamic, dynamic> team) {
+  Widget _buildTeamDutyCard(dynamic team) {
     final label = team['team_label'] ?? team['team_key'] ?? '';
     final total = team['total_members'] ?? 0;
     final active = team['active_members'] ?? 0;
@@ -387,7 +387,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) => TicketDetailScreen(ticketId: ticket.id, ticket: ticket),
+              builder: (_) => TicketDetailScreen(ticket: ticket),
             ),
           ).then((_) => _loadData());
         },

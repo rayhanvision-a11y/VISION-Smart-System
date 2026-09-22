@@ -152,7 +152,7 @@ class _UserDirectoryScreenState extends State<UserDirectoryScreen> {
     );
   }
 
-  Widget _buildUserCard(Map<dynamic, dynamic> user) {
+  Widget _buildUserCard(dynamic user) {
     final name = user['name'] ?? '';
     final email = user['email'] ?? '';
     final role = (user['role'] ?? '').toString().replaceAll('_', ' ').toUpperCase();

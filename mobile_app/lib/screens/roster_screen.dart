@@ -154,7 +154,7 @@ class _RosterScreenState extends State<RosterScreen> {
     );
   }
 
-  Widget _buildStaffRosterCard(Map<dynamic, dynamic> member) {
+  Widget _buildStaffRosterCard(dynamic member) {
     final name = member['name'] ?? '';
     final email = member['email'] ?? '';
     final role = (member['role'] ?? '').toString().replaceAll('_', ' ').toUpperCase();

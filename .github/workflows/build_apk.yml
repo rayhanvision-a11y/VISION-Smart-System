@@ -5,6 +5,7 @@ on:
   push:
     paths:
       - 'mobile_app/**'
+      - '.github/workflows/build_apk.yml'
     branches:
       - main
 
@@ -33,10 +34,15 @@ jobs:
           cd mobile_app
           flutter pub get
 
+      - name: Analyze Flutter code
+        run: |
+          cd mobile_app
+          flutter analyze --no-fatal-infos
+
       - name: Build APK
         run: |
           cd mobile_app
-          flutter build apk --release
+          flutter build apk --release --no-tree-shake-icons
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4

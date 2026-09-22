@@ -12,13 +12,11 @@ import '../widgets/priority_badge.dart';
 import '../widgets/status_badge.dart';
 
 class TicketDetailScreen extends StatefulWidget {
-  final int ticketId;
   final TicketModel ticket;
   final UserModel? currentUser;
 
   const TicketDetailScreen({
     Key? key,
-    required this.ticketId,
     required this.ticket,
     this.currentUser,
   }) : super(key: key);
@@ -239,7 +237,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
 
     if (!mounted) return;
 
-    final selected = await showModalBottomSheet<Map<dynamic, dynamic>>(
+    final selected = await showModalBottomSheet<dynamic>(
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
@@ -450,7 +448,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
                   itemCount: messages.length,
                   itemBuilder: (context, index) {
                     final msg = messages[index];
-                    final isMe = _user != null && msg.userId == _user!.id;
+                    final isMe = _user != null && msg.senderId == _user!.id;
                     return MessageBubble(message: msg, isMe: isMe);
                   },
                 );

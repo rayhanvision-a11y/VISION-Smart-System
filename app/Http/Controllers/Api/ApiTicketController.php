@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\PopOffice;
 use App\Models\Ticket;
+use App\Models\TicketCategory;
 use App\Models\TicketMessage;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
@@ -204,7 +206,7 @@ class ApiTicketController extends Controller
      */
     public function categories(): JsonResponse
     {
-        $categories = \App\Models\TicketCategory::where('is_active', true)
+        $categories = TicketCategory::where('is_active', true)
             ->orderBy('sort_order')
             ->get(['id', 'name', 'slug']);
 
@@ -216,7 +218,7 @@ class ApiTicketController extends Controller
      */
     public function popOffices(): JsonResponse
     {
-        $offices = \App\Models\PopOffice::where('is_active', true)
+        $offices = PopOffice::where('is_active', true)
             ->orderBy('name')
             ->get(['id', 'name']);
 
