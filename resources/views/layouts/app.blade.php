@@ -443,6 +443,15 @@
                 width: 0 !important;
                 height: 0 !important;
             }
+
+            /* Synchronize Sidebar Header & Main Top Bar heights & borders perfectly */
+            .sidebar-header-box,
+            .main-top-header {
+                height: 64px !important;
+                min-height: 64px !important;
+                max-height: 64px !important;
+                box-sizing: border-box !important;
+            }
         </style>
     </head>
     <body class="font-sans antialiased bg-slate-50 dark:bg-slate-950">
@@ -456,10 +465,10 @@
                  class="fixed inset-0 bg-black/50 z-20 lg:hidden"></div>            {{-- Sidebar --}}
             <aside id="main-sidebar"
                    :class="(sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0') + (sidebarCollapsed ? ' sidebar-collapsed' : '')"
-                   class="bg-white dark:bg-slate-950 text-slate-800 dark:text-white border border-slate-200 dark:border-slate-800 flex flex-col flex-shrink-0 fixed top-0 left-0 h-full z-30 lg:translate-x-0 overflow-visible transition-colors duration-200">
+                   class="bg-white dark:bg-slate-950 text-slate-800 dark:text-white border-r border-slate-200 dark:border-slate-800 flex flex-col flex-shrink-0 fixed top-0 left-0 h-full z-30 lg:translate-x-0 overflow-visible transition-colors duration-200">
 
                 {{-- Logo & Prominent Collapse Toggle Icon --}}
-                <div class="h-16 border-b border-r border-slate-200 dark:border-slate-800/80 bg-white dark:bg-slate-950 flex items-center justify-center flex-shrink-0 relative px-3 overflow-visible">
+                <div class="h-16 sidebar-header-box border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 flex items-center justify-center flex-shrink-0 relative px-3 overflow-visible">
                     @php 
                         $siteLogo = \App\Models\Setting::get('logo_path');
                         $siteFavicon = \App\Models\Setting::get('favicon_path');
@@ -844,7 +853,7 @@
                  class="flex-1 flex flex-col min-h-screen">
 
                 {{-- Top Bar --}}
-                <header class="h-14 sm:h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 px-2 sm:px-4 lg:px-6 flex items-center justify-between sticky top-0 z-10 gap-1 sm:gap-3">
+                <header class="h-16 main-top-header bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-2 sm:px-4 lg:px-6 flex items-center justify-between sticky top-0 z-10 gap-1 sm:gap-3">
                     <div class="flex items-center gap-1.5 sm:gap-3 flex-shrink-0 min-w-0">
                         {{-- Mobile-only menu toggle --}}
                         <button type="button"
@@ -1003,16 +1012,12 @@
                     </div>
                     @endif
 
-                    <div class="flex items-center gap-0.5 sm:gap-2 md:gap-3 flex-shrink-0">
-                        {{-- Mobile search shortcut --}}
-                        <a href="{{ route('search') }}" class="md:hidden p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg" title="{{ __('Search') }}">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                        </a>
-                        {{-- Global Search --}}
-                        <form method="GET" action="{{ route('search') }}" class="hidden md:flex items-center">
+                    <div class="flex items-center gap-2 sm:gap-3 flex-shrink-0 ml-auto">
+                        {{-- Global Search on the right --}}
+                        <form method="GET" action="{{ route('search') }}" class="flex items-center">
                             <div class="relative">
                                 <input type="text" name="q" value="{{ request('q') }}" placeholder="{{ __('Search tickets...') }}"
-                                       class="border border-slate-200 dark:border-slate-700 rounded-lg pl-8 pr-3 py-1.5 text-sm focus:ring-2 focus:ring-indigo-500 bg-slate-50 dark:bg-slate-800 dark:text-slate-100 w-40 md:w-48 lg:w-64">
+                                       class="border border-slate-200 dark:border-slate-700/80 rounded-lg pl-8 pr-3 py-1.5 text-xs sm:text-sm focus:ring-2 focus:ring-indigo-500 bg-slate-50 dark:bg-[#131b2e] text-slate-800 dark:text-slate-100 w-36 sm:w-48 lg:w-64 shadow-xs">
                                 <svg class="absolute left-2.5 top-2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                                 </svg>
