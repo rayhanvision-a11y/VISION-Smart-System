@@ -7,6 +7,14 @@ import '../models/user.dart';
 import 'storage_service.dart';
 
 class ApiService {
+  static Future<String> getBaseUrl() async {
+    final saved = await StorageService.getServerUrl();
+    if (saved != null && saved.trim().isNotEmpty) {
+      return saved.trim().replaceAll(RegExp(r'/+$'), '');
+    }
+    return AppConfig.apiBaseUrl;
+  }
+
   static Future<Map<String, String>> _headers() async {
     final token = await StorageService.getToken();
     return {
@@ -19,8 +27,9 @@ class ApiService {
   // 1. User Login
   static Future<Map<String, dynamic>> login(String email, String password) async {
     try {
+      final baseUrl = await getBaseUrl();
       final response = await http.post(
-        Uri.parse('${AppConfig.apiBaseUrl}/login'),
+        Uri.parse('$baseUrl/login'),
         headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
         body: jsonEncode({
           'email': email,
@@ -45,7 +54,8 @@ class ApiService {
   // 2. Fetch Tickets list from Laravel API
   static Future<List<TicketModel>> fetchTickets({String? status, String? search}) async {
     try {
-      var uri = Uri.parse('${AppConfig.apiBaseUrl}/tickets').replace(queryParameters: {
+      final baseUrl = await getBaseUrl();
+      var uri = Uri.parse('$baseUrl/tickets').replace(queryParameters: {
         if (status != null && status.isNotEmpty) 'status': status,
         if (search != null && search.isNotEmpty) 'search': search,
       });
@@ -68,8 +78,9 @@ class ApiService {
     String? category,
   }) async {
     try {
+      final baseUrl = await getBaseUrl();
       final response = await http.post(
-        Uri.parse('${AppConfig.apiBaseUrl}/tickets'),
+        Uri.parse('$baseUrl/tickets'),
         headers: await _headers(),
         body: jsonEncode({
           'title': title,
@@ -92,8 +103,9 @@ class ApiService {
   // 4. Update Ticket Status
   static Future<bool> updateTicketStatus(int ticketId, String status) async {
     try {
+      final baseUrl = await getBaseUrl();
       final response = await http.post(
-        Uri.parse('${AppConfig.apiBaseUrl}/tickets/$ticketId/status'),
+        Uri.parse('$baseUrl/tickets/$ticketId/status'),
         headers: await _headers(),
         body: jsonEncode({'status': status}),
       );
@@ -106,8 +118,9 @@ class ApiService {
   // 5. Add Message / Reply
   static Future<TicketMessageModel?> addMessage(int ticketId, String message, {bool isPrivate = false}) async {
     try {
+      final baseUrl = await getBaseUrl();
       final response = await http.post(
-        Uri.parse('${AppConfig.apiBaseUrl}/tickets/$ticketId/messages'),
+        Uri.parse('$baseUrl/tickets/$ticketId/messages'),
         headers: await _headers(),
         body: jsonEncode({
           'message': message,
@@ -126,8 +139,9 @@ class ApiService {
   // 6. Update Device FCM Token
   static Future<void> updateFcmToken(String fcmToken) async {
     try {
+      final baseUrl = await getBaseUrl();
       await http.post(
-        Uri.parse('${AppConfig.apiBaseUrl}/user/fcm-token'),
+        Uri.parse('$baseUrl/user/fcm-token'),
         headers: await _headers(),
         body: jsonEncode({'fcm_token': fcmToken}),
       );
@@ -137,8 +151,9 @@ class ApiService {
   // 7. Logout
   static Future<void> logout() async {
     try {
+      final baseUrl = await getBaseUrl();
       await http.post(
-        Uri.parse('${AppConfig.apiBaseUrl}/logout'),
+        Uri.parse('$baseUrl/logout'),
         headers: await _headers(),
       );
     } catch (_) {}

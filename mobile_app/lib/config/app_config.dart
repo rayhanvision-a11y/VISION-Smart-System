@@ -4,8 +4,8 @@ class AppConfig {
   static const String appName = 'VISION Smart System';
   
   // Base URL for Laravel Backend API
-  // Change to your production domain (e.g. https://portal.visiontech.com.bd/api)
-  static const String apiBaseUrl = 'https://portal.visiontech.com.bd/api';
+  static const String defaultApiBaseUrl = 'https://omit-vanilla-aware.ngrok-free.dev/api';
+  static String apiBaseUrl = defaultApiBaseUrl;
   
   // Firebase Realtime Database URL
   static const String firebaseDbUrl = 'https://vision-smart-systeam-default-rtdb.firebaseio.com';

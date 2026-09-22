@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../config/app_config.dart';
 import '../services/api_service.dart';
+import '../services/storage_service.dart';
 import 'ticket_list_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -17,6 +18,70 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
   bool _obscurePassword = true;
   String? _errorMessage;
+
+  Future<void> _showServerSettings() async {
+    final currentUrl = await ApiService.getBaseUrl();
+    final urlController = TextEditingController(text: currentUrl);
+
+    if (!mounted) return;
+
+    await showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Backend Server URL', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Enter your Laravel API base URL (e.g. your ngrok or domain):',
+              style: TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: urlController,
+              decoration: InputDecoration(
+                hintText: 'https://your-domain.com/api',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              ),
+              keyboardType: TextInputType.url,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () async {
+              final messenger = ScaffoldMessenger.of(ctx);
+              await StorageService.setServerUrl(AppConfig.defaultApiBaseUrl);
+              if (!ctx.mounted) return;
+              Navigator.pop(ctx);
+              messenger.showSnackBar(
+                const SnackBar(content: Text('Reset to default URL')),
+              );
+            },
+            child: const Text('Reset'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final newUrl = urlController.text.trim();
+              if (newUrl.isNotEmpty) {
+                final messenger = ScaffoldMessenger.of(ctx);
+                await StorageService.setServerUrl(newUrl);
+                if (!ctx.mounted) return;
+                Navigator.pop(ctx);
+                messenger.showSnackBar(
+                  SnackBar(content: Text('Server URL saved: $newUrl')),
+                );
+              }
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: AppConfig.primaryColor, foregroundColor: Colors.white),
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
@@ -51,6 +116,17 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings_outlined, color: Colors.grey),
+            tooltip: 'Server Settings',
+            onPressed: _showServerSettings,
+          ),
+        ],
+      ),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(

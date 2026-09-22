@@ -28,6 +28,18 @@ class StorageService {
     }
   }
 
+  static const String _keyServerUrl = 'server_url';
+
+  static Future<String?> getServerUrl() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_keyServerUrl);
+  }
+
+  static Future<void> setServerUrl(String url) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keyServerUrl, url);
+  }
+
   static Future<void> clearAuth() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_keyToken);
