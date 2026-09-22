@@ -40,10 +40,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final stats = _dashboardData?['stats'] as Map<String, dynamic>? ?? {};
+    if (_isLoading) {
+      return Scaffold(
+        backgroundColor: const Color(0xFFF8FAFC),
+        appBar: AppBar(
+          title: const Text('VISION Smart System', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+        ),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    final stats = (_dashboardData?['stats'] is Map) ? (_dashboardData!['stats'] as Map) : {};
     final dutyTeams = (_dashboardData?['duty_teams'] as List?) ?? [];
     final recentTicketsJson = (_dashboardData?['recent_tickets'] as List?) ?? [];
-    final recentTickets = recentTicketsJson.map((j) => TicketModel.fromJson(j)).toList();
+    final List<TicketModel> recentTickets = [];
+    for (var j in recentTicketsJson) {
+      if (j is Map) {
+        try {
+          recentTickets.add(TicketModel.fromJson(j));
+        } catch (_) {}
+      }
+    }
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),

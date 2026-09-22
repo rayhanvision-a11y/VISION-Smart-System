@@ -29,23 +29,37 @@ class TicketModel {
     this.updatedAt,
   });
 
-  factory TicketModel.fromJson(Map<String, dynamic> json) {
+  factory TicketModel.fromJson(Map<dynamic, dynamic> json) {
+    int? parseId(dynamic val) {
+      if (val == null) return null;
+      if (val is int) return val;
+      if (val is Map) return val['id'] is int ? val['id'] : int.tryParse(val['id']?.toString() ?? '');
+      return int.tryParse(val.toString());
+    }
+
+    String? parseName(dynamic val) {
+      if (val == null) return null;
+      if (val is String) return val;
+      if (val is Map) return val['name']?.toString();
+      return null;
+    }
+
     return TicketModel(
-      id: json['id'] is int ? json['id'] : int.tryParse(json['id'].toString()) ?? 0,
-      ticketKey: json['ticket_key'] ?? json['key'] ?? '',
-      title: json['title'] ?? '',
-      description: json['description'] ?? '',
-      priority: json['priority'] ?? 'medium',
-      status: json['status'] ?? 'open',
-      category: json['category'] is String ? json['category'] : json['category']?['name'],
-      createdBy: json['created_by'],
-      assignedTo: json['assigned_to'],
-      assigneeName: json['assigned_to'] != null && json['assigned_to'] is Map
-          ? json['assigned_to']['name']
-          : json['assignee']?['name'],
-      creatorName: json['user']?['name'] ?? json['creator']?['name'],
-      createdAt: json['created_at'],
-      updatedAt: json['updated_at'],
+      id: json['id'] is int ? json['id'] : int.tryParse(json['id']?.toString() ?? '') ?? 0,
+      ticketKey: json['ticket_key']?.toString() ?? json['key']?.toString() ?? '',
+      title: json['title']?.toString() ?? '',
+      description: json['description']?.toString() ?? '',
+      priority: json['priority']?.toString() ?? 'medium',
+      status: json['status']?.toString() ?? 'in_progress',
+      category: json['category'] is String
+          ? json['category']
+          : (json['category'] is Map ? json['category']['name']?.toString() : null),
+      createdBy: parseId(json['created_by']),
+      assignedTo: parseId(json['assigned_to']),
+      assigneeName: parseName(json['assigned_to']) ?? parseName(json['assignee']),
+      creatorName: parseName(json['user']) ?? parseName(json['creator']),
+      createdAt: json['created_at']?.toString(),
+      updatedAt: json['updated_at']?.toString(),
     );
   }
 

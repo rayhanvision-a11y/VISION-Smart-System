@@ -63,8 +63,18 @@ class ApiService {
       final response = await http.get(uri, headers: await _headers());
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        final list = data['data'] as List? ?? [];
-        return list.map((json) => TicketModel.fromJson(json)).toList();
+        final list = (data is Map && data['data'] is List)
+            ? (data['data'] as List)
+            : (data is List ? data : []);
+        final List<TicketModel> results = [];
+        for (var item in list) {
+          if (item is Map) {
+            try {
+              results.add(TicketModel.fromJson(item));
+            } catch (_) {}
+          }
+        }
+        return results;
       }
     } catch (_) {}
     return [];
