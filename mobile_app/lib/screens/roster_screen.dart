@@ -182,7 +182,10 @@ class _RosterScreenState extends State<RosterScreen> {
         borderRadius: BorderRadius.circular(12),
         side: const BorderSide(color: Color(0xFFE2E8F0)),
       ),
-      child: Padding(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () => _showStaffDetail(member),
+        child: Padding(
         padding: const EdgeInsets.all(12),
         child: Row(
           children: [
@@ -263,6 +266,107 @@ class _RosterScreenState extends State<RosterScreen> {
             ),
           ],
         ),
+        ),
+      ),
+    );
+  }
+
+  void _showStaffDetail(dynamic member) {
+    final name = (member['name'] ?? '').toString();
+    final email = (member['email'] ?? '').toString();
+    final phone = (member['phone'] ?? '').toString();
+    final role = (member['role'] ?? '').toString().replaceAll('_', ' ').toUpperCase();
+    final teamName = (member['team_name'] ?? member['team'] ?? 'Unassigned').toString();
+    final shift = (member['current_shift'] ?? '').toString().replaceAll('_', ' ');
+    final isOnDuty = member['is_on_duty'] == true;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+        child: SafeArea(
+          top: false,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40, height: 4,
+                  decoration: BoxDecoration(color: const Color(0xFFE2E8F0), borderRadius: BorderRadius.circular(2)),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  CircleAvatar(
+                    radius: 30,
+                    backgroundColor: const Color(0xFFEFF6FF),
+                    child: Text(name.isNotEmpty ? name[0].toUpperCase() : '?', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF2563EB))),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+                        const SizedBox(height: 4),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: isOnDuty ? const Color(0xFFD1FAE5) : const Color(0xFFF1F5F9),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            isOnDuty ? 'On Duty' : 'Off Duty',
+                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: isOnDuty ? const Color(0xFF047857) : const Color(0xFF64748B)),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              const Divider(height: 1),
+              const SizedBox(height: 16),
+              _staffRow(Icons.badge_outlined, 'Role', role),
+              _staffRow(Icons.groups_outlined, 'Team', teamName),
+              if (shift.isNotEmpty) _staffRow(Icons.schedule_outlined, 'Current Shift', shift),
+              if (email.isNotEmpty) _staffRow(Icons.email_outlined, 'Email', email),
+              if (phone.isNotEmpty) _staffRow(Icons.phone_outlined, 'Phone', phone),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _staffRow(IconData icon, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 18, color: const Color(0xFF64748B)),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label, style: const TextStyle(fontSize: 11, color: Color(0xFF64748B), fontWeight: FontWeight.w500)),
+                const SizedBox(height: 2),
+                Text(value, style: const TextStyle(fontSize: 14, color: Color(0xFF0F172A), fontWeight: FontWeight.w600)),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

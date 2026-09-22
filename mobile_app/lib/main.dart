@@ -1,5 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'config/app_config.dart';
@@ -14,22 +15,37 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Firebase (safely handles when google-services.json is attached)
-  try {
-    await Firebase.initializeApp();
-    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-
-    // Request Notification Permissions
-    final messaging = FirebaseMessaging.instance;
-    await messaging.requestPermission(alert: true, badge: true, sound: true);
-
-    // Get Device FCM Token and update to backend
-    final fcmToken = await messaging.getToken();
-    if (fcmToken != null) {
-      await ApiService.updateFcmToken(fcmToken);
+  // Initialize Firebase safely
+  if (kIsWeb) {
+    try {
+      await Firebase.initializeApp(
+        options: const FirebaseOptions(
+          apiKey: "demo-key",
+          appId: "1:1234567890:web:1234567890",
+          messagingSenderId: "1234567890",
+          projectId: "vision-smart-system",
+        ),
+      );
+    } catch (e) {
+      debugPrint('Firebase Web init note: $e');
     }
-  } catch (e) {
-    debugPrint('Firebase initialization note: $e');
+  } else {
+    try {
+      await Firebase.initializeApp();
+      FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
+      // Request Notification Permissions
+      final messaging = FirebaseMessaging.instance;
+      await messaging.requestPermission(alert: true, badge: true, sound: true);
+
+      // Get Device FCM Token and update to backend
+      final fcmToken = await messaging.getToken();
+      if (fcmToken != null) {
+        await ApiService.updateFcmToken(fcmToken);
+      }
+    } catch (e) {
+      debugPrint('Firebase initialization note: $e');
+    }
   }
 
   runApp(const VisionSmartApp());

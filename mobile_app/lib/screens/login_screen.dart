@@ -139,18 +139,31 @@ class _LoginScreenState extends State<LoginScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const SizedBox(height: 20),
-                  // Logo
+                  // VISION Logo
                   Center(
                     child: Container(
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(18),
                       decoration: BoxDecoration(
-                        color: AppConfig.primaryColor.withOpacity(0.1),
-                        shape: BoxShape.circle,
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppConfig.primaryColor.withOpacity(0.15),
+                            blurRadius: 20,
+                            offset: const Offset(0, 6),
+                          ),
+                        ],
                       ),
-                      child: const Icon(
-                        Icons.wifi_tethering_rounded,
-                        size: 48,
-                        color: AppConfig.primaryColor,
+                      child: Image.network(
+                        AppConfig.logoUrl,
+                        width: 140,
+                        height: 60,
+                        fit: BoxFit.contain,
+                        errorBuilder: (_, __, ___) => const Icon(
+                          Icons.wifi_tethering_rounded,
+                          size: 48,
+                          color: AppConfig.primaryColor,
+                        ),
                       ),
                     ),
                   ),

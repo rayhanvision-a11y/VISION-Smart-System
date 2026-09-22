@@ -10,6 +10,9 @@ class AppConfig {
   // Firebase Realtime Database URL
   static const String firebaseDbUrl = 'https://vision-smart-systeam-default-rtdb.firebaseio.com';
 
+  // Official VISION logo (matches website)
+  static const String logoUrl = 'https://visiontech.com.bd/wp-content/uploads/2017/11/vision-logo.png';
+
   // App Theme Colors
   static const Color primaryColor = Color(0xFF2563EB); // Modern Royal Blue
   static const Color primaryDark = Color(0xFF1D4ED8);

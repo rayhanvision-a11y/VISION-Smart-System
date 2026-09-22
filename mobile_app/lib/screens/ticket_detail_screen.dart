@@ -63,14 +63,16 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
     setState(() => _isSending = true);
     _messageController.clear();
 
-    await ApiService.addMessage(
+    final result = await ApiService.addMessage(
       _ticket.id,
       text,
       isPrivate: _isPrivateReply,
     );
 
-    if (mounted) {
-      setState(() => _isSending = false);
+    if (!mounted) return;
+    setState(() => _isSending = false);
+
+    if (result['success'] == true) {
       if (_scrollController.hasClients) {
         _scrollController.animateTo(
           _scrollController.position.maxScrollExtent + 80,
@@ -78,6 +80,26 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
           curve: Curves.easeOut,
         );
       }
+    } else {
+      // Restore user's text so they don't lose it, and surface the error
+      _messageController.text = text;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: Colors.red.shade700,
+          content: Row(
+            children: [
+              const Icon(Icons.error_outline, color: Colors.white, size: 18),
+              const SizedBox(width: 8),
+              Expanded(child: Text(result['error']?.toString() ?? 'Failed to send message')),
+            ],
+          ),
+          action: SnackBarAction(
+            label: 'Retry',
+            textColor: Colors.white,
+            onPressed: _sendMessage,
+          ),
+        ),
+      );
     }
   }
 

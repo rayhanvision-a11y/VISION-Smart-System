@@ -155,7 +155,7 @@ class ApiService {
   }
 
   // 5. Add Message / Reply
-  static Future<TicketMessageModel?> addMessage(int ticketId, String message, {bool isPrivate = false}) async {
+  static Future<Map<String, dynamic>> addMessage(int ticketId, String message, {bool isPrivate = false}) async {
     try {
       final uri = await _buildUri('/tickets/$ticketId/messages');
       final response = await http.post(
@@ -169,10 +169,20 @@ class ApiService {
 
       if (response.statusCode == 201) {
         final data = jsonDecode(response.body);
-        return TicketMessageModel.fromJson(data['data']);
+        return {
+          'success': true,
+          'message': TicketMessageModel.fromJson(data['data']),
+        };
       }
-    } catch (_) {}
-    return null;
+      String errMsg = 'Failed to send message (${response.statusCode})';
+      try {
+        final data = jsonDecode(response.body);
+        if (data is Map && data['message'] != null) errMsg = data['message'].toString();
+      } catch (_) {}
+      return {'success': false, 'error': errMsg};
+    } catch (e) {
+      return {'success': false, 'error': 'Network error: $e'};
+    }
   }
 
   // 6. Update Device FCM Token
