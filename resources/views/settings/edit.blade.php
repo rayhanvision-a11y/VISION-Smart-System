@@ -108,8 +108,17 @@
                    class="group flex items-center gap-3 p-3.5 rounded-xl border border-cyan-200 dark:border-cyan-900/60 bg-cyan-50/60 dark:bg-cyan-950/30 hover:bg-cyan-100 dark:hover:bg-cyan-950/60 transition-colors">
                     <div class="w-10 h-10 rounded-lg bg-cyan-500 text-white flex items-center justify-center text-lg shrink-0">👥</div>
                     <div class="min-w-0">
-                        <div class="text-sm font-bold text-slate-900 dark:text-white truncate">{{ __('Users & Teams') }}</div>
+                        <div class="text-sm font-bold text-slate-900 dark:text-white truncate">{{ __('Users') }}</div>
                         <div class="text-[11px] text-slate-500 dark:text-slate-400 truncate">{{ \App\Models\User::count() }} {{ __('users') }}</div>
+                    </div>
+                </a>
+
+                <a href="{{ route('teams.index') }}"
+                   class="group flex items-center gap-3 p-3.5 rounded-xl border border-teal-200 dark:border-teal-900/60 bg-teal-50/60 dark:bg-teal-950/30 hover:bg-teal-100 dark:hover:bg-teal-950/60 transition-colors">
+                    <div class="w-10 h-10 rounded-lg bg-teal-500 text-white flex items-center justify-center text-lg shrink-0">🏷️</div>
+                    <div class="min-w-0">
+                        <div class="text-sm font-bold text-slate-900 dark:text-white truncate">{{ __('Team Tags') }}</div>
+                        <div class="text-[11px] text-slate-500 dark:text-slate-400 truncate">@if(\Schema::hasTable('teams')){{ \App\Models\Team::count() }} {{ __('teams') }}@else{{ __('Setup pending') }}@endif</div>
                     </div>
                 </a>
 

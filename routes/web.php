@@ -328,6 +328,7 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('labels', LabelController::class)->only(['index', 'store', 'destroy']);
     Route::resource('ticket-categories', TicketCategoryController::class)->only(['index', 'store', 'update', 'destroy']);
     Route::resource('areas', AreaController::class)->only(['index', 'store', 'update', 'destroy']);
+    Route::resource('teams', \App\Http\Controllers\TeamController::class)->only(['index', 'store', 'update', 'destroy']);
 
     Route::get('/search', [SearchController::class, 'index'])->name('search');
 

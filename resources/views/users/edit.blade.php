@@ -53,8 +53,9 @@
                 <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">{{ __('Team Tag') }}</label>
                 <select name="team" class="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500">
                     <option value="">{{ __('None / No Team Tag') }}</option>
-                    @foreach(\App\Models\User::TEAMS as $tKey => $tName)
-                    <option value="{{ $tKey }}" {{ old('team', $editUser->team) === $tKey ? 'selected' : '' }}>🏷️ {{ $tName }}</option>
+                    @php $teams = \Schema::hasTable('teams') ? \App\Models\Team::where('is_active', true)->orderBy('name')->pluck('name') : collect(array_keys(\App\Models\User::TEAMS)); @endphp
+                    @foreach($teams as $tName)
+                    <option value="{{ $tName }}" {{ old('team', $editUser->team) === $tName ? 'selected' : '' }}>🏷️ {{ $tName }}</option>
                     @endforeach
                 </select>
                 @error('team')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
