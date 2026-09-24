@@ -46,6 +46,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     );
   }
 
+  bool get _isTechnician => _currentUser?.role.toLowerCase() == 'technician';
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -63,14 +65,16 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     return Scaffold(
       extendBody: true,
       body: IndexedStack(index: _currentIndex, children: pages),
-      floatingActionButton: FloatingActionButton(
-        heroTag: 'main_nav_fab',
-        onPressed: _openCreate,
-        backgroundColor: AppColors.accent,
-        elevation: 4,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.lg)),
-        child: const Icon(Icons.add_rounded, color: Colors.white, size: 28),
-      ),
+      floatingActionButton: _isTechnician
+          ? null
+          : FloatingActionButton(
+              heroTag: 'main_nav_fab',
+              onPressed: _openCreate,
+              backgroundColor: AppColors.accent,
+              elevation: 4,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.lg)),
+              child: const Icon(Icons.add_rounded, color: Colors.white, size: 28),
+            ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: _buildNav(),
     );
@@ -96,8 +100,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             children: [
               _navItem(0, Icons.home_outlined, Icons.home_rounded, AppState.instance.t('Home', 'হোম')),
               _navItem(1, Icons.confirmation_number_outlined, Icons.confirmation_number_rounded, AppState.instance.t('Tickets', 'টিকিট')),
-              const SizedBox(width: 60),
-              _navItem(3, Icons.groups_2_outlined, Icons.groups_2_rounded, AppState.instance.t('Team', 'টিম')),
+              if (!_isTechnician) const SizedBox(width: 60),
+              if (!_isTechnician)
+                _navItem(3, Icons.groups_2_outlined, Icons.groups_2_rounded, AppState.instance.t('Team', 'টিম')),
               _navItem(4, Icons.person_outline_rounded, Icons.person_rounded, AppState.instance.t('Profile', 'প্রোফাইল')),
             ],
           ),

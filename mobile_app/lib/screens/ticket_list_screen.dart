@@ -291,7 +291,13 @@ class _TicketListScreenState extends State<TicketListScreen> {
                     const SizedBox(height: 6),
                     Row(
                       children: [
-                        if (t.category != null && t.category!.isNotEmpty) ...[
+                        if (t.area != null && t.area!.isNotEmpty) ...[
+                          Icon(Icons.place_outlined, size: 12, color: AppColors.primary),
+                          const SizedBox(width: 3),
+                          Text(t.area!,
+                              style: AppText.caption.copyWith(fontSize: 11, color: AppColors.primary, fontWeight: FontWeight.w600)),
+                          const SizedBox(width: 10),
+                        ] else if (t.category != null && t.category!.isNotEmpty) ...[
                           Icon(Icons.folder_outlined, size: 12, color: AppColors.textMuted),
                           const SizedBox(width: 3),
                           Text(t.category!.replaceAll('_', ' '),

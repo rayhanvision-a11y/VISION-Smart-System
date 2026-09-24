@@ -12,6 +12,7 @@ class TicketModel {
   final String? creatorName;
   final String? createdAt;
   final String? updatedAt;
+  final String? area;
 
   TicketModel({
     required this.id,
@@ -27,6 +28,7 @@ class TicketModel {
     this.creatorName,
     this.createdAt,
     this.updatedAt,
+    this.area,
   });
 
   int? get assignedToId => assignedTo;
@@ -63,6 +65,7 @@ class TicketModel {
       creatorName: parseName(json['user']) ?? parseName(json['creator']),
       createdAt: json['created_at']?.toString(),
       updatedAt: json['updated_at']?.toString(),
+      area: json['area']?.toString(),
     );
   }
 

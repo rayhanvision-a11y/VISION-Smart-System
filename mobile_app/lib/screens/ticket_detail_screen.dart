@@ -7,6 +7,7 @@ import '../models/user.dart';
 import '../services/api_service.dart';
 import '../services/firebase_realtime_service.dart';
 import '../services/storage_service.dart';
+import '../theme/app_theme.dart';
 import '../widgets/message_bubble.dart';
 import '../widgets/priority_badge.dart';
 import '../widgets/status_badge.dart';
@@ -88,8 +89,10 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> with SingleTick
   bool get _isAdminOrStaff {
     if (_user == null) return false;
     final r = _user!.role.toLowerCase();
-    return r != 'reseller';
+    return r != 'reseller' && r != 'technician';
   }
+
+  bool get _isTechnician => _user?.role.toLowerCase() == 'technician';
 
   TicketMessageModel? _replyToMessage;
 
@@ -395,7 +398,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> with SingleTick
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: AppColors.bg,
       appBar: AppBar(
         title: Text(
           '#${_ticket.ticketKey}',
@@ -527,6 +530,22 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> with SingleTick
                             Text(
                               _ticket.category!.replaceAll('_', ' ').toUpperCase(),
                               style: const TextStyle(fontSize: 12, color: Color(0xFF0F172A)),
+                            ),
+                          ],
+                        ),
+                      ],
+                      if (_ticket.area != null && _ticket.area!.isNotEmpty) ...[
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            Icon(Icons.place_rounded, size: 16, color: AppColors.primary),
+                            const SizedBox(width: 6),
+                            const Text('Area: ', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF475569))),
+                            Expanded(
+                              child: Text(
+                                _ticket.area!,
+                                style: TextStyle(fontSize: 12, color: AppColors.primary, fontWeight: FontWeight.w600),
+                              ),
                             ),
                           ],
                         ),
