@@ -85,6 +85,22 @@
                         </div>
                     </div>
 
+                    <div class="mb-5">
+                        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                            <span class="inline-flex items-center gap-1">📍 {{ __('Area') }}</span>
+                        </label>
+                        <input type="text" name="area" list="area-suggestions" value="{{ old('area') }}"
+                               placeholder="{{ __('e.g. Shadhupara, Gopalpur, Power House Para') }}"
+                               class="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3.5 py-2.5 text-sm text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 bg-slate-50 dark:bg-slate-800 @error('area') border-red-400 @enderror">
+                        <datalist id="area-suggestions">
+                            @foreach(\App\Models\Ticket::whereNotNull('area')->where('area','!=','')->distinct()->orderBy('area')->limit(200)->pluck('area') as $areaOption)
+                                <option value="{{ $areaOption }}"></option>
+                            @endforeach
+                        </datalist>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">{{ __('Type to search existing areas or add a new one.') }}</p>
+                        @error('area')<p class="text-red-500 text-xs mt-1.5">{{ $message }}</p>@enderror
+                    </div>
+
                     @if(!auth()->user()->isReseller())
                     <div class="mb-5">
                         <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">{{ __('Assign To') }}</label>

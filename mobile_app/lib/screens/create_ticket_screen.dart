@@ -623,7 +623,7 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
                             itemBuilder: (_, i) {
                               final a = filtered[i];
                               return ListTile(
-                                leading: const Icon(Icons.place_outlined, color: AppColors.textMuted),
+                                leading: Icon(Icons.place_outlined, color: AppColors.textMuted),
                                 title: Text(a, style: AppText.body),
                                 onTap: () {
                                   setState(() => _selectedArea = a);

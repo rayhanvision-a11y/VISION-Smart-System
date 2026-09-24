@@ -105,6 +105,18 @@
             </div>
             @endif
 
+            <div class="flex-1 min-w-40">
+                <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">📍 {{ __('Area') }}</label>
+                <input type="text" name="area" list="area-filter-list" value="{{ request('area') }}"
+                       placeholder="{{ __('Any area') }}"
+                       class="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-700 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 bg-slate-50 dark:bg-slate-800">
+                <datalist id="area-filter-list">
+                    @foreach(\App\Models\Ticket::whereNotNull('area')->where('area','!=','')->distinct()->orderBy('area')->limit(200)->pluck('area') as $areaOption)
+                        <option value="{{ $areaOption }}"></option>
+                    @endforeach
+                </datalist>
+            </div>
+
             <div class="flex-1 min-w-48">
                 <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">{{ __('Search') }}</label>
                 <div class="relative">

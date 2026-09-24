@@ -45,6 +45,9 @@ class TicketController extends Controller
         if ($request->filled('search')) {
             $query->where('title', 'like', '%'.$request->search.'%');
         }
+        if ($request->filled('area')) {
+            $query->where('area', $request->area);
+        }
         if ($request->get('assigned') === 'me') {
             if ($user->isReseller()) {
                 $query->where('created_by', $user->id);
@@ -96,6 +99,7 @@ class TicketController extends Controller
             }],
             'labels' => 'nullable|array',
             'labels.*' => 'exists:labels,id',
+            'area' => 'nullable|string|max:120',
         ]);
 
         $ticket = Ticket::create([
@@ -108,6 +112,7 @@ class TicketController extends Controller
             'created_by' => auth()->id(),
             'assigned_to' => auth()->user()->isReseller() ? null : ($validated['assigned_to'] ?? null),
             'pop_office_id' => auth()->user()->isReseller() ? null : ($validated['pop_office_id'] ?? null),
+            'area' => isset($validated['area']) ? trim($validated['area']) : null,
         ]);
 
         $slaPolicy = SlaPolicy::forPriority($validated['priority']);
@@ -425,7 +430,11 @@ class TicketController extends Controller
             'status' => 'required|in:in_progress,pending,waiting_for_customer_feedback,resolved',
             'priority' => 'required|in:low,medium,high,critical',
             'assigned_to' => 'nullable|exists:users,id',
+            'area' => 'nullable|string|max:120',
         ]);
+        if (isset($validated['area'])) {
+            $validated['area'] = trim($validated['area']) ?: null;
+        }
 
         $oldAssignee = $ticket->assigned_to;
         $oldStatus = $ticket->status;

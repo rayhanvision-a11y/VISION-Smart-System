@@ -766,6 +766,12 @@
                             <span class="text-sm text-slate-700">{{ $ticket->creator->name ?? __('N/A') }}</span>
                         </div>
                     </div>
+                    @if(!empty($ticket->area))
+                    <div class="px-5 py-3">
+                        <p class="text-xs text-slate-400 font-semibold uppercase tracking-wide mb-1">📍 {{ __('Area') }}</p>
+                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">{{ $ticket->area }}</span>
+                    </div>
+                    @endif
                     <div class="px-5 py-3">
                         <p class="text-xs text-slate-400 font-semibold uppercase tracking-wide mb-1">{{ __('Priority') }}</p>
                         <span class="inline-flex px-2.5 py-0.5 rounded-full text-xs font-semibold {{ $pColor }}">{{ ucfirst($ticket->priority) }}</span>

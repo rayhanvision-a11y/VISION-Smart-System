@@ -47,6 +47,18 @@
                     </select>
                 </div>
 
+                <div class="mb-6">
+                    <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">📍 {{ __('Area') }}</label>
+                    <input type="text" name="area" list="area-suggestions-edit" value="{{ old('area', $ticket->area) }}"
+                           placeholder="{{ __('e.g. Shadhupara, Gopalpur') }}"
+                           class="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3.5 py-2.5 text-sm text-slate-700 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 bg-slate-50 dark:bg-slate-800">
+                    <datalist id="area-suggestions-edit">
+                        @foreach(\App\Models\Ticket::whereNotNull('area')->where('area','!=','')->distinct()->orderBy('area')->limit(200)->pluck('area') as $areaOption)
+                            <option value="{{ $areaOption }}"></option>
+                        @endforeach
+                    </datalist>
+                </div>
+
                 <div class="flex gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
                     <button type="submit"
                             class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors shadow-sm">
