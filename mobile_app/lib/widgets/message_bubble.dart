@@ -29,7 +29,7 @@ class MessageBubble extends StatelessWidget {
         : (message.isPrivate ? const Color(0xFF78350F) : const Color(0xFF0F172A));
 
     if (matches.isEmpty) {
-      return Text(text, style: TextStyle(color: textColor, fontSize: 14, height: 1.4));
+      return _buildRichText(text, textColor, isMe);
     }
 
     final imageUrls = matches.map((m) => m.group(0)!).toList();
@@ -45,7 +45,7 @@ class MessageBubble extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         if (textOnly.isNotEmpty) ...[
-          Text(textOnly, style: TextStyle(color: textColor, fontSize: 14, height: 1.4)),
+          _buildRichText(textOnly, textColor, isMe),
           const SizedBox(height: 6),
         ],
         for (final url in imageUrls)
@@ -80,6 +80,35 @@ class MessageBubble extends StatelessWidget {
             ),
           ),
       ],
+    );
+  }
+
+  Widget _buildRichText(String text, Color textColor, bool isMe) {
+    final mentionRegex = RegExp(r'@([\p{L}][\p{L}\s\.]{1,30}?)(?=\s|$|[^\p{L}\s])', unicode: true);
+    final spans = <TextSpan>[];
+    int last = 0;
+    for (final m in mentionRegex.allMatches(text)) {
+      if (m.start > last) {
+        spans.add(TextSpan(text: text.substring(last, m.start)));
+      }
+      spans.add(TextSpan(
+        text: m.group(0),
+        style: TextStyle(
+          fontWeight: FontWeight.w700,
+          color: isMe ? AppColors.accent : AppColors.primary,
+          backgroundColor: (isMe ? AppColors.accent : AppColors.primary).withOpacity(0.12),
+        ),
+      ));
+      last = m.end;
+    }
+    if (last < text.length) {
+      spans.add(TextSpan(text: text.substring(last)));
+    }
+    return RichText(
+      text: TextSpan(
+        style: TextStyle(color: textColor, fontSize: 14, height: 1.4),
+        children: spans,
+      ),
     );
   }
 

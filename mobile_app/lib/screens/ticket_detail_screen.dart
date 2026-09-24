@@ -37,6 +37,64 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> with SingleTick
   bool _isLoadingApi = true;
   bool _showInfo = true;
   bool _searchMode = false;
+  List<dynamic> _mentionCandidates = [];
+  List<dynamic> _allStaff = [];
+  int _mentionAnchor = -1;
+
+  void _onMessageChanged(String value) {
+    final selection = _messageController.selection;
+    if (selection.baseOffset < 0) {
+      setState(() {
+        _mentionCandidates = [];
+        _mentionAnchor = -1;
+      });
+      return;
+    }
+    // Find last @ before cursor without whitespace after it
+    final upToCursor = value.substring(0, selection.baseOffset);
+    final atIdx = upToCursor.lastIndexOf('@');
+    if (atIdx < 0) {
+      setState(() { _mentionCandidates = []; _mentionAnchor = -1; });
+      return;
+    }
+    final between = upToCursor.substring(atIdx + 1);
+    if (between.contains('\n') || between.contains(' ') && between.split(' ').last.length > 15) {
+      setState(() { _mentionCandidates = []; _mentionAnchor = -1; });
+      return;
+    }
+    final query = between.split(RegExp(r'\s')).last.toLowerCase();
+    final matches = _allStaff.where((s) {
+      final n = (s is Map ? s['name'] : null)?.toString().toLowerCase() ?? '';
+      return n.isNotEmpty && (query.isEmpty || n.contains(query));
+    }).take(6).toList();
+    setState(() {
+      _mentionCandidates = matches;
+      _mentionAnchor = atIdx;
+    });
+  }
+
+  void _insertMention(Map user) {
+    if (_mentionAnchor < 0) return;
+    final name = user['name']?.toString() ?? '';
+    final text = _messageController.text;
+    final cursor = _messageController.selection.baseOffset.clamp(0, text.length);
+    final before = text.substring(0, _mentionAnchor);
+    final after = text.substring(cursor);
+    final newText = '$before@$name $after';
+    _messageController.value = TextEditingValue(
+      text: newText,
+      selection: TextSelection.collapsed(offset: (before + '@$name ').length),
+    );
+    setState(() {
+      _mentionCandidates = [];
+      _mentionAnchor = -1;
+    });
+  }
+
+  Future<void> _loadStaffForMentions() async {
+    final staff = await ApiService.getStaff();
+    if (mounted) setState(() => _allStaff = staff);
+  }
 
   @override
   void initState() {
@@ -48,6 +106,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> with SingleTick
       _loadCurrentUser();
     }
     _fetchTicketDetails();
+    _loadStaffForMentions();
   }
 
   Future<void> _fetchTicketDetails() async {
@@ -786,6 +845,41 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> with SingleTick
                         ],
                       ),
                     ),
+                  if (_mentionCandidates.isNotEmpty)
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 6),
+                      constraints: const BoxConstraints(maxHeight: 180),
+                      decoration: BoxDecoration(
+                        color: AppColors.card,
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        border: Border.all(color: AppColors.border),
+                        boxShadow: AppShadows.card,
+                      ),
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        padding: EdgeInsets.zero,
+                        itemCount: _mentionCandidates.length,
+                        itemBuilder: (_, i) {
+                          final u = _mentionCandidates[i] as Map;
+                          return ListTile(
+                            dense: true,
+                            leading: CircleAvatar(
+                              backgroundColor: AppColors.primary.withOpacity(0.1),
+                              child: Text(
+                                (u['name']?.toString() ?? '?')[0].toUpperCase(),
+                                style: AppText.body.copyWith(color: AppColors.primary, fontWeight: FontWeight.w700),
+                              ),
+                            ),
+                            title: Text(u['name']?.toString() ?? '—', style: AppText.body.copyWith(fontSize: 13)),
+                            subtitle: Text(
+                              (u['role']?.toString() ?? '').replaceAll('_', ' ').toUpperCase(),
+                              style: AppText.label.copyWith(fontSize: 9),
+                            ),
+                            onTap: () => _insertMention(Map<String, dynamic>.from(u)),
+                          );
+                        },
+                      ),
+                    ),
                   Row(
                     children: [
                       IconButton(
@@ -799,8 +893,9 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> with SingleTick
                           controller: _messageController,
                           minLines: 1,
                           maxLines: 4,
+                          onChanged: _onMessageChanged,
                           decoration: InputDecoration(
-                            hintText: _isPrivateReply ? 'Add staff internal note...' : 'Type a public reply...',
+                            hintText: _isPrivateReply ? 'Add note (@ mention users)…' : 'Type reply (@ mention users)…',
                             hintStyle: const TextStyle(fontSize: 13),
                             contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                             filled: true,
