@@ -595,6 +595,50 @@ class ApiService {
     }
   }
 
+  // Notifications
+  static Future<Map<String, dynamic>> getNotifications() async {
+    try {
+      final uri = await _buildUri('/notifications');
+      final response = await http.get(uri, headers: await _headers());
+      if (response.statusCode == 200) return jsonDecode(response.body) as Map<String, dynamic>;
+    } catch (_) {}
+    return {'notifications': [], 'unread_count': 0};
+  }
+
+  static Future<bool> markNotificationRead(int id) async {
+    try {
+      final uri = await _buildUri('/notifications/$id/read');
+      final r = await http.post(uri, headers: await _headers());
+      return r.statusCode == 200;
+    } catch (_) { return false; }
+  }
+
+  static Future<bool> markAllNotificationsRead() async {
+    try {
+      final uri = await _buildUri('/notifications/read-all');
+      final r = await http.post(uri, headers: await _headers());
+      return r.statusCode == 200;
+    } catch (_) { return false; }
+  }
+
+  // Message edit / delete
+  static Future<Map<String, dynamic>> updateMessage(int ticketId, int messageId, String text) async {
+    try {
+      final uri = await _buildUri('/tickets/$ticketId/messages/$messageId');
+      final r = await http.patch(uri, headers: await _headers(), body: jsonEncode({'message': text}));
+      if (r.statusCode == 200) return {'success': true};
+      return {'success': false, 'message': jsonDecode(r.body)['error'] ?? 'Failed'};
+    } catch (e) { return {'success': false, 'message': e.toString()}; }
+  }
+
+  static Future<bool> deleteMessage(int ticketId, int messageId) async {
+    try {
+      final uri = await _buildUri('/tickets/$ticketId/messages/$messageId');
+      final r = await http.delete(uri, headers: await _headers());
+      return r.statusCode == 200;
+    } catch (_) { return false; }
+  }
+
   // 15. Logout
   static Future<void> logout() async {
     try {

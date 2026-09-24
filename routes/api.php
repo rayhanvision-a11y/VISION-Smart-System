@@ -36,6 +36,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/roster', [ApiRosterController::class, 'index']);
     Route::post('/user/shift', [ApiRosterController::class, 'updateOwnShift']);
 
+    // Notifications
+    Route::get('/notifications', [\App\Http\Controllers\Api\ApiNotificationController::class, 'index']);
+    Route::post('/notifications/{id}/read', [\App\Http\Controllers\Api\ApiNotificationController::class, 'markRead']);
+    Route::post('/notifications/read-all', [\App\Http\Controllers\Api\ApiNotificationController::class, 'markAllRead']);
+
+    // Message edit / delete
+    Route::patch('/tickets/{ticket}/messages/{message}', [ApiTicketController::class, 'updateMessage']);
+    Route::delete('/tickets/{ticket}/messages/{message}', [ApiTicketController::class, 'deleteMessage']);
+
     // User Directory (Admins / Super Admins)
     Route::get('/users', [ApiUserController::class, 'index']);
 

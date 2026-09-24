@@ -398,6 +398,45 @@ class ApiTicketController extends Controller
     }
 
     /**
+     * Edit own message text.
+     */
+    public function updateMessage(Request $request, int $ticketId, int $messageId): JsonResponse
+    {
+        $user = $request->user();
+        $ticket = Ticket::forUser($user)->findOrFail($ticketId);
+        $message = TicketMessage::where('ticket_id', $ticket->id)->findOrFail($messageId);
+
+        if ((int) $message->sender_id !== (int) $user->id && ! $user->isAdmin()) {
+            return response()->json(['error' => 'You can only edit your own messages'], 403);
+        }
+
+        $validated = $request->validate([
+            'message' => 'required|string',
+        ]);
+        $message->update(['message' => $validated['message']]);
+
+        return response()->json(['success' => true, 'data' => $message->fresh()]);
+    }
+
+    /**
+     * Delete own message.
+     */
+    public function deleteMessage(Request $request, int $ticketId, int $messageId): JsonResponse
+    {
+        $user = $request->user();
+        $ticket = Ticket::forUser($user)->findOrFail($ticketId);
+        $message = TicketMessage::where('ticket_id', $ticket->id)->findOrFail($messageId);
+
+        if ((int) $message->sender_id !== (int) $user->id && ! $user->isAdmin()) {
+            return response()->json(['error' => 'You can only delete your own messages'], 403);
+        }
+
+        $message->delete();
+
+        return response()->json(['success' => true]);
+    }
+
+    /**
      * Upload attachment(s) to a ticket.
      */
     public function uploadAttachment(Request $request, int $id): JsonResponse

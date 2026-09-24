@@ -12,10 +12,13 @@ class PushService {
   static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
   static const _channel = AndroidNotificationChannel(
-    'vision_ticket_channel',
+    'vision_ticket_channel_v2',
     'Ticket Updates',
     description: 'Ticket assignment, status change, new messages',
-    importance: Importance.high,
+    importance: Importance.max,
+    playSound: true,
+    enableVibration: true,
+    enableLights: true,
   );
 
   bool _initialized = false;
@@ -73,8 +76,11 @@ class PushService {
           _channel.name,
           channelDescription: _channel.description,
           icon: '@mipmap/ic_launcher',
-          importance: Importance.high,
-          priority: Priority.high,
+          importance: Importance.max,
+          priority: Priority.max,
+          playSound: true,
+          enableVibration: true,
+          enableLights: true,
         ),
         iOS: const DarwinNotificationDetails(),
       ),

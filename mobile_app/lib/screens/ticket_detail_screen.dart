@@ -1,5 +1,6 @@
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
 import '../models/ticket.dart';
 import '../models/ticket_message.dart';
@@ -35,6 +36,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> with SingleTick
   List<TicketMessageModel> _apiMessages = [];
   bool _isLoadingApi = true;
   bool _showInfo = true;
+  bool _searchMode = false;
 
   @override
   void initState() {
@@ -111,18 +113,55 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> with SingleTick
     }
   }
 
-  Future<void> _attachImageToMessage() async {
+  Future<void> _pickAttachmentSource() async {
+    await showModalBottomSheet(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_library_rounded, color: AppColors.info),
+              title: const Text('Photo from Gallery'),
+              onTap: () { Navigator.pop(ctx); _attachImage(); },
+            ),
+            ListTile(
+              leading: const Icon(Icons.insert_drive_file_rounded, color: AppColors.warning),
+              title: const Text('PDF / Document / File'),
+              onTap: () { Navigator.pop(ctx); _attachAnyFile(); },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _attachAnyFile() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'txt', 'jpg', 'jpeg', 'png', 'webp'],
+      withData: true,
+    );
+    if (result == null || result.files.isEmpty || !mounted) return;
+    final f = result.files.first;
+    if (f.bytes == null) return;
+    await _uploadAndPost(bytes: f.bytes!, filename: f.name);
+  }
+
+  Future<void> _attachImage() async {
     final picker = ImagePicker();
     final picked = await picker.pickImage(source: ImageSource.gallery, imageQuality: 85, maxWidth: 1600);
     if (picked == null || !mounted) return;
-
-    setState(() => _isSending = true);
     final bytes = await picked.readAsBytes();
+    await _uploadAndPost(bytes: bytes, filename: picked.name);
+  }
 
+  Future<void> _uploadAndPost({required List<int> bytes, required String filename}) async {
+    setState(() => _isSending = true);
     final upload = await ApiService.uploadTicketAttachment(
       ticketId: _ticket.id,
       bytes: bytes,
-      filename: picked.name,
+      filename: filename,
     );
     if (!mounted) {
       setState(() => _isSending = false);
@@ -131,7 +170,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> with SingleTick
 
     if (upload['success'] == true) {
       final url = upload['data']?['attachment']?['url']?.toString();
-      final fname = upload['data']?['attachment']?['file_name']?.toString() ?? picked.name;
+      final fname = upload['data']?['attachment']?['file_name']?.toString() ?? filename;
       // Post a message linking to the uploaded image so it appears in chat
       final caption = _messageController.text.trim();
       final body = url != null
@@ -474,6 +513,14 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> with SingleTick
         ),
         actions: [
           IconButton(
+            icon: Icon(_searchMode ? Icons.close_rounded : Icons.search_rounded),
+            tooltip: 'Search messages',
+            onPressed: () => setState(() {
+              _searchMode = !_searchMode;
+              if (!_searchMode) _messageSearch = '';
+            }),
+          ),
+          IconButton(
             icon: const Icon(Icons.info_outline_rounded),
             tooltip: 'Toggle Details',
             onPressed: () => setState(() => _showInfo = !_showInfo),
@@ -502,6 +549,21 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> with SingleTick
       ),
       body: Column(
         children: [
+          // Search bar (toggleable)
+          if (_searchMode)
+            Container(
+              color: AppColors.card,
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+              child: TextField(
+                autofocus: true,
+                decoration: InputDecoration(
+                  hintText: 'Search messages…',
+                  prefixIcon: const Icon(Icons.search_rounded, size: 20),
+                  isDense: true,
+                ),
+                onChanged: (v) => setState(() => _messageSearch = v.trim()),
+              ),
+            ),
           // Hero header
           Container(
             width: double.infinity,
@@ -727,9 +789,9 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> with SingleTick
                   Row(
                     children: [
                       IconButton(
-                        onPressed: _isSending ? null : _attachImageToMessage,
-                        tooltip: 'Attach image',
-                        icon: Icon(Icons.image_outlined,
+                        onPressed: _isSending ? null : _pickAttachmentSource,
+                        tooltip: 'Attach file',
+                        icon: Icon(Icons.attach_file_rounded,
                             color: _isSending ? AppColors.textMuted : AppColors.primary),
                       ),
                       Expanded(
@@ -768,7 +830,97 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> with SingleTick
     );
   }
 
+  String _messageSearch = '';
+
+  Future<void> _editMessagePrompt(TicketMessageModel msg) async {
+    final controller = TextEditingController(text: msg.plainMessage);
+    final result = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Edit message'),
+        content: TextField(controller: controller, maxLines: 5),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          ElevatedButton(onPressed: () => Navigator.pop(ctx, controller.text), child: const Text('Save')),
+        ],
+      ),
+    );
+    if (result == null || result.trim() == msg.plainMessage) return;
+    final res = await ApiService.updateMessage(_ticket.id, msg.id, result.trim());
+    if (res['success'] == true) {
+      await _fetchTicketDetails();
+    } else if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(res['message']?.toString() ?? 'Failed'), backgroundColor: AppColors.danger),
+      );
+    }
+  }
+
+  Future<void> _deleteMessagePrompt(TicketMessageModel msg) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete message?'),
+        content: const Text('This cannot be undone.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    final success = await ApiService.deleteMessage(_ticket.id, msg.id);
+    if (success) {
+      await _fetchTicketDetails();
+    } else if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to delete'), backgroundColor: AppColors.danger),
+      );
+    }
+  }
+
+  void _openMessageMenu(TicketMessageModel msg, bool isMine) {
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.reply_rounded),
+              title: const Text('Reply'),
+              onTap: () { Navigator.pop(ctx); _setReplyTo(msg); },
+            ),
+            if (isMine || (_user != null && (_user!.role == 'admin' || _user!.role == 'super_admin'))) ...[
+              ListTile(
+                leading: const Icon(Icons.edit_outlined, color: AppColors.info),
+                title: const Text('Edit message'),
+                onTap: () { Navigator.pop(ctx); _editMessagePrompt(msg); },
+              ),
+              ListTile(
+                leading: const Icon(Icons.delete_outline_rounded, color: AppColors.danger),
+                title: const Text('Delete message'),
+                onTap: () { Navigator.pop(ctx); _deleteMessagePrompt(msg); },
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildMessageList(List<TicketMessageModel> messages) {
+    if (_messageSearch.isNotEmpty) {
+      final q = _messageSearch.toLowerCase();
+      messages = messages.where((m) =>
+        m.plainMessage.toLowerCase().contains(q) ||
+        m.senderName.toLowerCase().contains(q)
+      ).toList();
+    }
     if (messages.isEmpty) {
       return Center(
         child: Column(
@@ -791,11 +943,14 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> with SingleTick
       itemBuilder: (context, index) {
         final msg = messages[index];
         final isMe = _user != null && msg.senderId == _user!.id;
-        return MessageBubble(
-          message: msg,
-          isMe: isMe,
-          onReply: _setReplyTo,
-          onReact: _handleReaction,
+        return GestureDetector(
+          onLongPress: () => _openMessageMenu(msg, isMe),
+          child: MessageBubble(
+            message: msg,
+            isMe: isMe,
+            onReply: _setReplyTo,
+            onReact: _handleReaction,
+          ),
         );
       },
     );

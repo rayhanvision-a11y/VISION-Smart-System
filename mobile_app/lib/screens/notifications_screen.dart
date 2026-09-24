@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import '../models/ticket.dart';
+import 'package:intl/intl.dart';
 import '../services/api_service.dart';
 import '../services/app_state.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common/empty_state.dart';
 import '../widgets/common/skeleton.dart';
-import '../widgets/common/status_pill.dart';
 import 'ticket_detail_screen.dart';
+import '../models/ticket.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({Key? key}) : super(key: key);
@@ -17,7 +17,8 @@ class NotificationsScreen extends StatefulWidget {
 
 class _NotificationsScreenState extends State<NotificationsScreen> {
   bool _isLoading = true;
-  List<TicketModel> _tickets = [];
+  List<Map<String, dynamic>> _items = [];
+  int _unread = 0;
 
   @override
   void initState() {
@@ -27,48 +28,42 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   Future<void> _load() async {
     setState(() => _isLoading = true);
-    final list = await ApiService.fetchTickets();
+    final data = await ApiService.getNotifications();
     if (!mounted) return;
     setState(() {
-      _tickets = list;
+      _items = ((data['notifications'] as List?) ?? [])
+          .whereType<Map>()
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList();
+      _unread = (data['unread_count'] as int?) ?? 0;
       _isLoading = false;
     });
   }
 
-  Map<String, List<TicketModel>> _groupByDay(List<TicketModel> tickets) {
-    final Map<String, List<TicketModel>> groups = {};
-    final now = DateTime.now();
-    for (final t in tickets) {
-      DateTime? dt;
-      if (t.updatedAt != null) {
-        dt = DateTime.tryParse(t.updatedAt!);
+  Future<void> _markAll() async {
+    final ok = await ApiService.markAllNotificationsRead();
+    if (ok) _load();
+  }
+
+  Future<void> _openTicket(int notifId, int? ticketId) async {
+    await ApiService.markNotificationRead(notifId);
+    if (!mounted) return;
+    if (ticketId != null) {
+      // Fetch full ticket details then push detail screen
+      final details = await ApiService.getTicketDetails(ticketId);
+      if (!mounted) return;
+      if (details?['ticket'] is TicketModel) {
+        Navigator.push(context, MaterialPageRoute(
+          builder: (_) => TicketDetailScreen(ticket: details!['ticket'] as TicketModel),
+        )).then((_) => _load());
+        return;
       }
-      dt ??= t.createdAt != null ? DateTime.tryParse(t.createdAt!) : null;
-      dt ??= now;
-      final diff = now.difference(dt).inDays;
-      String key;
-      if (diff == 0) {
-        key = 'Today';
-      } else if (diff == 1) {
-        key = 'Yesterday';
-      } else if (diff < 7) {
-        key = 'This week';
-      } else {
-        key = 'Earlier';
-      }
-      groups.putIfAbsent(key, () => []).add(t);
     }
-    return groups;
+    _load();
   }
 
   @override
   Widget build(BuildContext context) {
-    final groups = _groupByDay(_tickets);
-    final order = ['Today', 'Yesterday', 'This week', 'Earlier'];
-    String tr(String k) => AppState.instance.isBengali
-        ? {'Today': 'আজ', 'Yesterday': 'গতকাল', 'This week': 'এই সপ্তাহ', 'Earlier': 'পূর্বে'}[k] ?? k
-        : k;
-
     return Scaffold(
       backgroundColor: AppColors.bg,
       appBar: AppBar(
@@ -77,15 +72,22 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(AppState.instance.t('Notifications', 'নোটিফিকেশন'), style: AppText.h2),
-            Text(AppState.instance.t('${_tickets.length} recent updates', '${_tickets.length} টি সাম্প্রতিক আপডেট'),
-                style: AppText.label.copyWith(color: AppColors.textMuted)),
+            Text(
+              _unread == 0
+                  ? AppState.instance.t('All caught up', 'সব দেখা হয়েছে')
+                  : '$_unread ${AppState.instance.t('unread', 'অপঠিত')}',
+              style: AppText.label.copyWith(color: _unread > 0 ? AppColors.danger : AppColors.textMuted),
+            ),
           ],
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh_rounded),
-            onPressed: _load,
-          ),
+          if (_unread > 0)
+            TextButton.icon(
+              onPressed: _markAll,
+              icon: const Icon(Icons.done_all_rounded, size: 18),
+              label: Text(AppState.instance.t('Mark all', 'সব পড়ুন')),
+            ),
+          IconButton(icon: const Icon(Icons.refresh_rounded), onPressed: _load),
         ],
       ),
       body: _isLoading
@@ -93,130 +95,89 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               padding: const EdgeInsets.all(AppSpacing.lg),
               itemCount: 5,
               separatorBuilder: (_, __) => const SizedBox(height: 10),
-              itemBuilder: (_, __) => const SkeletonCard(height: 90),
+              itemBuilder: (_, __) => const SkeletonCard(height: 72),
             )
-          : _tickets.isEmpty
+          : _items.isEmpty
               ? EmptyState(
                   icon: Icons.notifications_off_rounded,
                   title: AppState.instance.t('No notifications yet', 'কোনো নোটিফিকেশন নেই'),
-                  subtitle: AppState.instance.t('Ticket updates will appear here', 'টিকিট আপডেট এখানে দেখাবে'),
+                  subtitle: AppState.instance.t('Updates will appear here', 'আপডেট এখানে দেখাবে'),
                 )
               : RefreshIndicator(
                   onRefresh: _load,
                   color: AppColors.primary,
-                  child: ListView(
+                  child: ListView.separated(
                     padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.md, AppSpacing.lg, AppSpacing.xxl),
-                    children: [
-                      for (final label in order)
-                        if (groups[label] != null) ...[
-                          Padding(
-                            padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-                            child: Row(
-                              children: [
-                                Text(tr(label), style: AppText.label),
-                                const SizedBox(width: 8),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 1),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.primary.withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(AppRadius.pill),
-                                  ),
-                                  child: Text('${groups[label]!.length}',
-                                      style: AppText.label.copyWith(color: AppColors.primary, fontSize: 10)),
-                                ),
-                              ],
-                            ),
-                          ),
-                          ...groups[label]!.map(_notifCard),
-                          const SizedBox(height: AppSpacing.sm),
-                        ],
-                    ],
+                    itemCount: _items.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 8),
+                    itemBuilder: (_, i) => _notifTile(_items[i]),
                   ),
                 ),
     );
   }
 
-  Widget _notifCard(TicketModel t) {
-    final sColor = AppColors.statusColor(t.status);
-    IconData icon;
-    String heading;
-    switch (t.status.toLowerCase()) {
-      case 'resolved':
-        icon = Icons.check_circle_rounded;
-        heading = 'Ticket resolved';
-        break;
-      case 'pending':
-        icon = Icons.hourglass_top_rounded;
-        heading = 'Ticket pending';
-        break;
-      case 'waiting_for_customer_feedback':
-        icon = Icons.forum_rounded;
-        heading = 'Waiting for feedback';
-        break;
-      default:
-        icon = Icons.autorenew_rounded;
-        heading = 'Ticket updated';
+  Widget _notifTile(Map<String, dynamic> n) {
+    final isRead = n['is_read'] == true;
+    final ticketId = n['ticket_id'] as int?;
+    final createdAt = n['created_at']?.toString();
+    String timeText = '';
+    if (createdAt != null) {
+      try {
+        final dt = DateTime.parse(createdAt).toLocal();
+        timeText = DateFormat('MMM d, h:mm a').format(dt);
+      } catch (_) {}
     }
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Material(
-        color: AppColors.card,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => TicketDetailScreen(ticket: t)),
+    return Material(
+      color: isRead ? AppColors.card : AppColors.primary.withOpacity(0.06),
+      borderRadius: BorderRadius.circular(AppRadius.md),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        onTap: () => _openTicket(n['id'] as int, ticketId),
+        child: Container(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            border: Border.all(color: isRead ? AppColors.border : AppColors.primary.withOpacity(0.3)),
           ),
-          child: Container(
-            padding: const EdgeInsets.all(AppSpacing.md),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppRadius.lg),
-              border: Border.all(color: AppColors.border),
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: 40, height: 40,
-                  decoration: BoxDecoration(
-                    color: sColor.withOpacity(0.12),
-                    borderRadius: BorderRadius.circular(AppRadius.md),
-                  ),
-                  child: Icon(icon, color: sColor, size: 20),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 36, height: 36,
+                decoration: BoxDecoration(
+                  color: isRead ? AppColors.bg : AppColors.primary.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
-                const SizedBox(width: AppSpacing.md),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(heading,
-                                style: AppText.body.copyWith(fontWeight: FontWeight.w700)),
-                          ),
-                          Text('#${t.ticketKey}',
-                              style: AppText.label.copyWith(color: AppColors.textMuted, fontSize: 10)),
-                        ],
+                child: Icon(
+                  isRead ? Icons.notifications_none_rounded : Icons.notifications_active_rounded,
+                  color: isRead ? AppColors.textMuted : AppColors.primary,
+                  size: 18,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      n['message']?.toString() ?? '',
+                      style: AppText.body.copyWith(
+                        fontSize: 13,
+                        fontWeight: isRead ? FontWeight.w500 : FontWeight.w700,
                       ),
-                      const SizedBox(height: 3),
-                      Text(t.title,
-                          style: AppText.bodySm, maxLines: 2, overflow: TextOverflow.ellipsis),
-                      const SizedBox(height: 6),
-                      Row(
-                        children: [
-                          StatusPill(status: t.status),
-                          const SizedBox(width: 6),
-                          PriorityPill(priority: t.priority),
-                        ],
-                      ),
+                    ),
+                    if (timeText.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(timeText, style: AppText.label.copyWith(fontSize: 10)),
                     ],
-                  ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+              if (!isRead)
+                Container(width: 8, height: 8, decoration: BoxDecoration(
+                  color: AppColors.danger, shape: BoxShape.circle,
+                )),
+            ],
           ),
         ),
       ),
