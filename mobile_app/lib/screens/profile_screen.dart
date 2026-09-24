@@ -441,7 +441,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(width: AppSpacing.md),
               Expanded(child: Text(label, style: AppText.body.copyWith(fontSize: 14))),
               if (trailing != null) trailing else
-                const Icon(Icons.chevron_right_rounded, color: AppColors.textMuted),
+                Icon(Icons.chevron_right_rounded, color: AppColors.textMuted),
             ],
           ),
         ),

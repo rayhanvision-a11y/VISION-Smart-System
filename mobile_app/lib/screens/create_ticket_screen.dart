@@ -202,7 +202,7 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
                                 subtitle: subtitleOf(it).isEmpty
                                     ? null
                                     : Text(subtitleOf(it), style: AppText.caption),
-                                trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.textMuted),
+                                trailing: Icon(Icons.chevron_right_rounded, color: AppColors.textMuted),
                                 onTap: () {
                                   onSelect(it).call();
                                   Navigator.pop(ctx);
@@ -282,7 +282,7 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
                       trailing: _selectedAssigneeName == null
                           ? null
                           : IconButton(
-                              icon: const Icon(Icons.close_rounded, size: 18, color: AppColors.textMuted),
+                              icon: Icon(Icons.close_rounded, size: 18, color: AppColors.textMuted),
                               onPressed: () => setState(() {
                                 _selectedAssigneeId = null;
                                 _selectedAssigneeName = null;
@@ -316,7 +316,7 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
                       trailing: _dueAt == null
                           ? null
                           : IconButton(
-                              icon: const Icon(Icons.close_rounded, size: 18, color: AppColors.textMuted),
+                              icon: Icon(Icons.close_rounded, size: 18, color: AppColors.textMuted),
                               onPressed: () => setState(() => _dueAt = null),
                             ),
                       onTap: _pickDueDate,
@@ -452,7 +452,7 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
                   ],
                 ),
               ),
-              trailing ?? const Icon(Icons.chevron_right_rounded, color: AppColors.textMuted),
+              trailing ?? Icon(Icons.chevron_right_rounded, color: AppColors.textMuted),
             ],
           ),
         ),

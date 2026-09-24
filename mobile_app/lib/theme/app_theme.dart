@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../services/app_state.dart';
 
 class AppColors {
   static const primary = Color(0xFF1B3A6B);
@@ -14,17 +15,31 @@ class AppColors {
   static const danger = Color(0xFFEF4444);
   static const info = Color(0xFF3B82F6);
 
-  static const bg = Color(0xFFF5F7FA);
-  static const card = Color(0xFFFFFFFF);
-  static const border = Color(0xFFE5E9F0);
-  static const divider = Color(0xFFEEF1F6);
+  static const _bgLight = Color(0xFFF5F7FA);
+  static const _cardLight = Color(0xFFFFFFFF);
+  static const _borderLight = Color(0xFFE5E9F0);
+  static const _dividerLight = Color(0xFFEEF1F6);
+  static const _textPrimaryLight = Color(0xFF0F172A);
+  static const _textSecondaryLight = Color(0xFF64748B);
+  static const _textMutedLight = Color(0xFF94A3B8);
 
-  static const textPrimary = Color(0xFF0F172A);
-  static const textSecondary = Color(0xFF64748B);
-  static const textMuted = Color(0xFF94A3B8);
+  static const bgDark = Color(0xFF0B1220);
+  static const cardDark = Color(0xFF1B2438);
+  static const _borderDark = Color(0xFF2A3448);
+  static const _dividerDark = Color(0xFF232D42);
+  static const _textPrimaryDark = Color(0xFFF1F5F9);
+  static const _textSecondaryDark = Color(0xFFCBD5E1);
+  static const _textMutedDark = Color(0xFF94A3B8);
 
-  static const bgDark = Color(0xFF0F172A);
-  static const cardDark = Color(0xFF1E293B);
+  static bool get _dark => AppState.instance.isDark;
+
+  static Color get bg => _dark ? bgDark : _bgLight;
+  static Color get card => _dark ? cardDark : _cardLight;
+  static Color get border => _dark ? _borderDark : _borderLight;
+  static Color get divider => _dark ? _dividerDark : _dividerLight;
+  static Color get textPrimary => _dark ? _textPrimaryDark : _textPrimaryLight;
+  static Color get textSecondary => _dark ? _textSecondaryDark : _textSecondaryLight;
+  static Color get textMuted => _dark ? _textMutedDark : _textMutedLight;
 
   static Color statusColor(String? s) {
     switch (s?.toLowerCase()) {
@@ -215,14 +230,14 @@ ThemeData buildAppTheme() {
       elevation: 0,
       centerTitle: false,
       titleTextStyle: AppText.h3,
-      iconTheme: const IconThemeData(color: AppColors.textPrimary),
+      iconTheme: IconThemeData(color: AppColors.textPrimary),
     ),
     cardTheme: CardThemeData(
       color: AppColors.card,
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        side: const BorderSide(color: AppColors.border),
+        side: BorderSide(color: AppColors.border),
       ),
     ),
     inputDecorationTheme: InputDecorationTheme(
@@ -231,11 +246,11 @@ ThemeData buildAppTheme() {
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppRadius.md),
-        borderSide: const BorderSide(color: AppColors.border),
+        borderSide: BorderSide(color: AppColors.border),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppRadius.md),
-        borderSide: const BorderSide(color: AppColors.border),
+        borderSide: BorderSide(color: AppColors.border),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppRadius.md),
@@ -263,7 +278,7 @@ ThemeData buildAppTheme() {
     chipTheme: ChipThemeData(
       backgroundColor: AppColors.card,
       selectedColor: AppColors.primary,
-      side: const BorderSide(color: AppColors.border),
+      side: BorderSide(color: AppColors.border),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadius.sm),
       ),

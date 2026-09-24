@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../config/app_config.dart';
 import '../services/api_service.dart';
 import '../services/storage_service.dart';
+import '../services/app_state.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common/primary_button.dart';
 import 'main_navigation_screen.dart';
@@ -175,10 +176,10 @@ class _LoginScreenState extends State<LoginScreen> {
                         ],
                       ),
                       const SizedBox(height: AppSpacing.xl),
-                      Text('Welcome\nBack 👋',
+                      Text(AppState.instance.t('Welcome\nBack 👋', 'স্বাগতম 👋'),
                           style: AppText.displayLg.copyWith(color: Colors.white, fontSize: 32, height: 1.2)),
                       const SizedBox(height: AppSpacing.sm),
-                      Text('Sign in to continue managing tickets',
+                      Text(AppState.instance.t('Sign in to continue managing tickets', 'টিকিট ব্যবস্থাপনা চালিয়ে যেতে সাইন-ইন করুন'),
                           style: AppText.bodySm.copyWith(color: Colors.white.withOpacity(0.85))),
                     ],
                   ),
@@ -204,9 +205,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          Text('Sign In', style: AppText.h2),
+                          Text(AppState.instance.t('Sign In', 'সাইন-ইন'), style: AppText.h2),
                           const SizedBox(height: 4),
-                          Text('Enter your credentials',
+                          Text(AppState.instance.t('Enter your credentials', 'আপনার তথ্য প্রবেশ করুন'),
                               style: AppText.bodySm),
                           const SizedBox(height: AppSpacing.xl),
 
@@ -232,7 +233,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             const SizedBox(height: AppSpacing.md),
                           ],
 
-                          Text('Email Address', style: AppText.label),
+                          Text(AppState.instance.t('Email Address', 'ইমেইল'), style: AppText.label),
                           const SizedBox(height: 6),
                           TextFormField(
                             controller: _emailController,
@@ -245,7 +246,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           const SizedBox(height: AppSpacing.md),
 
-                          Text('Password', style: AppText.label),
+                          Text(AppState.instance.t('Password', 'পাসওয়ার্ড'), style: AppText.label),
                           const SizedBox(height: 6),
                           TextFormField(
                             controller: _passwordController,
@@ -266,7 +267,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                           const SizedBox(height: AppSpacing.xl),
                           PrimaryButton(
-                            label: 'Sign In',
+                            label: AppState.instance.t('Sign In', 'সাইন-ইন'),
                             icon: Icons.login_rounded,
                             kind: PrimaryButtonKind.primary,
                             loading: _isLoading,
@@ -276,7 +277,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           Center(
                             child: TextButton.icon(
                               onPressed: _showServerSettings,
-                              icon: const Icon(Icons.dns_outlined, size: 16, color: AppColors.textMuted),
+                              icon: Icon(Icons.dns_outlined, size: 16, color: AppColors.textMuted),
                               label: Text('Server settings',
                                   style: AppText.caption.copyWith(color: AppColors.textMuted)),
                             ),

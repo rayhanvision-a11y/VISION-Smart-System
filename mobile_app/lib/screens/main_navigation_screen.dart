@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/user.dart';
 import '../services/storage_service.dart';
+import '../services/app_state.dart';
 import '../theme/app_theme.dart';
 import 'dashboard_screen.dart';
 import 'ticket_list_screen.dart';
@@ -93,11 +94,11 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           height: 68,
           child: Row(
             children: [
-              _navItem(0, Icons.home_outlined, Icons.home_rounded, 'Home'),
-              _navItem(1, Icons.confirmation_number_outlined, Icons.confirmation_number_rounded, 'Tickets'),
+              _navItem(0, Icons.home_outlined, Icons.home_rounded, AppState.instance.t('Home', 'হোম')),
+              _navItem(1, Icons.confirmation_number_outlined, Icons.confirmation_number_rounded, AppState.instance.t('Tickets', 'টিকিট')),
               const SizedBox(width: 60),
-              _navItem(3, Icons.groups_2_outlined, Icons.groups_2_rounded, 'Team'),
-              _navItem(4, Icons.person_outline_rounded, Icons.person_rounded, 'Profile'),
+              _navItem(3, Icons.groups_2_outlined, Icons.groups_2_rounded, AppState.instance.t('Team', 'টিম')),
+              _navItem(4, Icons.person_outline_rounded, Icons.person_rounded, AppState.instance.t('Profile', 'প্রোফাইল')),
             ],
           ),
         ),

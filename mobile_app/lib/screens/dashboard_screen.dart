@@ -14,6 +14,7 @@ import 'ticket_list_screen.dart';
 import 'roster_screen.dart';
 import 'profile_screen.dart';
 import 'notifications_screen.dart';
+import '../services/app_state.dart';
 
 class DashboardScreen extends StatefulWidget {
   final VoidCallback? onSwitchToTickets;
@@ -143,7 +144,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   const SizedBox(height: AppSpacing.lg),
                   _quickActions(),
                   const SizedBox(height: AppSpacing.md),
-                  const SectionHeader(title: 'Ticket Overview'),
+                  SectionHeader(title: AppState.instance.t('Ticket Overview', 'টিকিট সংক্ষিপ্ত')),
                   _isLoading
                       ? _skeletonStatsGrid()
                       : _statsGrid(inProgress, pending, waiting, resolved, urgent, overdue),
@@ -154,16 +155,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   const SizedBox(height: AppSpacing.sm),
                   _promoCard(),
                   SectionHeader(
-                    title: 'Recent Tickets',
-                    actionLabel: 'See all',
+                    title: AppState.instance.t('Recent Tickets', 'সাম্প্রতিক টিকিট'),
+                    actionLabel: AppState.instance.t('See all', 'সব দেখুন'),
                     onAction: () => _openTickets(null),
                   ),
                   _isLoading
                       ? Column(children: const [SkeletonCard(), SizedBox(height: 10), SkeletonCard()])
                       : _recentList(recentTickets),
                   SectionHeader(
-                    title: 'On Duty Today',
-                    actionLabel: 'View team',
+                    title: AppState.instance.t('On Duty Today', 'আজকের ডিউটি'),
+                    actionLabel: AppState.instance.t('View team', 'টিম দেখুন'),
                     onAction: _openRoster,
                   ),
                   _dutyCard(dutyTeams),
@@ -183,7 +184,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
       padding: const EdgeInsets.only(top: 4),
       child: Row(
         children: [
-          Text('$_greeting${name.isNotEmpty ? ", $name" : ""} ✨',
+          Text(AppState.instance.isBengali
+                  ? 'শুভেচ্ছা${name.isNotEmpty ? ", $name" : ""} ✨'
+                  : '$_greeting${name.isNotEmpty ? ", $name" : ""} ✨',
               style: AppText.bodySm.copyWith(color: AppColors.textSecondary)),
           const Spacer(),
           Container(
@@ -200,7 +203,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   decoration: const BoxDecoration(color: AppColors.success, shape: BoxShape.circle),
                 ),
                 const SizedBox(width: 5),
-                Text('System Online',
+                Text(AppState.instance.t('System Online', 'সিস্টেম চালু'),
                     style: AppText.label.copyWith(color: AppColors.success, fontSize: 10)),
               ],
             ),
@@ -705,7 +708,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         const SizedBox(height: 3),
                         Row(
                           children: [
-                            const Icon(Icons.person_outline_rounded, size: 12, color: AppColors.textMuted),
+                            Icon(Icons.person_outline_rounded, size: 12, color: AppColors.textMuted),
                             const SizedBox(width: 4),
                             Text(t.assigneeName!,
                                 style: AppText.caption.copyWith(fontSize: 11)),
@@ -721,7 +724,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     color: AppColors.bg,
                     borderRadius: BorderRadius.circular(AppRadius.sm),
                   ),
-                  child: const Icon(Icons.chevron_right_rounded, color: AppColors.textSecondary, size: 20),
+                  child: Icon(Icons.chevron_right_rounded, color: AppColors.textSecondary, size: 20),
                 ),
               ],
             ),
@@ -742,7 +745,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
         child: Row(
           children: [
-            const Icon(Icons.groups_rounded, color: AppColors.textMuted),
+            Icon(Icons.groups_rounded, color: AppColors.textMuted),
             const SizedBox(width: AppSpacing.md),
             Text('No teams on duty right now', style: AppText.bodySm),
           ],

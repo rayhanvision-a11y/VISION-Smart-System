@@ -6,6 +6,7 @@ import '../models/user.dart';
 import '../services/api_service.dart';
 import '../services/firebase_realtime_service.dart';
 import '../services/storage_service.dart';
+import '../services/app_state.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common/empty_state.dart';
 import '../widgets/common/skeleton.dart';
@@ -87,8 +88,8 @@ class _TicketListScreenState extends State<TicketListScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('My Tickets', style: AppText.h2),
-            Text('${_tickets.length} results',
+            Text(AppState.instance.t('My Tickets', 'আমার টিকিট'), style: AppText.h2),
+            Text(AppState.instance.t('${_tickets.length} results', '${_tickets.length} টি ফলাফল'),
                 style: AppText.label.copyWith(color: AppColors.textMuted)),
           ],
         ),
@@ -136,7 +137,7 @@ class _TicketListScreenState extends State<TicketListScreen> {
       child: TextField(
         controller: _searchController,
         decoration: InputDecoration(
-          hintText: 'Search by title or ticket #',
+          hintText: AppState.instance.t('Search by title or ticket #', 'খুঁজুন টাইটেল বা টিকিট #'),
           prefixIcon: const Icon(Icons.search_rounded, size: 20),
           suffixIcon: _search.isNotEmpty
               ? IconButton(
@@ -291,14 +292,14 @@ class _TicketListScreenState extends State<TicketListScreen> {
                     Row(
                       children: [
                         if (t.category != null && t.category!.isNotEmpty) ...[
-                          const Icon(Icons.folder_outlined, size: 12, color: AppColors.textMuted),
+                          Icon(Icons.folder_outlined, size: 12, color: AppColors.textMuted),
                           const SizedBox(width: 3),
                           Text(t.category!.replaceAll('_', ' '),
                               style: AppText.caption.copyWith(fontSize: 11)),
                           const SizedBox(width: 10),
                         ],
                         if (t.assigneeName != null) ...[
-                          const Icon(Icons.person_outline_rounded, size: 12, color: AppColors.textMuted),
+                          Icon(Icons.person_outline_rounded, size: 12, color: AppColors.textMuted),
                           const SizedBox(width: 3),
                           Flexible(
                             child: Text(t.assigneeName!,
@@ -320,7 +321,7 @@ class _TicketListScreenState extends State<TicketListScreen> {
                   color: AppColors.bg,
                   borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
-                child: const Icon(Icons.chevron_right_rounded, color: AppColors.textSecondary),
+                child: Icon(Icons.chevron_right_rounded, color: AppColors.textSecondary),
               ),
             ],
           ),

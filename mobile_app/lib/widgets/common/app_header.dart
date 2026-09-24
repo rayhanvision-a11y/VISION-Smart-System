@@ -26,7 +26,7 @@ class AppHeader extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.md, AppSpacing.lg, AppSpacing.md),
-      decoration: const BoxDecoration(color: AppColors.card),
+      decoration: BoxDecoration(color: AppColors.card),
       child: SafeArea(
         bottom: false,
         child: Row(
