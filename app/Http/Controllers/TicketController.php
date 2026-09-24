@@ -74,7 +74,7 @@ class TicketController extends Controller
 
     public function create()
     {
-        $nocUsers = User::whereIn('role', ['super_admin', 'admin', 'noc'])->orderBy('name')->get();
+        $nocUsers = User::whereIn('role', ['super_admin', 'admin', 'noc', 'supervisor', 'senior_supervisor', 'technician'])->where('is_active', true)->orderBy('name')->get();
         $labels = Label::orderBy('name')->get();
         $categories = TicketCategory::where('is_active', true)->orderBy('name')->get();
 
@@ -174,7 +174,7 @@ class TicketController extends Controller
             $ticket->setRelation('notes', collect());
         }
 
-        $nocUsers = User::whereIn('role', ['super_admin', 'admin', 'noc'])->orderBy('name')->get();
+        $nocUsers = User::whereIn('role', ['super_admin', 'admin', 'noc', 'supervisor', 'senior_supervisor', 'technician'])->where('is_active', true)->orderBy('name')->get();
         $allLabels = Label::orderBy('name')->get();
 
         $mentionUsers = User::orderBy('name')->get()->map(fn ($u) => [
@@ -244,7 +244,7 @@ class TicketController extends Controller
             abort(403);
         }
         $ticket = Ticket::findOrFail($id);
-        $nocUsers = User::whereIn('role', ['super_admin', 'admin', 'noc'])->orderBy('name')->get();
+        $nocUsers = User::whereIn('role', ['super_admin', 'admin', 'noc', 'supervisor', 'senior_supervisor', 'technician'])->where('is_active', true)->orderBy('name')->get();
 
         return view('tickets.edit', compact('ticket', 'nocUsers'));
     }

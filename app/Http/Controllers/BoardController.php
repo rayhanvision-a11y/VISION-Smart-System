@@ -46,7 +46,7 @@ class BoardController extends Controller
             $grouped[$status] = $tickets->where('status', $status)->values();
         }
 
-        $nocUsers = User::whereIn('role', ['super_admin', 'admin', 'noc'])->get();
+        $nocUsers = User::whereIn('role', ['super_admin', 'admin', 'noc', 'supervisor', 'senior_supervisor', 'technician'])->where('is_active', true)->get();
 
         return view('board.index', compact('grouped', 'columns', 'nocUsers'));
     }
