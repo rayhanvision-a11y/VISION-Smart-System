@@ -21,6 +21,7 @@ class Ticket extends Model
         'created_by',
         'assigned_to',
         'pop_office_id',
+        'area',
         'resolved_at',
         'due_at',
         'sla_notified_at',
@@ -84,6 +85,11 @@ class Ticket extends Model
         // 2. Reseller: only tickets created by this reseller
         if ($user->isReseller()) {
             return $query->where('created_by', $user->id);
+        }
+
+        // 2b. Technician: only tickets assigned to them
+        if ($user->isTechnician()) {
+            return $query->where('assigned_to', $user->id);
         }
 
         // 3. Admin, NOC, Supervisor, Senior Supervisor, Call Center:

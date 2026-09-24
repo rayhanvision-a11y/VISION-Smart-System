@@ -52,5 +52,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/tickets/{ticket}/assign', [ApiTicketController::class, 'assign']);
     Route::post('/tickets/{ticket}/messages', [ApiTicketController::class, 'addMessage']);
     Route::post('/tickets/{ticket}/attachments', [ApiTicketController::class, 'uploadAttachment']);
+
+    // Technician workflow endpoints
+    Route::get('/technicians', [ApiTicketController::class, 'technicians']);
+    Route::get('/areas', [ApiTicketController::class, 'areas']);
+    Route::post('/tickets/bulk-assign', [ApiTicketController::class, 'bulkAssign']);
     Route::post('/tickets/{ticket}/messages/{message}/react', [ApiTicketController::class, 'toggleReaction']);
 });

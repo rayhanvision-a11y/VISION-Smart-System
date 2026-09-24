@@ -29,6 +29,10 @@ class ApiTicketController extends Controller
             $query->where('status', $request->input('status'));
         }
 
+        if ($request->filled('area')) {
+            $query->where('area', $request->input('area'));
+        }
+
         if ($request->filled('search')) {
             $search = $request->input('search');
             $query->where(function ($q) use ($search) {
@@ -138,6 +142,7 @@ class ApiTicketController extends Controller
             'pop_office_id' => 'nullable|exists:pop_offices,id',
             'assigned_to' => 'nullable|exists:users,id',
             'due_at' => 'nullable|date',
+            'area' => 'nullable|string|max:120',
         ]);
 
         $ticket = Ticket::create([
@@ -149,6 +154,7 @@ class ApiTicketController extends Controller
             'pop_office_id' => $validated['pop_office_id'] ?? null,
             'assigned_to' => $validated['assigned_to'] ?? null,
             'due_at' => $validated['due_at'] ?? null,
+            'area' => isset($validated['area']) ? trim($validated['area']) : null,
             'status' => 'in_progress',
             'created_by' => $user->id,
         ]);
@@ -230,8 +236,8 @@ class ApiTicketController extends Controller
     {
         $currentUser = $request->user();
 
-        if ($currentUser->isReseller()) {
-            return response()->json(['error' => 'Resellers cannot assign tickets'], 403);
+        if ($currentUser->isReseller() || $currentUser->isTechnician()) {
+            return response()->json(['error' => 'Not authorized to assign tickets'], 403);
         }
 
         $ticket = Ticket::forUser($currentUser)->findOrFail($id);
@@ -257,8 +263,8 @@ class ApiTicketController extends Controller
     {
         $currentUser = $request->user();
 
-        if ($currentUser->isReseller()) {
-            return response()->json(['error' => 'Resellers cannot change priority'], 403);
+        if ($currentUser->isReseller() || $currentUser->isTechnician()) {
+            return response()->json(['error' => 'Not authorized to change priority'], 403);
         }
 
         $ticket = Ticket::forUser($currentUser)->findOrFail($id);
@@ -306,12 +312,75 @@ class ApiTicketController extends Controller
      */
     public function staff(): JsonResponse
     {
-        $staff = User::whereIn('role', ['admin', 'super_admin', 'noc', 'call_center', 'supervisor', 'senior_supervisor'])
+        $staff = User::whereIn('role', ['admin', 'super_admin', 'noc', 'call_center', 'supervisor', 'senior_supervisor', 'technician'])
             ->where('is_active', true)
             ->orderBy('name')
             ->get(['id', 'name', 'email', 'role', 'team']);
 
         return response()->json(['staff' => $staff]);
+    }
+
+    /**
+     * List technicians with current workload count (active tickets).
+     */
+    public function technicians(Request $request): JsonResponse
+    {
+        $technicians = User::where('role', 'technician')
+            ->where('is_active', true)
+            ->withCount(['assignedTickets as active_count' => function ($q) {
+                $q->whereIn('status', ['in_progress', 'pending', 'waiting_for_customer_feedback']);
+            }])
+            ->orderBy('name')
+            ->get(['id', 'name', 'email', 'role', 'team']);
+
+        return response()->json(['technicians' => $technicians]);
+    }
+
+    /**
+     * Distinct area autocomplete (from existing tickets).
+     */
+    public function areas(Request $request): JsonResponse
+    {
+        $search = $request->input('search');
+        $query = Ticket::query()
+            ->whereNotNull('area')
+            ->where('area', '!=', '');
+        if ($search) {
+            $query->where('area', 'like', '%'.$search.'%');
+        }
+        $areas = $query->distinct()
+            ->orderBy('area')
+            ->limit(50)
+            ->pluck('area');
+
+        return response()->json(['areas' => $areas]);
+    }
+
+    /**
+     * Bulk-assign multiple tickets to a single user (supervisor/admin only).
+     */
+    public function bulkAssign(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        if (! ($user->isSupervisorLevel() || $user->isAdmin() || $user->isNoc())) {
+            return response()->json(['error' => 'Not authorized'], 403);
+        }
+
+        $validated = $request->validate([
+            'ticket_ids' => 'required|array|min:1',
+            'ticket_ids.*' => 'integer',
+            'assigned_to' => 'required|exists:users,id',
+        ]);
+
+        $affected = Ticket::forUser($user)
+            ->whereIn('id', $validated['ticket_ids'])
+            ->update(['assigned_to' => $validated['assigned_to']]);
+
+        return response()->json([
+            'message' => "$affected tickets assigned",
+            'count' => $affected,
+        ]);
     }
 
     /**

@@ -111,6 +111,11 @@ class User extends Authenticatable
         return in_array($this->role, ['supervisor', 'senior_supervisor']);
     }
 
+    public function isTechnician(): bool
+    {
+        return $this->role === 'technician';
+    }
+
     public const TEAMS = [
         'IT Team' => 'IT Team',
         'NOC team' => 'NOC team',
