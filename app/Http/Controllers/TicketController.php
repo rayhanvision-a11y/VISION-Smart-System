@@ -426,14 +426,35 @@ class TicketController extends Controller
 
         $ticket = Ticket::findOrFail($id);
 
-        $validated = $request->validate([
-            'status' => 'required|in:in_progress,pending,waiting_for_customer_feedback,resolved',
-            'priority' => 'required|in:low,medium,high,critical',
-            'assigned_to' => 'nullable|exists:users,id',
-            'area' => 'nullable|string|max:120',
-        ]);
-        if (isset($validated['area'])) {
-            $validated['area'] = trim($validated['area']) ?: null;
+        // Technicians can only change status of their own assigned tickets
+        if ($user->isTechnician()) {
+            $validated = $request->validate([
+                'status' => 'required|in:in_progress,pending,waiting_for_customer_feedback,resolved',
+            ]);
+            // Retain existing values for fields technician cannot change
+            $validated['priority'] = $ticket->priority;
+            $validated['assigned_to'] = $ticket->assigned_to;
+            // Enforce technician can only touch their own tickets
+            if ((int) $ticket->assigned_to !== (int) $user->id) {
+                abort(403, 'Technicians can only update their own assigned tickets.');
+            }
+        } else {
+            $validated = $request->validate([
+                'status' => 'required|in:in_progress,pending,waiting_for_customer_feedback,resolved',
+                'priority' => 'required|in:low,medium,high,critical',
+                'assigned_to' => ['nullable', 'exists:users,id', function ($attr, $val, $fail) {
+                    if ($val) {
+                        $target = User::find($val);
+                        if ($target && in_array($target->role, ['reseller', 'call_center'])) {
+                            $fail('Tickets can only be assigned to staff (admin, NOC, supervisor, technician).');
+                        }
+                    }
+                }],
+                'area' => 'nullable|string|max:120',
+            ]);
+            if (isset($validated['area'])) {
+                $validated['area'] = trim($validated['area']) ?: null;
+            }
         }
 
         $oldAssignee = $ticket->assigned_to;

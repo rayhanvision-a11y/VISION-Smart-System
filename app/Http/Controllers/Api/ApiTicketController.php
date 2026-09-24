@@ -371,16 +371,29 @@ class ApiTicketController extends Controller
         $validated = $request->validate([
             'ticket_ids' => 'required|array|min:1',
             'ticket_ids.*' => 'integer',
-            'assigned_to' => 'required|exists:users,id',
+            'assigned_to' => ['required', 'exists:users,id', function ($attr, $val, $fail) {
+                $target = User::find($val);
+                if (! $target || ! $target->is_active) {
+                    $fail('Target user is not active.');
+                } elseif (in_array($target->role, ['reseller', 'call_center'])) {
+                    $fail('Cannot assign tickets to reseller or call center.');
+                }
+            }],
         ]);
 
-        $affected = Ticket::forUser($user)
-            ->whereIn('id', $validated['ticket_ids'])
-            ->update(['assigned_to' => $validated['assigned_to']]);
+        // Loop through so TicketObserver fires (FCM push + activity log per ticket)
+        $tickets = Ticket::forUser($user)->whereIn('id', $validated['ticket_ids'])->get();
+        $count = 0;
+        foreach ($tickets as $ticket) {
+            if ((int) $ticket->assigned_to !== (int) $validated['assigned_to']) {
+                $ticket->update(['assigned_to' => $validated['assigned_to']]);
+                $count++;
+            }
+        }
 
         return response()->json([
-            'message' => "$affected tickets assigned",
-            'count' => $affected,
+            'message' => "$count tickets assigned",
+            'count' => $count,
         ]);
     }
 

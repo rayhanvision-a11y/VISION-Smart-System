@@ -86,10 +86,14 @@
                     </div>
 
                     @php
-                        $areaMasterList = \App\Models\Area::where('is_active', true)->orderBy('name')->pluck('name')->toArray();
-                        $areaLegacyList = \App\Models\Ticket::whereNotNull('area')->where('area','!=','')
-                            ->distinct()->orderBy('area')->limit(200)->pluck('area')
-                            ->diff($areaMasterList)->values()->toArray();
+                        $areaMasterList = \Schema::hasTable('areas')
+                            ? \App\Models\Area::where('is_active', true)->orderBy('name')->pluck('name')->toArray()
+                            : [];
+                        $areaLegacyList = \Schema::hasColumn('tickets', 'area')
+                            ? \App\Models\Ticket::whereNotNull('area')->where('area','!=','')
+                                ->distinct()->orderBy('area')->limit(200)->pluck('area')
+                                ->diff($areaMasterList)->values()->toArray()
+                            : [];
                         $allAreas = array_merge($areaMasterList, $areaLegacyList);
                         $oldArea = old('area');
                         $isCustom = $oldArea && ! in_array($oldArea, $allAreas, true);

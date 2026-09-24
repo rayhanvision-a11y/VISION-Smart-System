@@ -64,7 +64,7 @@
                     <div class="w-10 h-10 rounded-lg bg-emerald-500 text-white flex items-center justify-center text-lg shrink-0">📍</div>
                     <div class="min-w-0">
                         <div class="text-sm font-bold text-slate-900 dark:text-white truncate">{{ __('Areas') }}</div>
-                        <div class="text-[11px] text-slate-500 dark:text-slate-400 truncate">{{ \App\Models\Area::count() }} {{ __('items') }}</div>
+                        <div class="text-[11px] text-slate-500 dark:text-slate-400 truncate">@if(\Schema::hasTable('areas')){{ \App\Models\Area::count() }} {{ __('items') }}@else{{ __('Setup pending') }}@endif</div>
                     </div>
                 </a>
 
