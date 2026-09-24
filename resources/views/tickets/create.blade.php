@@ -85,24 +85,61 @@
                         </div>
                     </div>
 
-                    <div class="mb-5">
+                    @php
+                        $areaMasterList = \App\Models\Area::where('is_active', true)->orderBy('name')->pluck('name')->toArray();
+                        $areaLegacyList = \App\Models\Ticket::whereNotNull('area')->where('area','!=','')
+                            ->distinct()->orderBy('area')->limit(200)->pluck('area')
+                            ->diff($areaMasterList)->values()->toArray();
+                        $allAreas = array_merge($areaMasterList, $areaLegacyList);
+                        $oldArea = old('area');
+                        $isCustom = $oldArea && ! in_array($oldArea, $allAreas, true);
+                    @endphp
+                    <div class="mb-5" x-data="{ mode: '{{ $isCustom ? 'custom' : 'select' }}', value: @js($oldArea) }">
                         <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                             <span class="inline-flex items-center gap-1">📍 {{ __('Area') }}</span>
                         </label>
-                        <input type="text" name="area" list="area-suggestions" value="{{ old('area') }}"
-                               placeholder="{{ __('e.g. Shadhupara, Gopalpur, Power House Para') }}"
-                               class="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3.5 py-2.5 text-sm text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 bg-slate-50 dark:bg-slate-800 @error('area') border-red-400 @enderror">
-                        <datalist id="area-suggestions">
-                            @foreach(\App\Models\Area::where('is_active', true)->orderBy('name')->pluck('name') as $areaOption)
-                                <option value="{{ $areaOption }}"></option>
-                            @endforeach
-                            @foreach(\App\Models\Ticket::whereNotNull('area')->where('area','!=','')->distinct()->orderBy('area')->limit(200)->pluck('area')->diff(\App\Models\Area::pluck('name')) as $legacyArea)
-                                <option value="{{ $legacyArea }}"></option>
-                            @endforeach
-                        </datalist>
-                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                            {{ __('Type existing area or add new.') }}
+
+                        <div class="flex gap-2">
+                            <select x-show="mode === 'select'"
+                                    x-model="value"
+                                    name="area"
+                                    class="flex-1 border border-slate-200 dark:border-slate-700 rounded-lg px-3.5 py-2.5 text-sm text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 bg-slate-50 dark:bg-slate-800 @error('area') border-red-400 @enderror">
+                                <option value="">— {{ __('Select area') }} —</option>
+                                @if(!empty($areaMasterList))
+                                <optgroup label="{{ __('Managed Areas') }}">
+                                    @foreach($areaMasterList as $areaOption)
+                                        <option value="{{ $areaOption }}" {{ $oldArea === $areaOption ? 'selected' : '' }}>{{ $areaOption }}</option>
+                                    @endforeach
+                                </optgroup>
+                                @endif
+                                @if(!empty($areaLegacyList))
+                                <optgroup label="{{ __('Legacy Areas') }}">
+                                    @foreach($areaLegacyList as $legacyArea)
+                                        <option value="{{ $legacyArea }}" {{ $oldArea === $legacyArea ? 'selected' : '' }}>{{ $legacyArea }}</option>
+                                    @endforeach
+                                </optgroup>
+                                @endif
+                            </select>
+
+                            <input x-show="mode === 'custom'"
+                                   x-model="value"
+                                   name="area"
+                                   type="text"
+                                   placeholder="{{ __('Type new area (e.g. Shadhupara)') }}"
+                                   class="flex-1 border border-slate-200 dark:border-slate-700 rounded-lg px-3.5 py-2.5 text-sm text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 bg-slate-50 dark:bg-slate-800 @error('area') border-red-400 @enderror">
+
+                            <button type="button"
+                                    @click="mode = mode === 'select' ? 'custom' : 'select'; value = ''"
+                                    class="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition-colors whitespace-nowrap">
+                                <span x-show="mode === 'select'">+ {{ __('New') }}</span>
+                                <span x-show="mode === 'custom'">← {{ __('List') }}</span>
+                            </button>
+                        </div>
+
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1.5 flex items-center gap-2">
+                            <span>{{ count($allAreas) }} {{ __('areas available') }}</span>
                             @if(auth()->user()->isAdmin() || auth()->user()->isNoc() || auth()->user()->isSupervisorLevel())
+                                <span>·</span>
                                 <a href="{{ route('areas.index') }}" class="text-indigo-600 hover:underline">{{ __('Manage areas →') }}</a>
                             @endif
                         </p>
