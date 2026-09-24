@@ -5,6 +5,7 @@ class UserModel {
   final String role;
   final String? team;
   final String? avatar;
+  final String? avatarUrl;
   final String? phone;
 
   UserModel({
@@ -14,30 +15,48 @@ class UserModel {
     required this.role,
     this.team,
     this.avatar,
+    this.avatarUrl,
     this.phone,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
+    // API may wrap user in 'user' key
+    final j = (json['user'] is Map)
+        ? Map<String, dynamic>.from(json['user'] as Map)
+        : json;
     return UserModel(
-      id: json['id'] is int ? json['id'] : int.tryParse(json['id'].toString()) ?? 0,
-      name: json['name'] ?? '',
-      email: json['email'] ?? '',
-      role: json['role'] ?? '',
-      team: json['team'],
-      avatar: json['avatar'],
-      phone: json['phone'],
+      id: j['id'] is int ? j['id'] : int.tryParse(j['id']?.toString() ?? '') ?? 0,
+      name: j['name']?.toString() ?? '',
+      email: j['email']?.toString() ?? '',
+      role: j['role']?.toString() ?? '',
+      team: j['team']?.toString(),
+      avatar: j['avatar']?.toString(),
+      avatarUrl: j['avatar_url']?.toString() ?? j['avatarUrl']?.toString(),
+      phone: j['phone']?.toString(),
     );
   }
 
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'name': name,
-      'email': email,
-      'role': role,
-      'team': team,
-      'avatar': avatar,
-      'phone': phone,
-    };
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'name': name,
+        'email': email,
+        'role': role,
+        'team': team,
+        'avatar': avatar,
+        'avatar_url': avatarUrl,
+        'phone': phone,
+      };
+
+  UserModel copyWith({String? avatar, String? avatarUrl, String? name, String? phone}) {
+    return UserModel(
+      id: id,
+      name: name ?? this.name,
+      email: email,
+      role: role,
+      team: team,
+      avatar: avatar ?? this.avatar,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
+      phone: phone ?? this.phone,
+    );
   }
 }

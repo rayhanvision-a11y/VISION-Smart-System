@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../config/app_config.dart';
+import '../theme/app_theme.dart';
 import '../models/ticket_message.dart';
 
 class MessageBubble extends StatelessWidget {
@@ -15,6 +15,11 @@ class MessageBubble extends StatelessWidget {
     this.onReply,
     this.onReact,
   }) : super(key: key);
+
+  String _stripHtml(String s) {
+    var t = s.replaceAll(RegExp(r'<[^>]+>'), '');
+    return t.replaceAll('&nbsp;', ' ').replaceAll('&amp;', '&').trim();
+  }
 
   void _showEmojiPicker(BuildContext context) {
     final emojis = ['👍', '❤️', '😂', '😮', '😢', '🎉', '🔥', '💯', '✅', '👏'];
@@ -132,7 +137,7 @@ class MessageBubble extends StatelessWidget {
                   ),
                   decoration: BoxDecoration(
                     color: isMe
-                        ? AppConfig.primaryColor
+                        ? AppColors.primary
                         : (message.isPrivate ? const Color(0xFFFFFBEB) : Colors.white),
                     borderRadius: BorderRadius.only(
                       topLeft: const Radius.circular(16),
@@ -143,7 +148,7 @@ class MessageBubble extends StatelessWidget {
                     border: Border.all(
                       color: message.isPrivate
                           ? const Color(0xFFFDE68A)
-                          : (isMe ? AppConfig.primaryColor : const Color(0xFFE2E8F0)),
+                          : (isMe ? AppColors.primary : const Color(0xFFE2E8F0)),
                     ),
                     boxShadow: [
                       BoxShadow(
@@ -185,7 +190,7 @@ class MessageBubble extends StatelessWidget {
                               ),
                               const SizedBox(height: 2),
                               Text(
-                                message.replyToText!,
+                                _stripHtml(message.replyToText!),
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
@@ -201,7 +206,7 @@ class MessageBubble extends StatelessWidget {
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                         child: Text(
-                          message.message,
+                          message.plainMessage,
                           style: TextStyle(
                             color: isMe
                                 ? Colors.white
@@ -306,7 +311,7 @@ class MessageBubble extends StatelessWidget {
             const SizedBox(width: 8),
             CircleAvatar(
               radius: 16,
-              backgroundColor: const Color(0xFFDC2626),
+              backgroundColor: AppColors.primary,
               child: Text(
                 initials,
                 style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),

@@ -82,6 +82,11 @@ class TicketMessage extends Model
         return $this->hasMany(TicketMessageReaction::class);
     }
 
+    public function attachments()
+    {
+        return $this->hasMany(TicketAttachment::class, 'ticket_message_id');
+    }
+
     // Grouped as [emoji => ['count' => n, 'reacted' => bool, 'users' => 'Name, Name']]
     public function reactionSummary(?int $currentUserId = null): array
     {

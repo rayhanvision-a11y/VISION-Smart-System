@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 import '../config/app_config.dart';
 import '../models/ticket.dart';
 import '../models/ticket_message.dart';
@@ -179,6 +180,9 @@ class ApiService {
     required String description,
     required String priority,
     String? category,
+    int? popOfficeId,
+    int? assignedTo,
+    DateTime? dueAt,
   }) async {
     try {
       final uri = await _buildUri('/tickets');
@@ -190,6 +194,9 @@ class ApiService {
           'description': description,
           'priority': priority,
           'category': category ?? 'other',
+          if (popOfficeId != null) 'pop_office_id': popOfficeId,
+          if (assignedTo != null) 'assigned_to': assignedTo,
+          if (dueAt != null) 'due_at': dueAt.toIso8601String(),
         }),
       );
 
@@ -198,6 +205,84 @@ class ApiService {
         return {'success': true, 'ticket': TicketModel.fromJson(data['ticket'])};
       }
       return {'success': false, 'message': data['message'] ?? 'Failed to create ticket'};
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  // 3b. Upload attachment to a ticket
+  static Future<Map<String, dynamic>> uploadTicketAttachment({
+    required int ticketId,
+    required List<int> bytes,
+    required String filename,
+  }) async {
+    try {
+      final uri = await _buildUri('/tickets/$ticketId/attachments');
+      final token = await StorageService.getToken();
+      final req = http.MultipartRequest('POST', uri);
+      req.headers.addAll({
+        'Accept': 'application/json',
+        if (token != null && token.isNotEmpty) ...{
+          'Authorization': 'Bearer $token',
+          'X-Authorization': 'Bearer $token',
+          'X-Api-Token': token,
+        },
+      });
+      req.files.add(http.MultipartFile.fromBytes('file', bytes, filename: filename));
+      final resp = await req.send();
+      final body = await resp.stream.bytesToString();
+      if (resp.statusCode == 201) {
+        return {'success': true, 'data': jsonDecode(body)};
+      }
+      return {'success': false, 'message': 'Upload failed (${resp.statusCode})'};
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  // 3c. Update user profile (name/phone)
+  static Future<Map<String, dynamic>> updateProfile({required String name, String? phone}) async {
+    try {
+      final uri = await _buildUri('/user/profile');
+      final response = await http.post(
+        uri,
+        headers: await _headers(),
+        body: jsonEncode({'name': name, if (phone != null) 'phone': phone}),
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['user'] is Map) {
+          final user = UserModel.fromJson(Map<String, dynamic>.from(data['user']));
+          await StorageService.saveUser(user);
+          return {'success': true, 'user': user};
+        }
+      }
+      final data = jsonDecode(response.body);
+      return {'success': false, 'message': data['message'] ?? 'Update failed'};
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  // 3d. Change password
+  static Future<Map<String, dynamic>> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    try {
+      final uri = await _buildUri('/user/password');
+      final response = await http.post(
+        uri,
+        headers: await _headers(),
+        body: jsonEncode({
+          'current_password': currentPassword,
+          'new_password': newPassword,
+          'new_password_confirmation': newPassword,
+        }),
+      );
+      if (response.statusCode == 200) return {'success': true};
+      final data = jsonDecode(response.body);
+      return {'success': false, 'message': data['message'] ?? 'Password change failed'};
     } catch (e) {
       return {'success': false, 'message': e.toString()};
     }
@@ -394,6 +479,49 @@ class ApiService {
       return response.statusCode == 200;
     } catch (_) {
       return false;
+    }
+  }
+
+  // 15b. Upload user avatar (multipart). `bytes` is required (works on web + mobile).
+  static Future<Map<String, dynamic>> uploadAvatar({
+    required List<int> bytes,
+    required String filename,
+  }) async {
+    try {
+      final uri = await _buildUri('/user/avatar');
+      final token = await StorageService.getToken();
+      final req = http.MultipartRequest('POST', uri);
+      req.headers.addAll({
+        'Accept': 'application/json',
+        if (token != null && token.isNotEmpty) ...{
+          'Authorization': 'Bearer $token',
+          'X-Authorization': 'Bearer $token',
+          'X-Api-Token': token,
+        },
+      });
+      final ext = filename.split('.').last.toLowerCase();
+      final mime = (ext == 'png')
+          ? MediaType('image', 'png')
+          : (ext == 'webp')
+              ? MediaType('image', 'webp')
+              : MediaType('image', 'jpeg');
+      req.files.add(http.MultipartFile.fromBytes(
+        'avatar',
+        bytes,
+        filename: filename,
+        contentType: mime,
+      ));
+      final resp = await req.send();
+      final body = await resp.stream.bytesToString();
+      if (resp.statusCode == 200) {
+        final data = jsonDecode(body);
+        return {'success': true, 'avatar_url': data['avatar_url'], 'avatar': data['avatar']};
+      }
+      debugPrint('uploadAvatar ${resp.statusCode}: $body');
+      return {'success': false, 'message': 'Upload failed (${resp.statusCode})'};
+    } catch (e) {
+      debugPrint('uploadAvatar exception: $e');
+      return {'success': false, 'message': e.toString()};
     }
   }
 

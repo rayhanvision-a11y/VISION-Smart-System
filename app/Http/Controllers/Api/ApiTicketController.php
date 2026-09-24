@@ -7,6 +7,7 @@ use App\Models\PopOffice;
 use App\Models\Ticket;
 use App\Models\TicketCategory;
 use App\Models\TicketMessage;
+use App\Models\TicketAttachment;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -135,6 +136,8 @@ class ApiTicketController extends Controller
             'priority' => 'required|in:low,medium,high,urgent',
             'category' => 'nullable|string',
             'pop_office_id' => 'nullable|exists:pop_offices,id',
+            'assigned_to' => 'nullable|exists:users,id',
+            'due_at' => 'nullable|date',
         ]);
 
         $ticket = Ticket::create([
@@ -144,6 +147,8 @@ class ApiTicketController extends Controller
             'priority' => $validated['priority'],
             'category' => $validated['category'] ?? 'other',
             'pop_office_id' => $validated['pop_office_id'] ?? null,
+            'assigned_to' => $validated['assigned_to'] ?? null,
+            'due_at' => $validated['due_at'] ?? null,
             'status' => 'in_progress',
             'created_by' => $user->id,
         ]);
@@ -307,6 +312,43 @@ class ApiTicketController extends Controller
             ->get(['id', 'name', 'email', 'role', 'team']);
 
         return response()->json(['staff' => $staff]);
+    }
+
+    /**
+     * Upload attachment(s) to a ticket.
+     */
+    public function uploadAttachment(Request $request, int $id): JsonResponse
+    {
+        $user = $request->user();
+        $ticket = Ticket::forUser($user)->findOrFail($id);
+
+        $request->validate([
+            'file' => 'required|file|max:10240|mimes:jpg,jpeg,png,webp,pdf,doc,docx,xls,xlsx,txt',
+        ]);
+
+        $file = $request->file('file');
+        $filename = 'ticket_'.$ticket->id.'_'.time().'_'.preg_replace('/[^a-zA-Z0-9._-]/', '', $file->getClientOriginalName());
+        $file->storeAs('ticket-attachments', $filename, 'public');
+
+        $attachment = TicketAttachment::create([
+            'ticket_id' => $ticket->id,
+            'user_id' => $user->id,
+            'file_name' => $file->getClientOriginalName(),
+            'file_path' => 'ticket-attachments/'.$filename,
+            'mime_type' => $file->getClientMimeType(),
+            'file_size' => $file->getSize(),
+        ]);
+
+        return response()->json([
+            'message' => 'Attachment uploaded',
+            'attachment' => [
+                'id' => $attachment->id,
+                'file_name' => $attachment->file_name,
+                'url' => asset('storage/'.$attachment->file_path),
+                'mime_type' => $attachment->mime_type,
+                'file_size' => $attachment->file_size,
+            ],
+        ], 201);
     }
 
     /**

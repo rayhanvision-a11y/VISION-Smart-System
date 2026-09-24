@@ -1,16 +1,16 @@
 import 'dart:async';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
-import '../config/app_config.dart';
 import '../models/ticket.dart';
 import '../models/user.dart';
 import '../services/api_service.dart';
 import '../services/firebase_realtime_service.dart';
 import '../services/storage_service.dart';
-import '../widgets/priority_badge.dart';
-import '../widgets/status_badge.dart';
+import '../theme/app_theme.dart';
+import '../widgets/common/empty_state.dart';
+import '../widgets/common/skeleton.dart';
+import '../widgets/common/status_pill.dart';
 import 'create_ticket_screen.dart';
-import 'login_screen.dart';
 import 'ticket_detail_screen.dart';
 
 class TicketListScreen extends StatefulWidget {
@@ -26,7 +26,9 @@ class _TicketListScreenState extends State<TicketListScreen> {
   List<TicketModel> _tickets = [];
   bool _isLoading = true;
   late String _selectedFilter;
+  String _search = '';
   StreamSubscription<DatabaseEvent>? _firebaseSub;
+  final _searchController = TextEditingController();
 
   @override
   void initState() {
@@ -39,6 +41,7 @@ class _TicketListScreenState extends State<TicketListScreen> {
   @override
   void dispose() {
     _firebaseSub?.cancel();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -51,293 +54,273 @@ class _TicketListScreenState extends State<TicketListScreen> {
   Future<void> _refreshTickets() async {
     final list = await ApiService.fetchTickets(
       status: (_selectedFilter == 'all' || _selectedFilter == 'my_tickets') ? null : _selectedFilter,
+      search: _search.isEmpty ? null : _search,
     );
     if (!mounted) return;
 
-    List<TicketModel> filteredList = list;
+    List<TicketModel> filtered = list;
     if (_selectedFilter == 'my_tickets' && _currentUser != null) {
-      filteredList = list.where((t) {
-        return t.assignedTo == _currentUser!.id || t.createdBy == _currentUser!.id;
-      }).toList();
+      filtered = list.where((t) =>
+        t.assignedTo == _currentUser!.id || t.createdBy == _currentUser!.id).toList();
     }
 
     setState(() {
-      _tickets = filteredList;
+      _tickets = filtered;
       _isLoading = false;
     });
   }
 
-  // Real-time synchronization listener
   void _listenToFirebaseRealtime() {
     try {
       _firebaseSub = FirebaseRealtimeService.getTicketsStream().listen((event) {
-        if (event.snapshot.value != null && mounted) {
-          // Trigger smooth local refresh when website pushes any change to Firebase
-          _refreshTickets();
-        }
+        if (event.snapshot.value != null && mounted) _refreshTickets();
       });
     } catch (_) {}
-  }
-
-  Future<void> _logout() async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Sign Out'),
-        content: const Text('Are you sure you want to log out?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Sign Out', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
-    );
-
-    if (confirm == true) {
-      await ApiService.logout();
-      if (!mounted) return;
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
-      );
-    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF1F5F9),
+      backgroundColor: AppColors.bg,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0.5,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
-              AppConfig.appName,
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
-            ),
-            if (_currentUser != null)
-              Text(
-                '${_currentUser!.name} (${_currentUser!.role.toUpperCase()})',
-                style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
-              ),
+            Text('My Tickets', style: AppText.h2),
+            Text('${_tickets.length} results',
+                style: AppText.label.copyWith(color: AppColors.textMuted)),
           ],
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh, color: AppConfig.primaryColor),
+            icon: const Icon(Icons.refresh_rounded),
             onPressed: _refreshTickets,
-          ),
-          IconButton(
-            icon: const Icon(Icons.logout_rounded, color: Colors.grey),
-            onPressed: _logout,
           ),
         ],
       ),
       body: Column(
         children: [
-          // Filter Tabs
-          Container(
-            color: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  _filterChip('all', 'All'),
-                  _filterChip('my_tickets', 'My Tickets 👤'),
-                  _filterChip('in_progress', 'In Progress'),
-                  _filterChip('pending', 'Pending'),
-                  _filterChip('waiting_for_customer_feedback', 'Waiting'),
-                  _filterChip('resolved', 'Resolved'),
-                ],
-              ),
-            ),
-          ),
-          const Divider(height: 1),
-
-          // Tickets List
+          _searchBar(),
+          _filterChips(),
           Expanded(
             child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
+                ? _skeletonList()
                 : _tickets.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.inbox_outlined, size: 56, color: Colors.grey.shade400),
-                            const SizedBox(height: 12),
-                            Text(
-                              'No tickets found',
-                              style: TextStyle(color: Colors.grey.shade600, fontSize: 15),
-                            ),
-                          ],
-                        ),
+                    ? EmptyState(
+                        icon: Icons.inbox_rounded,
+                        title: 'No tickets found',
+                        subtitle: _search.isNotEmpty
+                            ? 'Try a different search term'
+                            : 'Create your first ticket to get started',
                       )
                     : RefreshIndicator(
                         onRefresh: _refreshTickets,
+                        color: AppColors.primary,
                         child: ListView.separated(
-                          padding: const EdgeInsets.all(12),
+                          padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.md, AppSpacing.lg, 100),
                           itemCount: _tickets.length,
                           separatorBuilder: (_, __) => const SizedBox(height: 10),
-                          itemBuilder: (context, index) {
-                            final ticket = _tickets[index];
-                            return _buildTicketCard(ticket);
-                          },
+                          itemBuilder: (_, i) => _ticketCard(_tickets[i]),
                         ),
                       ),
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        heroTag: 'ticket_list_fab_new_ticket',
-        backgroundColor: AppConfig.primaryColor,
-        icon: const Icon(Icons.add_rounded, color: Colors.white),
-        label: const Text('New Ticket', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-        onPressed: () async {
-          final created = await Navigator.push<bool>(
-            context,
-            MaterialPageRoute(builder: (_) => const CreateTicketScreen()),
-          );
-          if (created == true) {
-            _refreshTickets();
-          }
-        },
-      ),
     );
   }
 
-  Widget _filterChip(String key, String label) {
-    final isSelected = _selectedFilter == key;
+  Widget _searchBar() {
     return Padding(
-      padding: const EdgeInsets.only(right: 8),
-      child: ChoiceChip(
-        label: Text(label),
-        selected: isSelected,
-        selectedColor: AppConfig.primaryColor,
-        labelStyle: TextStyle(
-          color: isSelected ? Colors.white : Colors.grey.shade700,
-          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-          fontSize: 12,
+      padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.md, AppSpacing.lg, AppSpacing.sm),
+      child: TextField(
+        controller: _searchController,
+        decoration: InputDecoration(
+          hintText: 'Search by title or ticket #',
+          prefixIcon: const Icon(Icons.search_rounded, size: 20),
+          suffixIcon: _search.isNotEmpty
+              ? IconButton(
+                  icon: const Icon(Icons.close_rounded, size: 18),
+                  onPressed: () {
+                    _searchController.clear();
+                    setState(() => _search = '');
+                    _refreshTickets();
+                  },
+                )
+              : null,
         ),
-        onSelected: (selected) {
-          if (selected) {
-            setState(() {
-              _selectedFilter = key;
-              _isLoading = true;
-            });
-            _refreshTickets();
-          }
+        onSubmitted: (v) {
+          setState(() => _search = v.trim());
+          _refreshTickets();
         },
       ),
     );
   }
 
-  Widget _buildTicketCard(TicketModel ticket) {
+  Widget _filterChips() {
+    final filters = [
+      ('all', 'All', Icons.apps_rounded),
+      ('my_tickets', 'Mine', Icons.person_pin_rounded),
+      ('in_progress', 'Active', Icons.autorenew_rounded),
+      ('pending', 'Pending', Icons.hourglass_top_rounded),
+      ('waiting_for_customer_feedback', 'Waiting', Icons.forum_rounded),
+      ('resolved', 'Done', Icons.check_circle_rounded),
+    ];
+    return SizedBox(
+      height: 40,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+        itemCount: filters.length,
+        itemBuilder: (_, i) {
+          final f = filters[i];
+          final selected = _selectedFilter == f.$1;
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: Material(
+              color: selected ? AppColors.primary : AppColors.card,
+              borderRadius: BorderRadius.circular(AppRadius.pill),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(AppRadius.pill),
+                onTap: () {
+                  setState(() {
+                    _selectedFilter = f.$1;
+                    _isLoading = true;
+                  });
+                  _refreshTickets();
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                    border: Border.all(color: selected ? AppColors.primary : AppColors.border),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(f.$3, size: 14, color: selected ? Colors.white : AppColors.textSecondary),
+                      const SizedBox(width: 5),
+                      Text(f.$2,
+                          style: AppText.caption.copyWith(
+                            color: selected ? Colors.white : AppColors.textSecondary,
+                            fontWeight: FontWeight.w600,
+                          )),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _skeletonList() {
+    return ListView.separated(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      itemCount: 5,
+      separatorBuilder: (_, __) => const SizedBox(height: 10),
+      itemBuilder: (_, __) => const SkeletonCard(height: 110),
+    );
+  }
+
+  Widget _ticketCard(TicketModel t) {
+    final pColor = AppColors.priorityColor(t.priority);
     return Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(14),
-      elevation: 0,
+      color: AppColors.card,
+      borderRadius: BorderRadius.circular(AppRadius.lg),
       child: InkWell(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         onTap: () async {
           await Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) => TicketDetailScreen(ticket: ticket, currentUser: _currentUser),
+              builder: (_) => TicketDetailScreen(ticket: t, currentUser: _currentUser),
             ),
           );
           _refreshTickets();
         },
         child: Container(
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.all(AppSpacing.md),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: const Color(0xFFE2E8F0)),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.02),
-                blurRadius: 6,
-                offset: const Offset(0, 2),
-              ),
-            ],
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            border: Border.all(color: AppColors.border),
+            boxShadow: AppShadows.card,
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: Row(
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFEFF6FF),
-                      borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: const Color(0xFFBFDBFE)),
-                    ),
-                    child: Text(
-                      '#${ticket.ticketKey}',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 11,
-                        color: Color(0xFF1D4ED8),
-                      ),
-                    ),
+              Container(
+                width: 5, height: 68,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [pColor, pColor.withOpacity(0.5)],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
                   ),
-                  Row(
-                    children: [
-                      StatusBadge(status: ticket.status),
-                      const SizedBox(width: 4),
-                      const Icon(Icons.chevron_right_rounded, color: Color(0xFF94A3B8), size: 18),
-                    ],
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Text(
-                ticket.title,
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF0F172A),
+                  borderRadius: BorderRadius.circular(3),
                 ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  PriorityBadge(priority: ticket.priority),
-                  if (ticket.category != null && ticket.category!.isNotEmpty) ...[
-                    const SizedBox(width: 6),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF1F5F9),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        ticket.category!.replaceAll('_', ' ').toUpperCase(),
-                        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Color(0xFF475569)),
-                      ),
-                    ),
-                  ],
-                  const Spacer(),
-                  if (ticket.assigneeName != null || ticket.creatorName != null)
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     Row(
                       children: [
-                        const Icon(Icons.person_outline, size: 14, color: Color(0xFF64748B)),
-                        const SizedBox(width: 4),
-                        Text(
-                          ticket.assigneeName ?? ticket.creatorName ?? '',
-                          style: const TextStyle(fontSize: 11, color: Color(0xFF64748B), fontWeight: FontWeight.w500),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withOpacity(0.08),
+                            borderRadius: BorderRadius.circular(AppRadius.sm),
+                          ),
+                          child: Text('#${t.ticketKey}',
+                              style: AppText.label.copyWith(color: AppColors.primary, fontSize: 10)),
                         ),
+                        const SizedBox(width: 6),
+                        StatusPill(status: t.status),
+                        const SizedBox(width: 6),
+                        PriorityPill(priority: t.priority),
                       ],
                     ),
-                ],
+                    const SizedBox(height: 6),
+                    Text(t.title,
+                        style: AppText.body.copyWith(fontSize: 14, fontWeight: FontWeight.w600),
+                        maxLines: 2, overflow: TextOverflow.ellipsis),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        if (t.category != null && t.category!.isNotEmpty) ...[
+                          const Icon(Icons.folder_outlined, size: 12, color: AppColors.textMuted),
+                          const SizedBox(width: 3),
+                          Text(t.category!.replaceAll('_', ' '),
+                              style: AppText.caption.copyWith(fontSize: 11)),
+                          const SizedBox(width: 10),
+                        ],
+                        if (t.assigneeName != null) ...[
+                          const Icon(Icons.person_outline_rounded, size: 12, color: AppColors.textMuted),
+                          const SizedBox(width: 3),
+                          Flexible(
+                            child: Text(t.assigneeName!,
+                                style: AppText.caption.copyWith(fontSize: 11),
+                                maxLines: 1, overflow: TextOverflow.ellipsis),
+                          ),
+                        ] else
+                          Text('Unassigned',
+                              style: AppText.caption.copyWith(color: AppColors.warning, fontSize: 11, fontWeight: FontWeight.w600)),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 6),
+              Container(
+                width: 32, height: 32,
+                decoration: BoxDecoration(
+                  color: AppColors.bg,
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                ),
+                child: const Icon(Icons.chevron_right_rounded, color: AppColors.textSecondary),
               ),
             ],
           ),

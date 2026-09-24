@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import '../config/app_config.dart';
 import '../models/user.dart';
 import '../services/storage_service.dart';
+import '../theme/app_theme.dart';
 import 'dashboard_screen.dart';
 import 'ticket_list_screen.dart';
 import 'roster_screen.dart';
-import 'user_directory_screen.dart';
 import 'profile_screen.dart';
+import 'create_ticket_screen.dart';
 
 class MainNavigationScreen extends StatefulWidget {
   final int initialIndex;
@@ -38,85 +38,103 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     }
   }
 
-  bool get _isAdmin {
-    if (_currentUser == null) return false;
-    final r = _currentUser!.role.toLowerCase();
-    return r == 'super_admin' || r == 'admin';
+  Future<void> _openCreate() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const CreateTicketScreen()),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    final List<Widget> pages = [
-      DashboardScreen(
-        onSwitchToTickets: () => setState(() => _currentIndex = 1),
-      ),
+    final pages = <Widget>[
+      DashboardScreen(onSwitchToTickets: () => setState(() => _currentIndex = 1)),
       const TicketListScreen(),
+      const SizedBox.shrink(),
       const RosterScreen(),
-      if (_isAdmin) const UserDirectoryScreen(),
       const ProfileScreen(),
     ];
 
-    final List<BottomNavigationBarItem> navItems = [
-      const BottomNavigationBarItem(
-        icon: Icon(Icons.dashboard_outlined),
-        activeIcon: Icon(Icons.dashboard),
-        label: 'Dashboard',
-      ),
-      const BottomNavigationBarItem(
-        icon: Icon(Icons.confirmation_number_outlined),
-        activeIcon: Icon(Icons.confirmation_number),
-        label: 'Tickets',
-      ),
-      const BottomNavigationBarItem(
-        icon: Icon(Icons.calendar_month_outlined),
-        activeIcon: Icon(Icons.calendar_month),
-        label: 'Roster',
-      ),
-      if (_isAdmin)
-        const BottomNavigationBarItem(
-          icon: Icon(Icons.people_alt_outlined),
-          activeIcon: Icon(Icons.people_alt),
-          label: 'Users',
-        ),
-      const BottomNavigationBarItem(
-        icon: Icon(Icons.person_outline),
-        activeIcon: Icon(Icons.person),
-        label: 'Profile',
-      ),
-    ];
-
-    // Ensure _currentIndex is within bounds if role changes
-    if (_currentIndex >= pages.length) {
-      _currentIndex = 0;
-    }
-
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: pages,
+      extendBody: true,
+      body: IndexedStack(index: _currentIndex, children: pages),
+      floatingActionButton: FloatingActionButton(
+        heroTag: 'main_nav_fab',
+        onPressed: _openCreate,
+        backgroundColor: AppColors.accent,
+        elevation: 4,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.lg)),
+        child: const Icon(Icons.add_rounded, color: Colors.white, size: 28),
       ),
-      bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          border: Border(top: BorderSide(color: Color(0xFFE2E8F0), width: 1)),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      bottomNavigationBar: _buildNav(),
+    );
+  }
+
+  Widget _buildNav() {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 16,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: SizedBox(
+          height: 68,
+          child: Row(
+            children: [
+              _navItem(0, Icons.home_outlined, Icons.home_rounded, 'Home'),
+              _navItem(1, Icons.confirmation_number_outlined, Icons.confirmation_number_rounded, 'Tickets'),
+              const SizedBox(width: 60),
+              _navItem(3, Icons.groups_2_outlined, Icons.groups_2_rounded, 'Team'),
+              _navItem(4, Icons.person_outline_rounded, Icons.person_rounded, 'Profile'),
+            ],
+          ),
         ),
-        child: BottomNavigationBar(
-          currentIndex: _currentIndex,
-          onTap: (index) => setState(() => _currentIndex = index),
-          type: BottomNavigationBarType.fixed,
-          backgroundColor: Colors.white,
-          selectedItemColor: AppConfig.primaryColor,
-          unselectedItemColor: const Color(0xFF64748B),
-          selectedFontSize: 11,
-          unselectedFontSize: 11,
-          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold),
-          elevation: 8,
-          items: navItems,
+      ),
+    );
+  }
+
+  Widget _navItem(int index, IconData icon, IconData activeIcon, String label) {
+    final selected = _currentIndex == index;
+    final color = selected ? AppColors.primary : AppColors.textMuted;
+    return Expanded(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => setState(() => _currentIndex = index),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(selected ? activeIcon : icon, color: color, size: 24),
+              const SizedBox(height: 4),
+              Text(label,
+                  style: AppText.label.copyWith(
+                    color: color,
+                    fontSize: 10,
+                    fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
+                  )),
+              if (selected)
+                Container(
+                  margin: const EdgeInsets.only(top: 4),
+                  width: 16, height: 3,
+                  decoration: BoxDecoration(
+                    color: AppColors.accent,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );

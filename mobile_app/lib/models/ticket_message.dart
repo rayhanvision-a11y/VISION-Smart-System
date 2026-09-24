@@ -26,6 +26,20 @@ class TicketMessageModel {
     this.reactions = const {},
   });
 
+  String get plainMessage {
+    var s = message;
+    s = s.replaceAll(RegExp(r'<br\s*/?>', caseSensitive: false), '\n');
+    s = s.replaceAll(RegExp(r'</p>', caseSensitive: false), '\n');
+    s = s.replaceAll(RegExp(r'<[^>]+>'), '');
+    s = s.replaceAll('&nbsp;', ' ')
+        .replaceAll('&amp;', '&')
+        .replaceAll('&lt;', '<')
+        .replaceAll('&gt;', '>')
+        .replaceAll('&quot;', '"')
+        .replaceAll('&#39;', "'");
+    return s.trim();
+  }
+
   factory TicketMessageModel.fromJson(Map<String, dynamic> json) {
     Map<String, int> rxMap = {};
     if (json['reactions'] is Map) {

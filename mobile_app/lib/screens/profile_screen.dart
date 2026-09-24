@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
-import '../config/app_config.dart';
+import 'package:image_picker/image_picker.dart';
+import '../models/user.dart';
 import '../services/api_service.dart';
 import '../services/storage_service.dart';
-import '../models/user.dart';
+import '../services/app_state.dart';
+import '../theme/app_theme.dart';
+import '../widgets/common/primary_button.dart';
 import 'login_screen.dart';
+import 'notifications_screen.dart';
+import 'edit_profile_screen.dart';
+import 'change_password_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({Key? key}) : super(key: key);
@@ -16,6 +22,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   UserModel? _user;
   String _serverUrl = '';
   bool _isLoading = true;
+  bool _isUploading = false;
 
   @override
   void initState() {
@@ -25,8 +32,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _loadProfile() async {
     setState(() => _isLoading = true);
-    final user = await StorageService.getUser();
+    var user = await StorageService.getUser();
     final url = await ApiService.getBaseUrl();
+    // Try refresh from server to pick up latest avatar_url
+    final refreshed = await ApiService.refreshCurrentUser();
+    if (refreshed != null) user = refreshed;
     if (mounted) {
       setState(() {
         _user = user;
@@ -36,30 +46,74 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  Future<void> _pickAndUploadAvatar() async {
+    final picker = ImagePicker();
+    final XFile? picked = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 85,
+      maxWidth: 800,
+    );
+    if (picked == null || !mounted) return;
+
+    setState(() => _isUploading = true);
+    final bytes = await picked.readAsBytes();
+    final result = await ApiService.uploadAvatar(
+      bytes: bytes,
+      filename: picked.name,
+    );
+
+    if (!mounted) return;
+    setState(() => _isUploading = false);
+
+    if (result['success'] == true && _user != null) {
+      final updated = _user!.copyWith(
+        avatar: result['avatar'] as String?,
+        avatarUrl: result['avatar_url'] as String?,
+      );
+      await StorageService.saveUser(updated);
+      setState(() => _user = updated);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Profile picture updated'),
+          backgroundColor: AppColors.success,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result['message']?.toString() ?? 'Upload failed'),
+          backgroundColor: AppColors.danger,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
   Future<void> _handleLogout() async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Confirm Logout'),
-        content: const Text('Are you sure you want to log out of VISION Smart System?'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.lg)),
+        title: Text('Sign out', style: AppText.h3),
+        content: Text('Are you sure you want to sign out?', style: AppText.bodySm),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Logout', style: TextStyle(color: Colors.white)),
+            child: const Text('Sign out'),
           ),
         ],
       ),
     );
-
     if (confirmed == true) {
       await ApiService.logout();
       if (mounted) {
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (_) => const LoginScreen()),
-          (route) => false,
+          (r) => false,
         );
       }
     }
@@ -68,145 +122,330 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
-      appBar: AppBar(
-        title: const Text('Account & Settings', style: TextStyle(fontWeight: FontWeight.bold)),
-      ),
+      backgroundColor: AppColors.bg,
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                // Profile Header Card
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFFE2E8F0)),
-                  ),
-                  child: Column(
-                    children: [
-                      CircleAvatar(
-                        radius: 36,
-                        backgroundColor: AppConfig.primaryColor.withOpacity(0.12),
-                        child: Text(
-                          (_user?.name.isNotEmpty == true) ? _user!.name[0].toUpperCase() : 'U',
-                          style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: AppConfig.primaryColor),
+          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+          : CustomScrollView(
+              slivers: [
+                SliverToBoxAdapter(child: _heroHeader()),
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, AppSpacing.xxl),
+                  sliver: SliverList(
+                    delegate: SliverChildListDelegate([
+                      _menuSection(AppState.instance.t('Account', 'অ্যাকাউন্ট'), [
+                        _menuItem(
+                          Icons.person_outline_rounded,
+                          AppState.instance.t('Edit Profile', 'প্রোফাইল সম্পাদনা'),
+                          AppColors.info,
+                          () async {
+                            final updated = await Navigator.push(context,
+                                MaterialPageRoute(builder: (_) => const EditProfileScreen()));
+                            if (updated == true) _loadProfile();
+                          },
                         ),
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        _user?.name ?? 'User',
-                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        _user?.email ?? '',
-                        style: const TextStyle(fontSize: 13, color: Color(0xFF64748B)),
-                      ),
-                      const SizedBox(height: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFEDE9FE),
-                          borderRadius: BorderRadius.circular(8),
+                        _menuItem(
+                          Icons.lock_outline_rounded,
+                          AppState.instance.t('Change Password', 'পাসওয়ার্ড পরিবর্তন'),
+                          AppColors.danger,
+                          () => Navigator.push(context,
+                              MaterialPageRoute(builder: (_) => const ChangePasswordScreen())),
                         ),
-                        child: Text(
-                          (_user?.role ?? '').replaceAll('_', ' ').toUpperCase(),
-                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF7C3AED)),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // Connected Server Card
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: const Color(0xFFE2E8F0)),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Server Connection',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1E293B)),
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          const Icon(Icons.cloud_done, color: Color(0xFF10B981), size: 18),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              _serverUrl,
-                              style: const TextStyle(fontSize: 12, color: Color(0xFF475569)),
-                              overflow: TextOverflow.ellipsis,
-                            ),
+                        _menuItem(Icons.email_outlined, 'Email', AppColors.info, () {},
+                            trailing: Text(_user?.email ?? '', style: AppText.caption)),
+                        if (_user?.phone != null && _user!.phone!.isNotEmpty)
+                          _menuItem(Icons.phone_outlined, 'Phone', AppColors.info, () {},
+                              trailing: Text(_user!.phone!, style: AppText.caption)),
+                      ]),
+                      const SizedBox(height: AppSpacing.md),
+                      _menuSection('Preferences', [
+                        _menuItem(Icons.notifications_none_rounded, 'Notifications', AppColors.warning, () {
+                          Navigator.push(context,
+                              MaterialPageRoute(builder: (_) => const NotificationsScreen()));
+                        }),
+                        _menuItem(
+                          Icons.language_rounded,
+                          AppState.instance.t('Language', 'ভাষা'),
+                          AppColors.info,
+                          () async {
+                            await AppState.instance.toggleLocale();
+                            if (mounted) setState(() {});
+                          },
+                          trailing: Text(
+                            AppState.instance.isBengali ? 'বাংলা' : 'English',
+                            style: AppText.caption.copyWith(color: AppColors.primary, fontWeight: FontWeight.w600),
                           ),
-                        ],
+                        ),
+                        _menuItem(
+                          AppState.instance.isDark ? Icons.dark_mode_rounded : Icons.dark_mode_outlined,
+                          AppState.instance.t('Dark Mode', 'ডার্ক মোড'),
+                          const Color(0xFF8B5CF6),
+                          () async {
+                            await AppState.instance.toggleTheme();
+                            if (mounted) setState(() {});
+                          },
+                          trailing: Switch(
+                            value: AppState.instance.isDark,
+                            activeColor: AppColors.primary,
+                            onChanged: (_) async {
+                              await AppState.instance.toggleTheme();
+                              if (mounted) setState(() {});
+                            },
+                          ),
+                        ),
+                      ]),
+                      const SizedBox(height: AppSpacing.md),
+                      _menuSection('System', [
+                        _menuItem(Icons.dns_outlined, 'Server', AppColors.success, () {},
+                            trailing: Text(
+                              _serverUrl.length > 26 ? '…${_serverUrl.substring(_serverUrl.length - 22)}' : _serverUrl,
+                              style: AppText.caption,
+                            )),
+                        _menuItem(Icons.info_outline_rounded, 'App Version', AppColors.textSecondary, () {},
+                            trailing: Text('v1.0.0', style: AppText.caption)),
+                        _menuItem(Icons.verified_user_outlined, 'System Status', AppColors.success, () {},
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  width: 8, height: 8,
+                                  decoration: const BoxDecoration(
+                                    color: AppColors.success, shape: BoxShape.circle,
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                Text('Online', style: AppText.caption.copyWith(color: AppColors.success)),
+                              ],
+                            )),
+                      ]),
+                      const SizedBox(height: AppSpacing.xl),
+                      PrimaryButton(
+                        label: 'Sign Out',
+                        icon: Icons.logout_rounded,
+                        kind: PrimaryButtonKind.danger,
+                        onPressed: _handleLogout,
                       ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // System & App Info Card (NEW FEATURE DEMO)
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: const Color(0xFFE2E8F0)),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'System Information',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1E293B)),
+                      const SizedBox(height: AppSpacing.xl),
+                      Center(
+                        child: Text('VISION Smart System · Made with ❤️',
+                            style: AppText.label.copyWith(color: AppColors.textMuted)),
                       ),
-                      const SizedBox(height: 12),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text('App Version', style: TextStyle(fontSize: 13, color: Color(0xFF64748B))),
-                          Text('v1.0.0+1', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppConfig.primaryColor)),
-                        ],
-                      ),
-                      const Divider(height: 20, color: Color(0xFFF1F5F9)),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: const [
-                          Text('System Status', style: TextStyle(fontSize: 13, color: Color(0xFF64748B))),
-                          Text('Online & Synchronized', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF10B981))),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 24),
-
-                // Logout Button
-                ElevatedButton.icon(
-                  onPressed: _handleLogout,
-                  icon: const Icon(Icons.logout, color: Colors.white),
-                  label: const Text('Logout', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFEF4444),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+                    ]),
                   ),
                 ),
               ],
             ),
+    );
+  }
+
+  Widget _heroHeader() {
+    final initials = (_user?.name.isNotEmpty ?? false) ? _user!.name[0].toUpperCase() : 'U';
+    final avatarUrl = _user?.avatarUrl;
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.md, AppSpacing.lg, AppSpacing.xl),
+      decoration: BoxDecoration(
+        gradient: AppColors.heroGradient,
+        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(32)),
+      ),
+      child: SafeArea(
+        bottom: false,
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Positioned(
+              right: -20, top: -10,
+              child: Container(
+                width: 140, height: 140,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white.withOpacity(0.06),
+                ),
+              ),
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Row(
+                  children: [
+                    if (Navigator.canPop(context))
+                      IconButton(
+                        icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    Text(AppState.instance.t('Profile', 'প্রোফাইল'),
+                        style: AppText.h2.copyWith(color: Colors.white)),
+                    const Spacer(),
+                    IconButton(
+                      icon: const Icon(Icons.notifications_none_rounded, color: Colors.white),
+                      onPressed: () => Navigator.push(context,
+                          MaterialPageRoute(builder: (_) => const NotificationsScreen())),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.md),
+                Stack(
+                  children: [
+                    Container(
+                      width: 108, height: 108,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 4),
+                        boxShadow: AppShadows.elevated,
+                      ),
+                      child: ClipOval(
+                        child: (avatarUrl != null && avatarUrl.isNotEmpty)
+                            ? Image.network(
+                                avatarUrl,
+                                fit: BoxFit.cover,
+                                loadingBuilder: (_, child, p) => p == null
+                                    ? child
+                                    : Container(
+                                        color: AppColors.primaryLight,
+                                        alignment: Alignment.center,
+                                        child: const CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                      ),
+                                errorBuilder: (_, __, ___) => _avatarInitial(initials),
+                              )
+                            : _avatarInitial(initials),
+                      ),
+                    ),
+                    Positioned(
+                      right: 0, bottom: 0,
+                      child: Material(
+                        color: AppColors.accent,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                          side: const BorderSide(color: Colors.white, width: 3),
+                        ),
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(20),
+                          onTap: _isUploading ? null : _pickAndUploadAvatar,
+                          child: Padding(
+                            padding: const EdgeInsets.all(7),
+                            child: _isUploading
+                                ? const SizedBox(
+                                    width: 16, height: 16,
+                                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                  )
+                                : const Icon(Icons.camera_alt_rounded, color: Colors.white, size: 16),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.md),
+                Text(_user?.name ?? '',
+                    style: AppText.h1.copyWith(color: Colors.white)),
+                const SizedBox(height: 4),
+                Text(_user?.email ?? '',
+                    style: AppText.bodySm.copyWith(color: Colors.white.withOpacity(0.8))),
+                const SizedBox(height: AppSpacing.md),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: AppColors.accent.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.verified_rounded, size: 14, color: AppColors.accent),
+                          const SizedBox(width: 4),
+                          Text((_user?.role ?? '').replaceAll('_', ' ').toUpperCase(),
+                              style: AppText.label.copyWith(color: AppColors.accent, fontSize: 11)),
+                        ],
+                      ),
+                    ),
+                    if (_user?.team != null && _user!.team!.isNotEmpty) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.groups_2_rounded, size: 14, color: Colors.white),
+                            const SizedBox(width: 4),
+                            Text(_user!.team!.toUpperCase(),
+                                style: AppText.label.copyWith(color: Colors.white, fontSize: 11)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _avatarInitial(String s) => Container(
+        color: AppColors.primaryLight,
+        alignment: Alignment.center,
+        child: Text(s, style: AppText.displayLg.copyWith(color: Colors.white, fontSize: 40)),
+      );
+
+  Widget _menuSection(String title, List<Widget> items) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(bottom: AppSpacing.sm, left: 4),
+          child: Text(title, style: AppText.label),
+        ),
+        Container(
+          decoration: BoxDecoration(
+            color: AppColors.card,
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Column(
+            children: List.generate(items.length * 2 - 1, (i) {
+              if (i.isOdd) return const Divider(height: 1, indent: 60);
+              return items[i ~/ 2];
+            }),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _menuItem(IconData icon, String label, Color color, VoidCallback onTap, {Widget? trailing}) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.md),
+          child: Row(
+            children: [
+              Container(
+                width: 36, height: 36,
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                ),
+                child: Icon(icon, size: 18, color: color),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(child: Text(label, style: AppText.body.copyWith(fontSize: 14))),
+              if (trailing != null) trailing else
+                const Icon(Icons.chevron_right_rounded, color: AppColors.textMuted),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

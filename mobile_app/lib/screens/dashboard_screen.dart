@@ -1,13 +1,19 @@
 import 'package:flutter/material.dart';
-import '../config/app_config.dart';
 import '../services/api_service.dart';
 import '../services/storage_service.dart';
 import '../models/user.dart';
 import '../models/ticket.dart';
+import '../theme/app_theme.dart';
+import '../widgets/common/app_header.dart';
+import '../widgets/common/section_header.dart';
+import '../widgets/common/skeleton.dart';
+import '../widgets/common/status_pill.dart';
 import 'create_ticket_screen.dart';
 import 'ticket_detail_screen.dart';
 import 'ticket_list_screen.dart';
 import 'roster_screen.dart';
+import 'profile_screen.dart';
+import 'notifications_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   final VoidCallback? onSwitchToTickets;
@@ -41,7 +47,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
-  void _navigateToFilteredTickets(String? statusFilter) {
+  String get _greeting {
+    final h = DateTime.now().hour;
+    if (h < 12) return 'Good Morning';
+    if (h < 17) return 'Good Afternoon';
+    if (h < 21) return 'Good Evening';
+    return 'Good Night';
+  }
+
+  void _openTickets(String? statusFilter) {
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -51,7 +65,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
               statusFilter == null
                   ? 'All Tickets'
                   : 'Tickets: ${statusFilter.replaceAll('_', ' ').toUpperCase()}',
-              style: const TextStyle(fontWeight: FontWeight.bold),
             ),
           ),
           body: TicketListScreen(initialStatus: statusFilter),
@@ -60,18 +73,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  Future<void> _openCreate() async {
+    final res = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const CreateTicketScreen()),
+    );
+    if (res == true) _loadData();
+  }
+
+  void _openRoster() {
+    Navigator.push(context, MaterialPageRoute(builder: (_) => const RosterScreen()));
+  }
+
+  void _openProfile() {
+    Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen()));
+  }
+
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      return Scaffold(
-        backgroundColor: const Color(0xFFF8FAFC),
-        appBar: AppBar(
-          title: const Text('VISION Smart System', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-        ),
-        body: const Center(child: CircularProgressIndicator()),
-      );
-    }
-
     final Map<String, dynamic> stats = (_dashboardData?['stats'] is Map)
         ? Map<String, dynamic>.from(_dashboardData!['stats'] as Map)
         : <String, dynamic>{};
@@ -86,294 +105,457 @@ class _DashboardScreenState extends State<DashboardScreen> {
       }
     }
 
+    final int inProgress = ((stats['in_progress'] ?? 0) as num).toInt();
+    final int pending = ((stats['pending'] ?? 0) as num).toInt();
+    final int waiting = ((stats['waiting_for_customer_feedback'] ?? 0) as num).toInt();
+    final int resolved = ((stats['resolved'] ?? 0) as num).toInt();
+    final int urgent = ((stats['urgent'] ?? 0) as num).toInt();
+    final int overdue = ((stats['overdue'] ?? 0) as num).toInt();
+    final int total = ((stats['total'] ?? 0) as num).toInt();
+    final int totalActive = inProgress + pending + waiting;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
-      appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'VISION Smart System',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-            ),
-            if (_currentUser != null)
-              Text(
-                '${_currentUser!.name} (${_currentUser!.role.toUpperCase().replaceAll('_', ' ')})',
-                style: const TextStyle(fontSize: 11, color: Colors.white70),
+      backgroundColor: AppColors.bg,
+      body: RefreshIndicator(
+        onRefresh: _loadData,
+        color: AppColors.primary,
+        child: CustomScrollView(
+          slivers: [
+            SliverToBoxAdapter(
+              child: AppHeader(
+                user: _currentUser,
+                notificationCount: (stats['unread_notifications'] ?? 0) as int? ?? 0,
+                onSearchTap: () => _openTickets(null),
+                onNotificationTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+                ),
+                onAvatarTap: _openProfile,
               ),
+            ),
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, AppSpacing.xxl),
+              sliver: SliverList(
+                delegate: SliverChildListDelegate([
+                  _greetingLine(),
+                  const SizedBox(height: AppSpacing.md),
+                  _heroCard(totalActive, resolved, total),
+                  const SizedBox(height: AppSpacing.lg),
+                  _quickActions(),
+                  const SizedBox(height: AppSpacing.md),
+                  const SectionHeader(title: 'Ticket Overview'),
+                  _isLoading
+                      ? _skeletonStatsGrid()
+                      : _statsGrid(inProgress, pending, waiting, resolved, urgent, overdue),
+                  if (overdue > 0) ...[
+                    const SizedBox(height: AppSpacing.md),
+                    _slaBanner(overdue),
+                  ],
+                  const SizedBox(height: AppSpacing.sm),
+                  _promoCard(),
+                  SectionHeader(
+                    title: 'Recent Tickets',
+                    actionLabel: 'See all',
+                    onAction: () => _openTickets(null),
+                  ),
+                  _isLoading
+                      ? Column(children: const [SkeletonCard(), SizedBox(height: 10), SkeletonCard()])
+                      : _recentList(recentTickets),
+                  SectionHeader(
+                    title: 'On Duty Today',
+                    actionLabel: 'View team',
+                    onAction: _openRoster,
+                  ),
+                  _dutyCard(dutyTeams),
+                  const SizedBox(height: 80),
+                ]),
+              ),
+            ),
           ],
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _loadData,
-            tooltip: 'Refresh Dashboard',
-          ),
-        ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        heroTag: 'dashboard_fab_new_ticket',
-        onPressed: () async {
-          final res = await Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const CreateTicketScreen()),
-          );
-          if (res == true) _loadData();
-        },
-        icon: const Icon(Icons.add),
-        label: const Text('New Ticket'),
-        backgroundColor: const Color(0xFFDC2626),
-      ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : RefreshIndicator(
-              onRefresh: _loadData,
-              child: ListView(
-                padding: const EdgeInsets.all(16),
-                children: [
-                  // 1. Welcome Header Banner Card
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF991B1B), Color(0xFFDC2626)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFFDC2626).withOpacity(0.3),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 26,
-                          backgroundColor: Colors.white.withOpacity(0.2),
-                          child: const Icon(Icons.speed_rounded, color: Colors.white, size: 28),
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'System Overview',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Select a button below to view details',
-                                style: TextStyle(
-                                  color: Colors.white.withOpacity(0.85),
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 18),
-
-                  // 2. Interactive Ticket Metric Buttons (Clickable Summary Cards)
-                  const Text(
-                    'Ticket Overview',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
-                  ),
-                  const SizedBox(height: 10),
-                  GridView.count(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 10,
-                    mainAxisSpacing: 10,
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    childAspectRatio: 1.5,
-                    children: [
-                      _buildStatCard(
-                        'Total Tickets',
-                        '${stats['total'] ?? 0}',
-                        Icons.confirmation_number_outlined,
-                        const Color(0xFF3B82F6),
-                        const Color(0xFFEFF6FF),
-                        onTap: () => _navigateToFilteredTickets(null),
-                      ),
-                      _buildStatCard(
-                        'In Progress',
-                        '${stats['in_progress'] ?? 0}',
-                        Icons.pending_actions,
-                        const Color(0xFF0284C7),
-                        const Color(0xFFE0F2FE),
-                        onTap: () => _navigateToFilteredTickets('in_progress'),
-                      ),
-                      _buildStatCard(
-                        'Pending',
-                        '${stats['pending'] ?? 0}',
-                        Icons.hourglass_top,
-                        const Color(0xFFF59E0B),
-                        const Color(0xFFFEF3C7),
-                        onTap: () => _navigateToFilteredTickets('pending'),
-                      ),
-                      _buildStatCard(
-                        'Waiting Feedback',
-                        '${stats['waiting_for_customer_feedback'] ?? 0}',
-                        Icons.chat_bubble_outline,
-                        const Color(0xFF8B5CF6),
-                        const Color(0xFFEDE9FE),
-                        onTap: () => _navigateToFilteredTickets('waiting_for_customer_feedback'),
-                      ),
-                      _buildStatCard(
-                        'Resolved',
-                        '${stats['resolved'] ?? 0}',
-                        Icons.check_circle_outline,
-                        const Color(0xFF10B981),
-                        const Color(0xFFD1FAE5),
-                        onTap: () => _navigateToFilteredTickets('resolved'),
-                      ),
-                      _buildStatCard(
-                        'Urgent / Overdue',
-                        '${stats['urgent'] ?? 0} / ${stats['overdue'] ?? 0}',
-                        Icons.warning_amber_rounded,
-                        const Color(0xFFEF4444),
-                        const Color(0xFFFEE2E2),
-                        onTap: () => _navigateToFilteredTickets('urgent'),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 22),
-
-                  // 3. Quick Action Buttons (MTB App Fintech Style Shortcuts)
-                  const Text(
-                    'Services & Navigation',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
-                  ),
-                  const SizedBox(height: 10),
-
-                  // Button 1: All Tickets Button Card
-                  _buildMenuButton(
-                    title: 'All Tickets & History',
-                    subtitle: 'View all ${stats['total'] ?? 0} support tickets',
-                    icon: Icons.confirmation_number_rounded,
-                    iconBgColor: const Color(0xFFEFF6FF),
-                    iconColor: const Color(0xFF2563EB),
-                    onTap: widget.onSwitchToTickets ?? () => _navigateToFilteredTickets(null),
-                  ),
-                  const SizedBox(height: 10),
-
-                  // Button 2: My Tickets Button Card
-                  _buildMenuButton(
-                    title: 'My Assigned Tickets 👤',
-                    subtitle: 'Tickets assigned to or created by you',
-                    icon: Icons.person_pin_rounded,
-                    iconBgColor: const Color(0xFFFEF3C7),
-                    iconColor: const Color(0xFFD97706),
-                    onTap: () => _navigateToFilteredTickets('my_tickets'),
-                  ),
-                  const SizedBox(height: 10),
-
-                  // Button 3: Duty Roster Button Card
-                  _buildMenuButton(
-                    title: 'Active Duty Roster',
-                    subtitle: '${dutyTeams.length} active teams shift schedule & contacts',
-                    icon: Icons.calendar_month_rounded,
-                    iconBgColor: const Color(0xFFD1FAE5),
-                    iconColor: const Color(0xFF059669),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => Scaffold(
-                            appBar: AppBar(
-                              title: const Text('Duty Roster & Shift Schedule', style: TextStyle(fontWeight: FontWeight.bold)),
-                            ),
-                            body: const RosterScreen(),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 10),
-
-                  // Button 4: Create Ticket Button Card
-                  _buildMenuButton(
-                    title: 'Create New Ticket ➕',
-                    subtitle: 'Submit a new support ticket request',
-                    icon: Icons.add_circle_outline_rounded,
-                    iconBgColor: const Color(0xFFFEE2E2),
-                    iconColor: const Color(0xFFDC2626),
-                    onTap: () async {
-                      final res = await Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const CreateTicketScreen()),
-                      );
-                      if (res == true) _loadData();
-                    },
-                  ),
-                  const SizedBox(height: 40),
-                ],
-              ),
-            ),
     );
   }
 
-  Widget _buildMenuButton({
-    required String title,
-    required String subtitle,
-    required IconData icon,
-    required Color iconBgColor,
-    required Color iconColor,
-    required VoidCallback onTap,
-  }) {
+  Widget _greetingLine() {
+    final name = _currentUser?.name.split(' ').first ?? '';
+    return Padding(
+      padding: const EdgeInsets.only(top: 4),
+      child: Row(
+        children: [
+          Text('$_greeting${name.isNotEmpty ? ", $name" : ""} ✨',
+              style: AppText.bodySm.copyWith(color: AppColors.textSecondary)),
+          const Spacer(),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            decoration: BoxDecoration(
+              color: AppColors.success.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(AppRadius.pill),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 6, height: 6,
+                  decoration: const BoxDecoration(color: AppColors.success, shape: BoxShape.circle),
+                ),
+                const SizedBox(width: 5),
+                Text('System Online',
+                    style: AppText.label.copyWith(color: AppColors.success, fontSize: 10)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _heroCard(int active, int resolved, int total) {
+    final resolutionRate = total > 0 ? (resolved / total * 100).toStringAsFixed(0) : '0';
+
     return Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(16),
-      elevation: 0,
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(AppRadius.xl),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(AppRadius.xl),
+        onTap: () => _openTickets(null),
+        child: Container(
+          padding: const EdgeInsets.all(AppSpacing.xl),
+          decoration: BoxDecoration(
+            gradient: AppColors.heroGradient,
+            borderRadius: BorderRadius.circular(AppRadius.xl),
+            boxShadow: AppShadows.elevated,
+          ),
+          child: Stack(
+            children: [
+              Positioned(
+                right: -20,
+                top: -20,
+                child: Container(
+                  width: 140,
+                  height: 140,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white.withOpacity(0.05),
+                  ),
+                ),
+              ),
+              Positioned(
+                right: 30,
+                bottom: -40,
+                child: Container(
+                  width: 100,
+                  height: 100,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppColors.accent.withOpacity(0.15),
+                  ),
+                ),
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(AppSpacing.sm),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(AppRadius.md),
+                        ),
+                        child: const Icon(Icons.dashboard_rounded, color: AppColors.accent, size: 18),
+                      ),
+                      const SizedBox(width: AppSpacing.md),
+                      Text('Live Overview',
+                          style: AppText.bodySm.copyWith(color: Colors.white.withOpacity(0.9))),
+                      const Spacer(),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: AppColors.accent.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
+                        ),
+                        child: Text('$resolutionRate% resolved',
+                            style: AppText.label.copyWith(color: AppColors.accent, fontSize: 10)),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text('$active',
+                          style: AppText.displayLg.copyWith(color: Colors.white, fontSize: 48)),
+                      const SizedBox(width: AppSpacing.md),
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: Text('active tickets',
+                            style: AppText.bodySm.copyWith(color: Colors.white.withOpacity(0.85))),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  _progressBar(active, total),
+                  const SizedBox(height: AppSpacing.md),
+                  Row(
+                    children: [
+                      _heroPill('Total', '$total'),
+                      const SizedBox(width: 8),
+                      _heroPill('Resolved', '$resolved'),
+                      const SizedBox(width: 8),
+                      _heroPill('Active', '$active'),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _progressBar(int active, int total) {
+    final ratio = total > 0 ? (total - active) / total : 0.0;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text('Progress',
+                style: AppText.label.copyWith(color: Colors.white.withOpacity(0.8))),
+            const Spacer(),
+            Text('${(ratio * 100).toStringAsFixed(0)}%',
+                style: AppText.label.copyWith(color: AppColors.accent)),
+          ],
+        ),
+        const SizedBox(height: 6),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(AppRadius.pill),
+          child: LinearProgressIndicator(
+            value: ratio.clamp(0.0, 1.0),
+            minHeight: 6,
+            backgroundColor: Colors.white.withOpacity(0.15),
+            valueColor: const AlwaysStoppedAnimation(AppColors.accent),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _heroPill(String label, String value) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          border: Border.all(color: Colors.white.withOpacity(0.15)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label,
+                style: AppText.label.copyWith(color: Colors.white.withOpacity(0.75), fontSize: 10)),
+            const SizedBox(height: 2),
+            Text(value,
+                style: AppText.h3.copyWith(color: Colors.white, fontSize: 16)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _quickActions() {
+    final items = [
+      (Icons.add_circle_rounded, 'New\nTicket', AppColors.accent, _openCreate),
+      (Icons.person_pin_circle_rounded, 'My\nTickets', AppColors.info,
+          () => _openTickets('my_tickets')),
+      (Icons.groups_2_rounded, 'Team\nRoster', AppColors.success, _openRoster),
+      (Icons.local_fire_department_rounded, 'Urgent\nOnly', AppColors.danger,
+          () => _openTickets('urgent')),
+    ];
+
+    return Row(
+      children: items
+          .map((it) => Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: _actionTile(it.$1, it.$2, it.$3, it.$4),
+                ),
+              ))
+          .toList(),
+    );
+  }
+
+  Widget _actionTile(IconData icon, String label, Color color, VoidCallback onTap) {
+    return Material(
+      color: AppColors.card,
+      borderRadius: BorderRadius.circular(AppRadius.lg),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          padding: const EdgeInsets.all(16),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        splashColor: color.withOpacity(0.15),
+        child: Ink(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFE2E8F0)),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            border: Border.all(color: AppColors.border),
+            boxShadow: AppShadows.card,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg, horizontal: 6),
+            child: Column(
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [color.withOpacity(0.18), color.withOpacity(0.08)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                  ),
+                  child: Icon(icon, size: 24, color: color),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                Text(label,
+                    textAlign: TextAlign.center,
+                    style: AppText.caption.copyWith(fontWeight: FontWeight.w600, height: 1.2)),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _statsGrid(int inProg, int pend, int wait, int res, int urgent, int overdue) {
+    final items = [
+      (_StatItem('In Progress', '$inProg', Icons.autorenew_rounded, AppColors.info, 'in_progress')),
+      (_StatItem('Pending', '$pend', Icons.hourglass_top_rounded, AppColors.warning, 'pending')),
+      (_StatItem('Waiting FB', '$wait', Icons.forum_rounded, const Color(0xFF8B5CF6), 'waiting_for_customer_feedback')),
+      (_StatItem('Resolved', '$res', Icons.check_circle_rounded, AppColors.success, 'resolved')),
+      (_StatItem('Urgent', '$urgent', Icons.priority_high_rounded, AppColors.danger, 'urgent')),
+      (_StatItem('Overdue', '$overdue', Icons.schedule_rounded, const Color(0xFFEA580C), null)),
+    ];
+
+    return GridView.count(
+      crossAxisCount: 2,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      crossAxisSpacing: 10,
+      mainAxisSpacing: 10,
+      childAspectRatio: 1.75,
+      children: items.map((it) => _statCard(it)).toList(),
+    );
+  }
+
+  Widget _statCard(_StatItem it) {
+    return Material(
+      color: AppColors.card,
+      borderRadius: BorderRadius.circular(AppRadius.lg),
+      child: InkWell(
+        onTap: () => _openTickets(it.filter),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        splashColor: it.color.withOpacity(0.15),
+        child: Ink(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            border: Border.all(color: AppColors.border),
+            boxShadow: AppShadows.card,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            child: Stack(
+              children: [
+                Positioned(
+                  right: -8,
+                  bottom: -8,
+                  child: Icon(it.icon, size: 60, color: it.color.withOpacity(0.06)),
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(7),
+                      decoration: BoxDecoration(
+                        color: it.color.withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                      ),
+                      child: Icon(it.icon, size: 16, color: it.color),
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(it.value, style: AppText.h1.copyWith(color: it.color, fontSize: 24)),
+                        Text(it.label, style: AppText.caption),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _skeletonStatsGrid() {
+    return GridView.count(
+      crossAxisCount: 2,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      crossAxisSpacing: 10,
+      mainAxisSpacing: 10,
+      childAspectRatio: 1.75,
+      children: List.generate(6, (_) => const SkeletonCard(height: 90)),
+    );
+  }
+
+  Widget _slaBanner(int overdue) {
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(AppRadius.lg),
+      child: InkWell(
+        onTap: () => _openTickets(null),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        child: Container(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [AppColors.danger.withOpacity(0.12), AppColors.danger.withOpacity(0.04)],
+            ),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            border: Border.all(color: AppColors.danger.withOpacity(0.3)),
           ),
           child: Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.all(AppSpacing.sm),
                 decoration: BoxDecoration(
-                  color: iconBgColor,
-                  borderRadius: BorderRadius.circular(12),
+                  color: AppColors.danger.withOpacity(0.15),
+                  shape: BoxShape.circle,
                 ),
-                child: Icon(icon, color: iconColor, size: 24),
+                child: const Icon(Icons.warning_amber_rounded, color: AppColors.danger, size: 20),
               ),
-              const SizedBox(width: 14),
+              const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      title,
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF0F172A)),
-                    ),
+                    Text('SLA Breach Alert',
+                        style: AppText.body.copyWith(color: AppColors.danger, fontWeight: FontWeight.w700)),
                     const SizedBox(height: 2),
-                    Text(
-                      subtitle,
-                      style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
-                    ),
+                    Text('$overdue tickets need immediate attention',
+                        style: AppText.caption),
                   ],
                 ),
               ),
-              const Icon(Icons.arrow_forward_ios_rounded, size: 16, color: Color(0xFF94A3B8)),
+              const Icon(Icons.chevron_right_rounded, color: AppColors.danger),
             ],
           ),
         ),
@@ -381,81 +563,276 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildStatCard(
-    String title,
-    String count,
-    IconData icon,
-    Color color,
-    Color bgColor, {
-    VoidCallback? onTap,
-  }) {
+  Widget _promoCard() {
     return Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(16),
-      elevation: 0,
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(AppRadius.lg),
       child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        splashColor: color.withOpacity(0.12),
-        highlightColor: color.withOpacity(0.06),
+        onTap: _openCreate,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         child: Container(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(AppSpacing.lg),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFE2E8F0)),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.02),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
+            gradient: LinearGradient(
+              colors: [AppColors.accent.withOpacity(0.14), AppColors.accent.withOpacity(0.02)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            border: Border.all(color: AppColors.accent.withOpacity(0.3)),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          child: Row(
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Text(
-                      title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF64748B)),
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: bgColor,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Icon(icon, size: 16, color: color),
-                  ),
-                ],
+              Container(
+                width: 46, height: 46,
+                decoration: BoxDecoration(
+                  gradient: AppColors.goldGradient,
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                ),
+                child: const Icon(Icons.rocket_launch_rounded, color: Colors.white),
               ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    count,
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: color),
-                  ),
-                  Icon(
-                    Icons.chevron_right_rounded,
-                    size: 18,
-                    color: color.withOpacity(0.7),
-                  ),
-                ],
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Need help? Create a ticket',
+                        style: AppText.body.copyWith(fontWeight: FontWeight.w700)),
+                    const SizedBox(height: 2),
+                    Text('Our team responds within minutes',
+                        style: AppText.caption),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: AppColors.accent,
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                ),
+                child: Row(
+                  children: [
+                    const Text('Start',
+                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 12)),
+                    const SizedBox(width: 4),
+                    const Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 14),
+                  ],
+                ),
               ),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _recentList(List<TicketModel> tickets) {
+    if (tickets.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(AppSpacing.xl),
+        decoration: BoxDecoration(
+          color: AppColors.card,
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Column(
+          children: [
+            Icon(Icons.inbox_rounded, size: 40, color: AppColors.textMuted.withOpacity(0.5)),
+            const SizedBox(height: 8),
+            Text('No recent tickets', style: AppText.bodySm),
+          ],
+        ),
+      );
+    }
+    return Column(
+      children: tickets.take(5).map(_recentCard).toList(),
+    );
+  }
+
+  Widget _recentCard(TicketModel t) {
+    final pColor = AppColors.priorityColor(t.priority);
+    return Container(
+      margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(color: AppColors.border),
+        boxShadow: AppShadows.card,
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => TicketDetailScreen(ticket: t)),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            child: Row(
+              children: [
+                Container(
+                  width: 5, height: 52,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [pColor, pColor.withOpacity(0.6)],
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                    ),
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text('#${t.ticketKey}',
+                              style: AppText.label.copyWith(color: AppColors.textMuted)),
+                          const SizedBox(width: 6),
+                          StatusPill(status: t.status),
+                          const SizedBox(width: 6),
+                          PriorityPill(priority: t.priority),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(t.title,
+                          style: AppText.body, maxLines: 1, overflow: TextOverflow.ellipsis),
+                      if (t.assigneeName != null) ...[
+                        const SizedBox(height: 3),
+                        Row(
+                          children: [
+                            const Icon(Icons.person_outline_rounded, size: 12, color: AppColors.textMuted),
+                            const SizedBox(width: 4),
+                            Text(t.assigneeName!,
+                                style: AppText.caption.copyWith(fontSize: 11)),
+                          ],
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                Container(
+                  width: 32, height: 32,
+                  decoration: BoxDecoration(
+                    color: AppColors.bg,
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                  ),
+                  child: const Icon(Icons.chevron_right_rounded, color: AppColors.textSecondary, size: 20),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _dutyCard(List teams) {
+    if (teams.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        decoration: BoxDecoration(
+          color: AppColors.card,
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.groups_rounded, color: AppColors.textMuted),
+            const SizedBox(width: AppSpacing.md),
+            Text('No teams on duty right now', style: AppText.bodySm),
+          ],
+        ),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(color: AppColors.border),
+        boxShadow: AppShadows.card,
+      ),
+      child: Column(
+        children: teams.take(4).map<Widget>((t) {
+          if (t is! Map) return const SizedBox.shrink();
+          final label = t['team_label']?.toString() ?? t['team_key']?.toString() ?? 'Team';
+          final members = (t['members'] as List?) ?? [];
+          final onDuty = members.where((m) => m is Map && m['is_on_duty'] == true).length;
+          final pct = members.isEmpty ? 0.0 : onDuty / members.length;
+
+          return Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: _openRoster,
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 34, height: 34,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        label.isNotEmpty ? label[0].toUpperCase() : 'T',
+                        style: AppText.h3.copyWith(color: AppColors.primary),
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.md),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(label, style: AppText.body.copyWith(fontSize: 13)),
+                          const SizedBox(height: 5),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(AppRadius.pill),
+                            child: LinearProgressIndicator(
+                              value: pct,
+                              minHeight: 4,
+                              backgroundColor: AppColors.border,
+                              valueColor: AlwaysStoppedAnimation(
+                                pct > 0.5 ? AppColors.success : AppColors.warning,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.md),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text('$onDuty/${members.length}',
+                            style: AppText.h3.copyWith(fontSize: 14, color: AppColors.success)),
+                        Text('on duty', style: AppText.label.copyWith(fontSize: 9)),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }).toList(),
       ),
     );
   }
 }
 
+class _StatItem {
+  final String label;
+  final String value;
+  final IconData icon;
+  final Color color;
+  final String? filter;
+  _StatItem(this.label, this.value, this.icon, this.color, this.filter);
+}

@@ -25,6 +25,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [ApiAuthController::class, 'logout']);
     Route::get('/user', [ApiAuthController::class, 'me']);
     Route::post('/user/fcm-token', [ApiAuthController::class, 'updateFcmToken']);
+    Route::post('/user/avatar', [ApiAuthController::class, 'updateAvatar']);
+    Route::post('/user/profile', [ApiAuthController::class, 'updateProfile']);
+    Route::post('/user/password', [ApiAuthController::class, 'changePassword']);
 
     // Live Dashboard & Duty Stats
     Route::get('/dashboard', [ApiDashboardController::class, 'index']);
@@ -48,5 +51,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/tickets/{ticket}/priority', [ApiTicketController::class, 'updatePriority']);
     Route::post('/tickets/{ticket}/assign', [ApiTicketController::class, 'assign']);
     Route::post('/tickets/{ticket}/messages', [ApiTicketController::class, 'addMessage']);
+    Route::post('/tickets/{ticket}/attachments', [ApiTicketController::class, 'uploadAttachment']);
     Route::post('/tickets/{ticket}/messages/{message}/react', [ApiTicketController::class, 'toggleReaction']);
 });
