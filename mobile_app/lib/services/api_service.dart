@@ -77,11 +77,12 @@ class ApiService {
   }
 
   // 2. Fetch Tickets list from Laravel API
-  static Future<List<TicketModel>> fetchTickets({String? status, String? search}) async {
+  static Future<List<TicketModel>> fetchTickets({String? status, String? search, String? area}) async {
     try {
       final uri = await _buildUri('/tickets', {
         if (status != null && status.isNotEmpty) 'status': status,
         if (search != null && search.isNotEmpty) 'search': search,
+        if (area != null && area.isNotEmpty) 'area': area,
       });
 
       final response = await http.get(uri, headers: await _headers());
@@ -183,6 +184,7 @@ class ApiService {
     int? popOfficeId,
     int? assignedTo,
     DateTime? dueAt,
+    String? area,
   }) async {
     try {
       final uri = await _buildUri('/tickets');
@@ -197,6 +199,7 @@ class ApiService {
           if (popOfficeId != null) 'pop_office_id': popOfficeId,
           if (assignedTo != null) 'assigned_to': assignedTo,
           if (dueAt != null) 'due_at': dueAt.toIso8601String(),
+          if (area != null && area.isNotEmpty) 'area': area,
         }),
       );
 
@@ -479,6 +482,57 @@ class ApiService {
       return response.statusCode == 200;
     } catch (_) {
       return false;
+    }
+  }
+
+  // 15a. Areas autocomplete
+  static Future<List<String>> getAreas({String? search}) async {
+    try {
+      final uri = await _buildUri('/areas', {if (search != null && search.isNotEmpty) 'search': search});
+      final response = await http.get(uri, headers: await _headers());
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data is Map && data['areas'] is List) {
+          return (data['areas'] as List).map((e) => e.toString()).toList();
+        }
+      }
+    } catch (_) {}
+    return [];
+  }
+
+  // 15c. Technicians with workload
+  static Future<List<dynamic>> getTechnicians() async {
+    try {
+      final uri = await _buildUri('/technicians');
+      final response = await http.get(uri, headers: await _headers());
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return (data['technicians'] as List?) ?? [];
+      }
+    } catch (_) {}
+    return [];
+  }
+
+  // 15d. Bulk assign tickets
+  static Future<Map<String, dynamic>> bulkAssign({
+    required List<int> ticketIds,
+    required int assignedTo,
+  }) async {
+    try {
+      final uri = await _buildUri('/tickets/bulk-assign');
+      final response = await http.post(
+        uri,
+        headers: await _headers(),
+        body: jsonEncode({'ticket_ids': ticketIds, 'assigned_to': assignedTo}),
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return {'success': true, 'count': data['count'] ?? 0};
+      }
+      final data = jsonDecode(response.body);
+      return {'success': false, 'message': data['message'] ?? data['error'] ?? 'Failed'};
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
     }
   }
 

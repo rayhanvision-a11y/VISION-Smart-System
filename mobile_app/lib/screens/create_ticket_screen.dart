@@ -26,9 +26,11 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
   String? _selectedAssigneeName;
   DateTime? _dueAt;
   final List<_PickedFile> _attachments = [];
+  String? _selectedArea;
 
   bool _isLoading = false;
   bool _isLoadingMeta = true;
+  List<String> _areas = [];
 
   List<dynamic> _categoriesApi = [];
   List<dynamic> _popOffices = [];
@@ -60,12 +62,14 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
       ApiService.getCategories(),
       ApiService.getPopOffices(),
       ApiService.getStaff(),
+      ApiService.getAreas(),
     ]);
     if (!mounted) return;
     setState(() {
-      _categoriesApi = results[0];
-      _popOffices = results[1];
-      _staff = results[2];
+      _categoriesApi = results[0] as List;
+      _popOffices = results[1] as List;
+      _staff = results[2] as List;
+      _areas = (results[3] as List).map((e) => e.toString()).toList();
       _isLoadingMeta = false;
     });
   }
@@ -82,6 +86,7 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
       popOfficeId: _selectedPopId,
       assignedTo: _selectedAssigneeId,
       dueAt: _dueAt,
+      area: _selectedArea,
     );
 
     if (!mounted) return;
@@ -308,6 +313,20 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
                     ),
                     const SizedBox(height: 10),
                     _sectionCard(
+                      icon: Icons.place_rounded,
+                      iconColor: AppColors.danger,
+                      title: AppState.instance.t('Area (Optional)', 'এলাকা (ঐচ্ছিক)'),
+                      subtitle: _selectedArea ?? AppState.instance.t('Select or add new area', 'এলাকা নির্বাচন বা যোগ করুন'),
+                      trailing: _selectedArea == null
+                          ? null
+                          : IconButton(
+                              icon: Icon(Icons.close_rounded, size: 18, color: AppColors.textMuted),
+                              onPressed: () => setState(() => _selectedArea = null),
+                            ),
+                      onTap: _showAreaPicker,
+                    ),
+                    const SizedBox(height: 10),
+                    _sectionCard(
                       icon: Icons.event_rounded,
                       iconColor: AppColors.warning,
                       title: AppState.instance.t('Due Date (Optional)', 'শেষ তারিখ (ঐচ্ছিক)'),
@@ -504,6 +523,122 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
           ),
         );
       }).toList(),
+    );
+  }
+
+  Future<void> _showAreaPicker() async {
+    String search = '';
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setLocal) {
+          final filtered = search.isEmpty
+              ? _areas
+              : _areas.where((a) => a.toLowerCase().contains(search.toLowerCase())).toList();
+          final showAddNew = search.trim().isNotEmpty &&
+              !_areas.any((a) => a.toLowerCase() == search.trim().toLowerCase());
+          return DraggableScrollableSheet(
+            initialChildSize: 0.7,
+            maxChildSize: 0.9,
+            minChildSize: 0.4,
+            expand: false,
+            builder: (_, sc) => Container(
+              decoration: BoxDecoration(
+                color: AppColors.card,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
+              ),
+              padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.md, AppSpacing.lg, 0),
+              child: Column(
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40, height: 4,
+                      decoration: BoxDecoration(
+                        color: AppColors.border,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  Row(
+                    children: [
+                      const Icon(Icons.place_rounded, color: AppColors.primary),
+                      const SizedBox(width: 10),
+                      Text(AppState.instance.t('Select Area', 'এলাকা নির্বাচন'), style: AppText.h2),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  TextField(
+                    autofocus: true,
+                    decoration: InputDecoration(
+                      hintText: AppState.instance.t('Type area name (e.g. Shadhupara)', 'এলাকার নাম লিখুন'),
+                      prefixIcon: const Icon(Icons.search_rounded, size: 20),
+                    ),
+                    onChanged: (v) => setLocal(() => search = v),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  if (showAddNew)
+                    Material(
+                      color: AppColors.accent.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        onTap: () {
+                          final v = search.trim();
+                          setState(() {
+                            _selectedArea = v;
+                            if (!_areas.contains(v)) _areas.insert(0, v);
+                          });
+                          Navigator.pop(ctx);
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.all(AppSpacing.md),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.add_circle_rounded, color: AppColors.accent),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  '${AppState.instance.t('Add new area', 'নতুন এলাকা যোগ')}: "$search"',
+                                  style: AppText.body.copyWith(color: AppColors.accent, fontWeight: FontWeight.w600),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  const SizedBox(height: AppSpacing.sm),
+                  Expanded(
+                    child: filtered.isEmpty && !showAddNew
+                        ? Center(
+                            child: Text(AppState.instance.t('No areas yet — type to add', 'কোনো এলাকা নেই — লিখে যোগ করুন'), style: AppText.bodySm),
+                          )
+                        : ListView.separated(
+                            controller: sc,
+                            itemCount: filtered.length,
+                            separatorBuilder: (_, __) => const Divider(height: 1),
+                            itemBuilder: (_, i) {
+                              final a = filtered[i];
+                              return ListTile(
+                                leading: const Icon(Icons.place_outlined, color: AppColors.textMuted),
+                                title: Text(a, style: AppText.body),
+                                onTap: () {
+                                  setState(() => _selectedArea = a);
+                                  Navigator.pop(ctx);
+                                },
+                              );
+                            },
+                          ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 

@@ -14,6 +14,7 @@ import 'ticket_list_screen.dart';
 import 'roster_screen.dart';
 import 'profile_screen.dart';
 import 'notifications_screen.dart';
+import 'area_assign_screen.dart';
 import '../services/app_state.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -370,12 +371,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _quickActions() {
+    final role = _currentUser?.role.toLowerCase() ?? '';
+    final isSupervisorish = ['supervisor', 'senior_supervisor', 'admin', 'super_admin', 'noc'].contains(role);
     final items = [
-      (Icons.add_circle_rounded, 'New\nTicket', AppColors.accent, _openCreate),
-      (Icons.person_pin_circle_rounded, 'My\nTickets', AppColors.info,
+      (Icons.add_circle_rounded, AppState.instance.t('New\nTicket', 'নতুন\nটিকিট'), AppColors.accent, _openCreate),
+      (Icons.person_pin_circle_rounded, AppState.instance.t('My\nTickets', 'আমার\nটিকিট'), AppColors.info,
           () => _openTickets('my_tickets')),
-      (Icons.groups_2_rounded, 'Team\nRoster', AppColors.success, _openRoster),
-      (Icons.local_fire_department_rounded, 'Urgent\nOnly', AppColors.danger,
+      if (isSupervisorish)
+        (Icons.place_rounded, AppState.instance.t('Area\nAssign', 'এলাকা\nনিয়োগ'), AppColors.success,
+            () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AreaAssignScreen())))
+      else
+        (Icons.groups_2_rounded, AppState.instance.t('Team\nRoster', 'টিম\nরোস্টার'), AppColors.success, _openRoster),
+      (Icons.local_fire_department_rounded, AppState.instance.t('Urgent\nOnly', 'জরুরি\nমাত্র'), AppColors.danger,
           () => _openTickets('urgent')),
     ];
 
