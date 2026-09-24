@@ -36,17 +36,90 @@
                     <span>{{ __('Export Settings JSON') }}</span>
                 </a>
                 @endif
+            </div>
+        </div>
+
+        {{-- 🗂️ Data Management Hub — all master lists in one place --}}
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm p-5">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h2 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <span>🗂️</span> {{ __('Data Management') }}
+                    </h2>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{{ __('Manage master lists used across tickets and users.') }}</p>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                 <a href="{{ route('ticket-categories.index') }}"
-                   class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-indigo-200 dark:border-indigo-800/80 bg-indigo-50/70 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 text-xs font-semibold transition-colors shadow-xs">
-                    <svg class="w-4 h-4 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
-                    </svg>
-                    <span>{{ __('Manage Categories') }} &rarr;</span>
+                   class="group flex items-center gap-3 p-3.5 rounded-xl border border-indigo-200 dark:border-indigo-900/60 bg-indigo-50/60 dark:bg-indigo-950/30 hover:bg-indigo-100 dark:hover:bg-indigo-950/60 transition-colors">
+                    <div class="w-10 h-10 rounded-lg bg-indigo-500 text-white flex items-center justify-center text-lg shrink-0">🏷️</div>
+                    <div class="min-w-0">
+                        <div class="text-sm font-bold text-slate-900 dark:text-white truncate">{{ __('Categories') }}</div>
+                        <div class="text-[11px] text-slate-500 dark:text-slate-400 truncate">{{ \App\Models\TicketCategory::count() }} {{ __('items') }}</div>
+                    </div>
                 </a>
+
                 <a href="{{ route('areas.index') }}"
-                   class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-emerald-200 dark:border-emerald-800/80 bg-emerald-50/70 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 text-xs font-semibold transition-colors shadow-xs">
-                    <span>📍</span>
-                    <span>{{ __('Manage Areas') }} &rarr;</span>
+                   class="group flex items-center gap-3 p-3.5 rounded-xl border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/60 dark:bg-emerald-950/30 hover:bg-emerald-100 dark:hover:bg-emerald-950/60 transition-colors">
+                    <div class="w-10 h-10 rounded-lg bg-emerald-500 text-white flex items-center justify-center text-lg shrink-0">📍</div>
+                    <div class="min-w-0">
+                        <div class="text-sm font-bold text-slate-900 dark:text-white truncate">{{ __('Areas') }}</div>
+                        <div class="text-[11px] text-slate-500 dark:text-slate-400 truncate">{{ \App\Models\Area::count() }} {{ __('items') }}</div>
+                    </div>
+                </a>
+
+                <a href="{{ route('labels.index') }}"
+                   class="group flex items-center gap-3 p-3.5 rounded-xl border border-amber-200 dark:border-amber-900/60 bg-amber-50/60 dark:bg-amber-950/30 hover:bg-amber-100 dark:hover:bg-amber-950/60 transition-colors">
+                    <div class="w-10 h-10 rounded-lg bg-amber-500 text-white flex items-center justify-center text-lg shrink-0">🔖</div>
+                    <div class="min-w-0">
+                        <div class="text-sm font-bold text-slate-900 dark:text-white truncate">{{ __('Labels') }}</div>
+                        <div class="text-[11px] text-slate-500 dark:text-slate-400 truncate">{{ \App\Models\Label::count() }} {{ __('items') }}</div>
+                    </div>
+                </a>
+
+                <a href="{{ route('pop-offices.index') }}"
+                   class="group flex items-center gap-3 p-3.5 rounded-xl border border-sky-200 dark:border-sky-900/60 bg-sky-50/60 dark:bg-sky-950/30 hover:bg-sky-100 dark:hover:bg-sky-950/60 transition-colors">
+                    <div class="w-10 h-10 rounded-lg bg-sky-500 text-white flex items-center justify-center text-lg shrink-0">🏢</div>
+                    <div class="min-w-0">
+                        <div class="text-sm font-bold text-slate-900 dark:text-white truncate">{{ __('POP Offices') }}</div>
+                        <div class="text-[11px] text-slate-500 dark:text-slate-400 truncate">{{ \App\Models\PopOffice::count() }} {{ __('items') }}</div>
+                    </div>
+                </a>
+
+                <a href="{{ route('sla-policies.index') }}"
+                   class="group flex items-center gap-3 p-3.5 rounded-xl border border-rose-200 dark:border-rose-900/60 bg-rose-50/60 dark:bg-rose-950/30 hover:bg-rose-100 dark:hover:bg-rose-950/60 transition-colors">
+                    <div class="w-10 h-10 rounded-lg bg-rose-500 text-white flex items-center justify-center text-lg shrink-0">⏱️</div>
+                    <div class="min-w-0">
+                        <div class="text-sm font-bold text-slate-900 dark:text-white truncate">{{ __('SLA Policies') }}</div>
+                        <div class="text-[11px] text-slate-500 dark:text-slate-400 truncate">{{ \App\Models\SlaPolicy::count() }} {{ __('items') }}</div>
+                    </div>
+                </a>
+
+                <a href="{{ route('kb-categories.index') }}"
+                   class="group flex items-center gap-3 p-3.5 rounded-xl border border-purple-200 dark:border-purple-900/60 bg-purple-50/60 dark:bg-purple-950/30 hover:bg-purple-100 dark:hover:bg-purple-950/60 transition-colors">
+                    <div class="w-10 h-10 rounded-lg bg-purple-500 text-white flex items-center justify-center text-lg shrink-0">📚</div>
+                    <div class="min-w-0">
+                        <div class="text-sm font-bold text-slate-900 dark:text-white truncate">{{ __('KB Categories') }}</div>
+                        <div class="text-[11px] text-slate-500 dark:text-slate-400 truncate">{{ __('Knowledge Base') }}</div>
+                    </div>
+                </a>
+
+                <a href="{{ route('users.index') }}"
+                   class="group flex items-center gap-3 p-3.5 rounded-xl border border-cyan-200 dark:border-cyan-900/60 bg-cyan-50/60 dark:bg-cyan-950/30 hover:bg-cyan-100 dark:hover:bg-cyan-950/60 transition-colors">
+                    <div class="w-10 h-10 rounded-lg bg-cyan-500 text-white flex items-center justify-center text-lg shrink-0">👥</div>
+                    <div class="min-w-0">
+                        <div class="text-sm font-bold text-slate-900 dark:text-white truncate">{{ __('Users & Teams') }}</div>
+                        <div class="text-[11px] text-slate-500 dark:text-slate-400 truncate">{{ \App\Models\User::count() }} {{ __('users') }}</div>
+                    </div>
+                </a>
+
+                <a href="{{ route('canned-responses.index') }}"
+                   class="group flex items-center gap-3 p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors">
+                    <div class="w-10 h-10 rounded-lg bg-slate-500 text-white flex items-center justify-center text-lg shrink-0">💬</div>
+                    <div class="min-w-0">
+                        <div class="text-sm font-bold text-slate-900 dark:text-white truncate">{{ __('Canned Responses') }}</div>
+                        <div class="text-[11px] text-slate-500 dark:text-slate-400 truncate">{{ __('Quick reply templates') }}</div>
+                    </div>
                 </a>
             </div>
         </div>
