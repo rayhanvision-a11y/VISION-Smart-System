@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/ticket.dart';
 import '../services/api_service.dart';
+import '../services/app_state.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common/empty_state.dart';
 import '../widgets/common/skeleton.dart';
@@ -64,6 +65,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   Widget build(BuildContext context) {
     final groups = _groupByDay(_tickets);
     final order = ['Today', 'Yesterday', 'This week', 'Earlier'];
+    String tr(String k) => AppState.instance.isBengali
+        ? {'Today': 'আজ', 'Yesterday': 'গতকাল', 'This week': 'এই সপ্তাহ', 'Earlier': 'পূর্বে'}[k] ?? k
+        : k;
 
     return Scaffold(
       backgroundColor: AppColors.bg,
@@ -72,8 +76,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('Notifications', style: AppText.h2),
-            Text('${_tickets.length} recent updates',
+            Text(AppState.instance.t('Notifications', 'নোটিফিকেশন'), style: AppText.h2),
+            Text(AppState.instance.t('${_tickets.length} recent updates', '${_tickets.length} টি সাম্প্রতিক আপডেট'),
                 style: AppText.label.copyWith(color: AppColors.textMuted)),
           ],
         ),
@@ -92,10 +96,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               itemBuilder: (_, __) => const SkeletonCard(height: 90),
             )
           : _tickets.isEmpty
-              ? const EmptyState(
+              ? EmptyState(
                   icon: Icons.notifications_off_rounded,
-                  title: 'No notifications yet',
-                  subtitle: 'Ticket updates will appear here',
+                  title: AppState.instance.t('No notifications yet', 'কোনো নোটিফিকেশন নেই'),
+                  subtitle: AppState.instance.t('Ticket updates will appear here', 'টিকিট আপডেট এখানে দেখাবে'),
                 )
               : RefreshIndicator(
                   onRefresh: _load,
@@ -109,7 +113,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                             padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
                             child: Row(
                               children: [
-                                Text(label, style: AppText.label),
+                                Text(tr(label), style: AppText.label),
                                 const SizedBox(width: 8),
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 1),

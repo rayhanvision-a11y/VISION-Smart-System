@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/user.dart';
 import '../services/api_service.dart';
 import '../services/storage_service.dart';
+import '../services/app_state.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common/primary_button.dart';
 
@@ -76,7 +77,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.bg,
-      appBar: AppBar(title: const Text('Edit Profile')),
+      appBar: AppBar(title: Text(AppState.instance.t('Edit Profile', 'প্রোফাইল সম্পাদনা'))),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppSpacing.lg),
         child: Form(
@@ -103,18 +104,18 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 ),
               ),
               const SizedBox(height: AppSpacing.lg),
-              Text('Full Name', style: AppText.label),
+              Text(AppState.instance.t('Full Name', 'পুরো নাম'), style: AppText.label),
               const SizedBox(height: 6),
               TextFormField(
                 controller: _nameController,
-                decoration: const InputDecoration(
-                  hintText: 'Your name',
-                  prefixIcon: Icon(Icons.person_outline_rounded, size: 20),
+                decoration: InputDecoration(
+                  hintText: AppState.instance.t('Your name', 'আপনার নাম'),
+                  prefixIcon: const Icon(Icons.person_outline_rounded, size: 20),
                 ),
-                validator: (v) => (v == null || v.trim().isEmpty) ? 'Name is required' : null,
+                validator: (v) => (v == null || v.trim().isEmpty) ? AppState.instance.t('Name is required', 'নাম আবশ্যক') : null,
               ),
               const SizedBox(height: AppSpacing.md),
-              Text('Phone', style: AppText.label),
+              Text(AppState.instance.t('Phone', 'ফোন'), style: AppText.label),
               const SizedBox(height: 6),
               TextFormField(
                 controller: _phoneController,
@@ -126,7 +127,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               ),
               const SizedBox(height: AppSpacing.xl),
               PrimaryButton(
-                label: 'Save Changes',
+                label: AppState.instance.t('Save Changes', 'পরিবর্তন সংরক্ষণ'),
                 icon: Icons.check_rounded,
                 loading: _isLoading,
                 onPressed: _save,

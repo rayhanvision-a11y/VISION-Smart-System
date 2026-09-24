@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import '../services/api_service.dart';
+import '../services/app_state.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common/primary_button.dart';
 
@@ -153,9 +154,9 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
             minChildSize: 0.4,
             expand: false,
             builder: (_, sc) => Container(
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 color: AppColors.card,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
               ),
               padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.md, AppSpacing.lg, 0),
               child: Column(
@@ -233,7 +234,7 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.bg,
-      appBar: AppBar(title: const Text('New Ticket')),
+      appBar: AppBar(title: Text(AppState.instance.t('New Ticket', 'নতুন টিকিট'))),
       body: _isLoadingMeta
           ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
           : SingleChildScrollView(
@@ -246,7 +247,7 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
                     _sectionCard(
                       icon: Icons.category_rounded,
                       iconColor: AppColors.info,
-                      title: 'Category',
+                      title: AppState.instance.t('Category', 'ক্যাটেগরি'),
                       subtitle: categoryLabel,
                       onTap: () => _showCategoryPicker(),
                     ),
@@ -254,8 +255,8 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
                     _sectionCard(
                       icon: Icons.business_rounded,
                       iconColor: AppColors.success,
-                      title: 'POP Office (Optional)',
-                      subtitle: _selectedPopName ?? 'Select POP office',
+                      title: AppState.instance.t('POP Office (Optional)', 'পপ অফিস (ঐচ্ছিক)'),
+                      subtitle: _selectedPopName ?? AppState.instance.t('Select POP office', 'পপ অফিস নির্বাচন করুন'),
                       onTap: _popOffices.isEmpty
                           ? null
                           : () => _showPicker(
@@ -277,8 +278,8 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
                     _sectionCard(
                       icon: Icons.person_add_alt_rounded,
                       iconColor: AppColors.accent,
-                      title: 'Assign to Staff (Optional)',
-                      subtitle: _selectedAssigneeName ?? 'Unassigned',
+                      title: AppState.instance.t('Assign to Staff (Optional)', 'কর্মী নিয়োগ (ঐচ্ছিক)'),
+                      subtitle: _selectedAssigneeName ?? AppState.instance.t('Unassigned', 'অনির্ধারিত'),
                       trailing: _selectedAssigneeName == null
                           ? null
                           : IconButton(
@@ -309,10 +310,10 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
                     _sectionCard(
                       icon: Icons.event_rounded,
                       iconColor: AppColors.warning,
-                      title: 'Due Date (Optional)',
+                      title: AppState.instance.t('Due Date (Optional)', 'শেষ তারিখ (ঐচ্ছিক)'),
                       subtitle: _dueAt != null
                           ? DateFormat('MMM d, y – h:mm a').format(_dueAt!)
-                          : 'No deadline set',
+                          : AppState.instance.t('No deadline set', 'কোনো ডেডলাইন নেই'),
                       trailing: _dueAt == null
                           ? null
                           : IconButton(
@@ -325,9 +326,9 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
                     _sectionCard(
                       icon: Icons.attach_file_rounded,
                       iconColor: const Color(0xFF8B5CF6),
-                      title: 'Attachments (${_attachments.length})',
+                      title: AppState.instance.t('Attachments (${_attachments.length})', 'সংযুক্তি (${_attachments.length})'),
                       subtitle: _attachments.isEmpty
-                          ? 'Add images or files'
+                          ? AppState.instance.t('Add images or files', 'ছবি বা ফাইল যুক্ত করুন')
                           : _attachments.map((a) => a.name).join(', '),
                       onTap: _pickAttachment,
                     ),
@@ -365,38 +366,38 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
                     ],
                     const SizedBox(height: AppSpacing.lg),
 
-                    Text('Priority Level', style: AppText.label),
+                    Text(AppState.instance.t('Priority Level', 'অগ্রাধিকার'), style: AppText.label),
                     const SizedBox(height: 6),
                     _priorityRow(),
                     const SizedBox(height: AppSpacing.lg),
 
-                    Text('Ticket Title', style: AppText.label),
+                    Text(AppState.instance.t('Ticket Title', 'টিকিট শিরোনাম'), style: AppText.label),
                     const SizedBox(height: 6),
                     TextFormField(
                       controller: _titleController,
-                      decoration: const InputDecoration(
-                        hintText: 'Brief summary of the issue',
-                        prefixIcon: Icon(Icons.title_rounded, size: 20),
+                      decoration: InputDecoration(
+                        hintText: AppState.instance.t('Brief summary of the issue', 'সমস্যার সংক্ষিপ্ত বিবরণ'),
+                        prefixIcon: const Icon(Icons.title_rounded, size: 20),
                       ),
-                      validator: (v) => (v == null || v.trim().isEmpty) ? 'Title is required' : null,
+                      validator: (v) => (v == null || v.trim().isEmpty) ? AppState.instance.t('Title is required', 'শিরোনাম আবশ্যক') : null,
                     ),
                     const SizedBox(height: AppSpacing.md),
 
-                    Text('Detailed Description', style: AppText.label),
+                    Text(AppState.instance.t('Detailed Description', 'বিস্তারিত বিবরণ'), style: AppText.label),
                     const SizedBox(height: 6),
                     TextFormField(
                       controller: _descController,
                       maxLines: 5,
                       minLines: 4,
-                      decoration: const InputDecoration(
-                        hintText: 'Provide complete details about the problem…',
+                      decoration: InputDecoration(
+                        hintText: AppState.instance.t('Provide complete details about the problem…', 'সমস্যার সম্পূর্ণ বিবরণ দিন…'),
                       ),
-                      validator: (v) => (v == null || v.trim().isEmpty) ? 'Description is required' : null,
+                      validator: (v) => (v == null || v.trim().isEmpty) ? AppState.instance.t('Description is required', 'বিবরণ আবশ্যক') : null,
                     ),
 
                     const SizedBox(height: AppSpacing.xl),
                     PrimaryButton(
-                      label: 'Create Ticket',
+                      label: AppState.instance.t('Create Ticket', 'টিকিট তৈরি'),
                       icon: Icons.send_rounded,
                       loading: _isLoading,
                       onPressed: _submit,

@@ -270,7 +270,7 @@ ThemeData buildAppTheme() {
         textStyle: AppText.button,
       ),
     ),
-    dividerTheme: const DividerThemeData(
+    dividerTheme: DividerThemeData(
       color: AppColors.divider,
       thickness: 1,
       space: 1,

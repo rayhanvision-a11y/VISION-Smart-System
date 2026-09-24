@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import '../services/app_state.dart';
+import '../theme/app_theme.dart';
 
 class RosterScreen extends StatefulWidget {
   const RosterScreen({Key? key}) : super(key: key);
@@ -83,9 +85,9 @@ class _RosterScreenState extends State<RosterScreen> {
     final filtered = _filteredRoster;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: AppColors.bg,
       appBar: AppBar(
-        title: const Text('Duty Roster & Shifts', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(AppState.instance.t('Duty Roster & Shifts', 'ডিউটি রোস্টার ও শিফট'), style: const TextStyle(fontWeight: FontWeight.bold)),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -103,18 +105,18 @@ class _RosterScreenState extends State<RosterScreen> {
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
                   child: TextField(
                     decoration: InputDecoration(
-                      hintText: 'Search staff by name or role...',
+                      hintText: AppState.instance.t('Search staff by name or role...', 'কর্মী খুঁজুন...'),
                       prefixIcon: const Icon(Icons.search, size: 20),
                       filled: true,
-                      fillColor: Colors.white,
+                      fillColor: AppColors.card,
                       contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                        borderSide: BorderSide(color: AppColors.border),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                        borderSide: BorderSide(color: AppColors.border),
                       ),
                     ),
                     onChanged: (val) => setState(() => _searchQuery = val.trim()),
@@ -172,10 +174,10 @@ class _RosterScreenState extends State<RosterScreen> {
       label: Text(label, style: TextStyle(color: isSelected ? Colors.white : const Color(0xFF334155), fontSize: 12, fontWeight: FontWeight.w600)),
       selected: isSelected,
       selectedColor: const Color(0xFF2563EB),
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.card,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),
-        side: BorderSide(color: isSelected ? const Color(0xFF2563EB) : const Color(0xFFCBD5E1)),
+        side: BorderSide(color: isSelected ? AppColors.primary : AppColors.border),
       ),
       onSelected: (_) => setState(() => _selectedTeam = key),
     );
@@ -207,7 +209,7 @@ class _RosterScreenState extends State<RosterScreen> {
       margin: const EdgeInsets.only(bottom: 10),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: const BorderSide(color: Color(0xFFE2E8F0)),
+        side: BorderSide(color: AppColors.border),
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
@@ -312,9 +314,9 @@ class _RosterScreenState extends State<RosterScreen> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        decoration: BoxDecoration(
+          color: AppColors.card,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         ),
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
         child: SafeArea(

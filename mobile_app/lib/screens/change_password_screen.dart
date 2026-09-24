@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import '../services/app_state.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common/primary_button.dart';
 
@@ -90,7 +91,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.bg,
-      appBar: AppBar(title: const Text('Change Password')),
+      appBar: AppBar(title: Text(AppState.instance.t('Change Password', 'পাসওয়ার্ড পরিবর্তন'))),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppSpacing.lg),
         child: Form(
@@ -99,21 +100,21 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               _pwField(
-                label: 'Current Password',
+                label: AppState.instance.t('Current Password', 'বর্তমান পাসওয়ার্ড'),
                 controller: _currentController,
                 obscure: _obscureCurrent,
                 onToggle: () => setState(() => _obscureCurrent = !_obscureCurrent),
                 validator: (v) => (v == null || v.isEmpty) ? 'Required' : null,
               ),
               _pwField(
-                label: 'New Password (min 8 chars)',
+                label: AppState.instance.t('New Password (min 8 chars)', 'নতুন পাসওয়ার্ড (মিনিমাম ৮)'),
                 controller: _newController,
                 obscure: _obscureNew,
                 onToggle: () => setState(() => _obscureNew = !_obscureNew),
                 validator: (v) => (v == null || v.length < 8) ? 'Min 8 characters' : null,
               ),
               _pwField(
-                label: 'Confirm New Password',
+                label: AppState.instance.t('Confirm New Password', 'পাসওয়ার্ড নিশ্চিত করুন'),
                 controller: _confirmController,
                 obscure: _obscureConfirm,
                 onToggle: () => setState(() => _obscureConfirm = !_obscureConfirm),
@@ -121,7 +122,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
               ),
               const SizedBox(height: AppSpacing.lg),
               PrimaryButton(
-                label: 'Update Password',
+                label: AppState.instance.t('Update Password', 'পাসওয়ার্ড আপডেট'),
                 icon: Icons.check_rounded,
                 loading: _isLoading,
                 onPressed: _submit,
