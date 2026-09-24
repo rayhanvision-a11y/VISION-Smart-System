@@ -29,6 +29,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   bool _isLoading = true;
   UserModel? _currentUser;
   Map<String, dynamic>? _dashboardData;
+  bool _showRecent = true;
+  bool _showDuty = true;
 
   @override
   void initState() {
@@ -155,20 +157,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ],
                   const SizedBox(height: AppSpacing.sm),
                   _promoCard(),
-                  SectionHeader(
+                  _toggleHeader(
                     title: AppState.instance.t('Recent Tickets', 'সাম্প্রতিক টিকিট'),
-                    actionLabel: AppState.instance.t('See all', 'সব দেখুন'),
-                    onAction: () => _openTickets(null),
+                    expanded: _showRecent,
+                    onTap: () => setState(() => _showRecent = !_showRecent),
+                    trailingLabel: '${recentTickets.length}',
                   ),
-                  _isLoading
-                      ? Column(children: const [SkeletonCard(), SizedBox(height: 10), SkeletonCard()])
-                      : _recentList(recentTickets),
-                  SectionHeader(
+                  if (_showRecent)
+                    _isLoading
+                        ? Column(children: const [SkeletonCard(), SizedBox(height: 10), SkeletonCard()])
+                        : _recentList(recentTickets),
+                  _toggleHeader(
                     title: AppState.instance.t('On Duty Today', 'আজকের ডিউটি'),
-                    actionLabel: AppState.instance.t('View team', 'টিম দেখুন'),
-                    onAction: _openRoster,
+                    expanded: _showDuty,
+                    onTap: () => setState(() => _showDuty = !_showDuty),
+                    trailingLabel: '${dutyTeams.length}',
                   ),
-                  _dutyCard(dutyTeams),
+                  if (_showDuty) _dutyCard(dutyTeams),
                   const SizedBox(height: 80),
                 ]),
               ),
@@ -210,6 +215,49 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _toggleHeader({
+    required String title,
+    required bool expanded,
+    required VoidCallback onTap,
+    String? trailingLabel,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.md, bottom: AppSpacing.sm),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: Row(
+              children: [
+                Text(title, style: AppText.h3),
+                const SizedBox(width: 8),
+                if (trailingLabel != null)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                    ),
+                    child: Text(trailingLabel,
+                        style: AppText.label.copyWith(color: AppColors.primary)),
+                  ),
+                const Spacer(),
+                AnimatedRotation(
+                  turns: expanded ? 0.5 : 0,
+                  duration: const Duration(milliseconds: 200),
+                  child: const Icon(Icons.expand_more_rounded, color: AppColors.textMuted),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

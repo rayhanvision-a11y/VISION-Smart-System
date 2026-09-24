@@ -34,6 +34,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Team Roster & Duty Shifts
     Route::get('/roster', [ApiRosterController::class, 'index']);
+    Route::post('/user/shift', [ApiRosterController::class, 'updateOwnShift']);
 
     // User Directory (Admins / Super Admins)
     Route::get('/users', [ApiUserController::class, 'index']);

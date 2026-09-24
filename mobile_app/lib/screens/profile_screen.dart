@@ -132,6 +132,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, AppSpacing.xxl),
                   sliver: SliverList(
                     delegate: SliverChildListDelegate([
+                      _dutyCard(),
+                      const SizedBox(height: AppSpacing.md),
                       _menuSection(AppState.instance.t('Account', 'অ্যাকাউন্ট'), [
                         _menuItem(
                           Icons.person_outline_rounded,
@@ -394,6 +396,110 @@ class _ProfileScreenState extends State<ProfileScreen> {
         alignment: Alignment.center,
         child: Text(s, style: AppText.displayLg.copyWith(color: Colors.white, fontSize: 40)),
       );
+
+  String? _currentShift;
+  bool _isShiftLoading = false;
+
+  Future<void> _setShift(String shift) async {
+    setState(() => _isShiftLoading = true);
+    final res = await ApiService.updateOwnShift(shift);
+    if (!mounted) return;
+    setState(() {
+      _isShiftLoading = false;
+      if (res['success'] == true) {
+        _currentShift = res['current_shift']?.toString();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${AppState.instance.t('Duty updated:', 'ডিউটি:')} ${_shiftLabel(_currentShift)}'),
+            backgroundColor: AppColors.success,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    });
+  }
+
+  String _shiftLabel(String? s) {
+    switch (s) {
+      case 'day_shift': return AppState.instance.t('Day Shift', 'ডে শিফট');
+      case 'night_shift': return AppState.instance.t('Night Shift', 'নাইট শিফট');
+      case 'day_off': return AppState.instance.t('Day Off', 'ছুটি');
+      default: return AppState.instance.t('Unassigned', 'নির্ধারিত না');
+    }
+  }
+
+  Widget _dutyCard() {
+    final options = [
+      ('day_shift', '☀️', AppState.instance.t('Day', 'দিন'), AppColors.warning),
+      ('night_shift', '🌙', AppState.instance.t('Night', 'রাত'), AppColors.info),
+      ('day_off', '🏖️', AppState.instance.t('Off', 'ছুটি'), AppColors.textMuted),
+    ];
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.schedule_rounded, color: AppColors.primary, size: 18),
+              const SizedBox(width: 8),
+              Text(AppState.instance.t('My Duty Shift', 'আমার ডিউটি'),
+                  style: AppText.body.copyWith(fontWeight: FontWeight.w700)),
+              const Spacer(),
+              if (_isShiftLoading)
+                const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
+              else
+                Text(_shiftLabel(_currentShift),
+                    style: AppText.caption.copyWith(color: AppColors.primary, fontWeight: FontWeight.w600)),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Row(
+            children: options.map((o) {
+              final selected = _currentShift == o.$1;
+              return Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 3),
+                  child: Material(
+                    color: selected ? o.$4 : AppColors.bg,
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                      onTap: _isShiftLoading ? null : () => _setShift(o.$1),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(AppRadius.md),
+                          border: Border.all(color: selected ? o.$4 : AppColors.border),
+                        ),
+                        child: Column(
+                          children: [
+                            Text(o.$2, style: const TextStyle(fontSize: 18)),
+                            const SizedBox(height: 2),
+                            Text(o.$3,
+                                style: AppText.label.copyWith(
+                                  color: selected ? Colors.white : AppColors.textSecondary,
+                                  fontSize: 10,
+                                )),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _menuSection(String title, List<Widget> items) {
     return Column(

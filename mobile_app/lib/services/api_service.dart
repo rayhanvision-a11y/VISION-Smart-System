@@ -243,6 +243,22 @@ class ApiService {
     }
   }
 
+  // 3e. Update own shift/duty
+  static Future<Map<String, dynamic>> updateOwnShift(String shift) async {
+    try {
+      final uri = await _buildUri('/user/shift');
+      final response = await http.post(uri, headers: await _headers(), body: jsonEncode({'shift': shift}));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return {'success': true, 'current_shift': data['current_shift'], 'is_on_duty': data['is_on_duty']};
+      }
+      final data = jsonDecode(response.body);
+      return {'success': false, 'message': data['message'] ?? 'Failed'};
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
   // 3c. Update user profile (name/phone)
   static Future<Map<String, dynamic>> updateProfile({required String name, String? phone}) async {
     try {

@@ -158,7 +158,9 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> with SingleTick
   }
 
   Future<void> _showStatusDialog() async {
-    final statuses = ['in_progress', 'pending', 'waiting_for_customer_feedback', 'resolved'];
+    final statuses = _isTechnician
+        ? ['pending', 'resolved']
+        : ['in_progress', 'pending', 'waiting_for_customer_feedback', 'resolved'];
 
     final selected = await showModalBottomSheet<String>(
       context: context,
