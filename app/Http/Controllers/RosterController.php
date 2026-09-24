@@ -22,6 +22,10 @@ class RosterController extends Controller
             $query->where('team', $selectedTeam);
         }
 
+        if ($request->filled('role')) {
+            $query->where('role', $request->role);
+        }
+
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
@@ -78,7 +82,10 @@ class RosterController extends Controller
             ],
         ];
 
-        $teams = User::TEAMS;
+        // Pull teams from managed Team master list if available, else fall back to hardcoded
+        $teams = \Schema::hasTable('teams')
+            ? \App\Models\Team::where('is_active', true)->orderBy('name')->pluck('name', 'name')->toArray()
+            : User::TEAMS;
 
         return view('roster.index', compact('grouped', 'shifts', 'teams', 'selectedTeam', 'search', 'allUsers'));
     }
