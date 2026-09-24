@@ -43,6 +43,11 @@
                     </svg>
                     <span>{{ __('Manage Categories') }} &rarr;</span>
                 </a>
+                <a href="{{ route('areas.index') }}"
+                   class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-emerald-200 dark:border-emerald-800/80 bg-emerald-50/70 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 text-xs font-semibold transition-colors shadow-xs">
+                    <span>📍</span>
+                    <span>{{ __('Manage Areas') }} &rarr;</span>
+                </a>
             </div>
         </div>
 

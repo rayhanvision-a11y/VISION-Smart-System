@@ -342,18 +342,19 @@ class ApiTicketController extends Controller
     public function areas(Request $request): JsonResponse
     {
         $search = $request->input('search');
-        $query = Ticket::query()
-            ->whereNotNull('area')
-            ->where('area', '!=', '');
+        $master = \App\Models\Area::query()->where('is_active', true);
         if ($search) {
-            $query->where('area', 'like', '%'.$search.'%');
+            $master->where('name', 'like', '%'.$search.'%');
         }
-        $areas = $query->distinct()
-            ->orderBy('area')
-            ->limit(50)
-            ->pluck('area');
+        $names = $master->orderBy('name')->pluck('name')->all();
 
-        return response()->json(['areas' => $areas]);
+        // Also include legacy free-text areas from tickets not yet in master list
+        $legacy = Ticket::whereNotNull('area')->where('area', '!=', '')
+            ->when($search, fn ($q) => $q->where('area', 'like', '%'.$search.'%'))
+            ->distinct()->orderBy('area')->pluck('area')->all();
+        $merged = collect(array_unique(array_merge($names, $legacy)))->values();
+
+        return response()->json(['areas' => $merged]);
     }
 
     /**

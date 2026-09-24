@@ -53,7 +53,7 @@
                            placeholder="{{ __('e.g. Shadhupara, Gopalpur') }}"
                            class="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3.5 py-2.5 text-sm text-slate-700 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 bg-slate-50 dark:bg-slate-800">
                     <datalist id="area-suggestions-edit">
-                        @foreach(\App\Models\Ticket::whereNotNull('area')->where('area','!=','')->distinct()->orderBy('area')->limit(200)->pluck('area') as $areaOption)
+                        @foreach(\App\Models\Area::where('is_active', true)->orderBy('name')->pluck('name') as $areaOption)
                             <option value="{{ $areaOption }}"></option>
                         @endforeach
                     </datalist>

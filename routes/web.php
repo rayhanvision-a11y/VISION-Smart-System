@@ -17,6 +17,7 @@ use App\Http\Controllers\RosterController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\SlaPolicyController;
+use App\Http\Controllers\AreaController;
 use App\Http\Controllers\TicketAttachmentController;
 use App\Http\Controllers\TicketCategoryController;
 use App\Http\Controllers\TicketController;
@@ -326,6 +327,7 @@ Route::middleware(['auth'])->group(function () {
 
     Route::resource('labels', LabelController::class)->only(['index', 'store', 'destroy']);
     Route::resource('ticket-categories', TicketCategoryController::class)->only(['index', 'store', 'update', 'destroy']);
+    Route::resource('areas', AreaController::class)->only(['index', 'store', 'update', 'destroy']);
 
     Route::get('/search', [SearchController::class, 'index'])->name('search');
 
