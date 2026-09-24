@@ -5,8 +5,8 @@ import 'package:flutter/material.dart';
 import 'config/app_config.dart';
 import 'theme/app_theme.dart';
 import 'screens/splash_screen.dart';
-import 'services/api_service.dart';
 import 'services/app_state.dart';
+import 'services/push_service.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -30,12 +30,7 @@ void main() async {
     } else {
       await Firebase.initializeApp();
       FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-      final messaging = FirebaseMessaging.instance;
-      await messaging.requestPermission(alert: true, badge: true, sound: true);
-      final fcmToken = await messaging.getToken();
-      if (fcmToken != null) {
-        await ApiService.updateFcmToken(fcmToken);
-      }
+      await PushService.instance.init();
     }
   } catch (e) {
     debugPrint('Firebase safe fallback note: $e');
@@ -58,6 +53,7 @@ class VisionSmartApp extends StatelessWidget {
         darkTheme: buildDarkTheme(),
         themeMode: AppState.instance.themeMode,
         locale: AppState.instance.locale,
+        navigatorKey: PushService.navigatorKey,
         home: const SplashScreen(),
       ),
     );
