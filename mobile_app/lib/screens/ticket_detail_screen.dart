@@ -459,7 +459,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> with SingleTick
                   _ticket.title,
                   style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
                 ),
-                if (_ticket.description.isNotEmpty) ...[
+                if (_ticket.plainDescription.isNotEmpty) ...[
                   const SizedBox(height: 8),
                   Container(
                     width: double.infinity,
@@ -470,7 +470,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> with SingleTick
                       border: Border.all(color: const Color(0xFFE2E8F0)),
                     ),
                     child: Text(
-                      _ticket.description,
+                      _ticket.plainDescription,
                       style: const TextStyle(fontSize: 13, color: Color(0xFF334155), height: 1.4),
                     ),
                   ),

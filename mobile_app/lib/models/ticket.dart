@@ -34,6 +34,20 @@ class TicketModel {
   int? get assignedToId => assignedTo;
   int? get userId => createdBy;
 
+  String get plainDescription {
+    var s = description;
+    s = s.replaceAll(RegExp(r'<br\s*/?>', caseSensitive: false), '\n');
+    s = s.replaceAll(RegExp(r'</p>', caseSensitive: false), '\n');
+    s = s.replaceAll(RegExp(r'<[^>]+>'), '');
+    s = s.replaceAll('&nbsp;', ' ')
+        .replaceAll('&amp;', '&')
+        .replaceAll('&lt;', '<')
+        .replaceAll('&gt;', '>')
+        .replaceAll('&quot;', '"')
+        .replaceAll('&#39;', "'");
+    return s.trim();
+  }
+
   factory TicketModel.fromJson(Map<dynamic, dynamic> json) {
     int? parseId(dynamic val) {
       if (val == null) return null;
