@@ -252,7 +252,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 AnimatedRotation(
                   turns: expanded ? 0.5 : 0,
                   duration: const Duration(milliseconds: 200),
-                  child: const Icon(Icons.expand_more_rounded, color: AppColors.textMuted),
+                  child: Icon(Icons.expand_more_rounded, color: AppColors.textMuted),
                 ),
               ],
             ),
