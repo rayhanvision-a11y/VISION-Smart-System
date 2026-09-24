@@ -1,5 +1,6 @@
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import '../models/ticket.dart';
 import '../models/ticket_message.dart';
 import '../models/user.dart';
@@ -107,6 +108,55 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> with SingleTick
     final ok = await ApiService.toggleReaction(_ticket.id, msg.id, emoji);
     if (ok) {
       await _fetchTicketDetails();
+    }
+  }
+
+  Future<void> _attachImageToMessage() async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(source: ImageSource.gallery, imageQuality: 85, maxWidth: 1600);
+    if (picked == null || !mounted) return;
+
+    setState(() => _isSending = true);
+    final bytes = await picked.readAsBytes();
+
+    final upload = await ApiService.uploadTicketAttachment(
+      ticketId: _ticket.id,
+      bytes: bytes,
+      filename: picked.name,
+    );
+    if (!mounted) {
+      setState(() => _isSending = false);
+      return;
+    }
+
+    if (upload['success'] == true) {
+      final url = upload['data']?['attachment']?['url']?.toString();
+      final fname = upload['data']?['attachment']?['file_name']?.toString() ?? picked.name;
+      // Post a message linking to the uploaded image so it appears in chat
+      final caption = _messageController.text.trim();
+      final body = url != null
+          ? (caption.isEmpty ? '📎 $fname\n$url' : '$caption\n\n📎 $fname\n$url')
+          : (caption.isEmpty ? '📎 Attached: $fname' : caption);
+      _messageController.clear();
+      final res = await ApiService.addMessage(
+        _ticket.id,
+        body,
+        isPrivate: _isPrivateReply,
+      );
+      if (!mounted) return;
+      setState(() => _isSending = false);
+      if (res['success'] == true) {
+        await _fetchTicketDetails();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(res['error']?.toString() ?? 'Failed to post message'), backgroundColor: AppColors.danger),
+        );
+      }
+    } else {
+      setState(() => _isSending = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(upload['message']?.toString() ?? 'Upload failed'), backgroundColor: AppColors.danger),
+      );
     }
   }
 
@@ -676,6 +726,12 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> with SingleTick
                     ),
                   Row(
                     children: [
+                      IconButton(
+                        onPressed: _isSending ? null : _attachImageToMessage,
+                        tooltip: 'Attach image',
+                        icon: Icon(Icons.image_outlined,
+                            color: _isSending ? AppColors.textMuted : AppColors.primary),
+                      ),
                       Expanded(
                         child: TextField(
                           controller: _messageController,

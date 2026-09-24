@@ -16,6 +16,73 @@ class MessageBubble extends StatelessWidget {
     this.onReact,
   }) : super(key: key);
 
+  static final _imageUrlRegex = RegExp(
+    r'https?:\/\/[^\s]+?\.(?:jpg|jpeg|png|gif|webp)(?:\?[^\s]*)?',
+    caseSensitive: false,
+  );
+
+  Widget _buildContent(bool isMe) {
+    final text = message.plainMessage;
+    final matches = _imageUrlRegex.allMatches(text).toList();
+    final textColor = isMe
+        ? Colors.white
+        : (message.isPrivate ? const Color(0xFF78350F) : const Color(0xFF0F172A));
+
+    if (matches.isEmpty) {
+      return Text(text, style: TextStyle(color: textColor, fontSize: 14, height: 1.4));
+    }
+
+    final imageUrls = matches.map((m) => m.group(0)!).toList();
+    // Remove image URLs from displayed text
+    var textOnly = text;
+    for (final u in imageUrls) {
+      textOnly = textOnly.replaceAll(u, '');
+    }
+    textOnly = textOnly.replaceAll(RegExp(r'\n{3,}'), '\n\n').trim();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (textOnly.isNotEmpty) ...[
+          Text(textOnly, style: TextStyle(color: textColor, fontSize: 14, height: 1.4)),
+          const SizedBox(height: 6),
+        ],
+        for (final url in imageUrls)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: Image.network(
+                url,
+                fit: BoxFit.cover,
+                width: 220,
+                loadingBuilder: (_, child, progress) => progress == null
+                    ? child
+                    : Container(
+                        width: 220, height: 140,
+                        color: Colors.black.withOpacity(0.08),
+                        alignment: Alignment.center,
+                        child: const CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                errorBuilder: (_, __, ___) => Container(
+                  width: 220, padding: const EdgeInsets.all(10),
+                  color: Colors.black.withOpacity(0.05),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.broken_image_outlined, size: 16),
+                      const SizedBox(width: 6),
+                      Flexible(child: Text(url, style: const TextStyle(fontSize: 10), maxLines: 1, overflow: TextOverflow.ellipsis)),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
   String _stripHtml(String s) {
     var t = s.replaceAll(RegExp(r'<[^>]+>'), '');
     return t.replaceAll('&nbsp;', ' ').replaceAll('&amp;', '&').trim();
@@ -202,19 +269,10 @@ class MessageBubble extends StatelessWidget {
                           ),
                         ),
 
-                      // Text Content
+                      // Text + inline image if URL detected
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                        child: Text(
-                          message.plainMessage,
-                          style: TextStyle(
-                            color: isMe
-                                ? Colors.white
-                                : (message.isPrivate ? const Color(0xFF78350F) : const Color(0xFF0F172A)),
-                            fontSize: 14,
-                            height: 1.4,
-                          ),
-                        ),
+                        child: _buildContent(isMe),
                       ),
                     ],
                   ),
