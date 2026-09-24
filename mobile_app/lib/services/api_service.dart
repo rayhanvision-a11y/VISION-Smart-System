@@ -109,6 +109,70 @@ class ApiService {
     return [];
   }
 
+  // 2b. Fetch single ticket details & comments from Laravel API
+  static Future<Map<String, dynamic>?> getTicketDetails(int ticketId) async {
+    try {
+      final uri = await _buildUri('/tickets/$ticketId');
+      final response = await http.get(uri, headers: await _headers());
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        Map? ticketJson;
+        if (data is Map && data['ticket'] is Map) {
+          ticketJson = data['ticket'] as Map;
+        } else if (data is Map) {
+          ticketJson = data;
+        }
+        if (ticketJson != null) {
+          TicketModel? ticket;
+          try {
+            ticket = TicketModel.fromJson(Map<String, dynamic>.from(ticketJson));
+          } catch (e) {
+            debugPrint('TicketModel parse error on details: $e');
+          }
+          final List<TicketMessageModel> messages = [];
+          final rawMsgs = ticketJson['messages'];
+          if (rawMsgs is List) {
+            for (var m in rawMsgs) {
+              if (m is Map) {
+                try {
+                  messages.add(TicketMessageModel.fromJson(Map<String, dynamic>.from(m)));
+                } catch (e) {
+                  debugPrint('TicketMessage parse error: $e');
+                }
+              }
+            }
+          }
+          debugPrint('getTicketDetails: parsed ${messages.length} messages for ticket $ticketId');
+          return {'ticket': ticket, 'messages': messages};
+        }
+      } else {
+        debugPrint('getTicketDetails HTTP ${response.statusCode}: ${response.body}');
+      }
+    } catch (e) {
+      debugPrint('getTicketDetails exception: $e');
+    }
+    return null;
+  }
+
+  // 2c. Refresh currently authenticated user (keeps role/preferences in sync)
+  static Future<UserModel?> refreshCurrentUser() async {
+    try {
+      final uri = await _buildUri('/user');
+      final response = await http.get(uri, headers: await _headers());
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data is Map<String, dynamic>) {
+          final user = UserModel.fromJson(data);
+          await StorageService.saveUser(user);
+          return user;
+        }
+      }
+    } catch (e) {
+      debugPrint('refreshCurrentUser exception: $e');
+    }
+    return null;
+  }
+
   // 3. Create Ticket
   static Future<Map<String, dynamic>> createTicket({
     required String title,
@@ -155,7 +219,7 @@ class ApiService {
   }
 
   // 5. Add Message / Reply
-  static Future<Map<String, dynamic>> addMessage(int ticketId, String message, {bool isPrivate = false}) async {
+  static Future<Map<String, dynamic>> addMessage(int ticketId, String message, {bool isPrivate = false, int? replyToId}) async {
     try {
       final uri = await _buildUri('/tickets/$ticketId/messages');
       final response = await http.post(
@@ -164,6 +228,7 @@ class ApiService {
         body: jsonEncode({
           'message': message,
           'is_private': isPrivate,
+          if (replyToId != null) 'reply_to_id': replyToId,
         }),
       );
 
@@ -182,6 +247,21 @@ class ApiService {
       return {'success': false, 'error': errMsg};
     } catch (e) {
       return {'success': false, 'error': 'Network error: $e'};
+    }
+  }
+
+  // 5b. Toggle Emoji Reaction on a Comment
+  static Future<bool> toggleReaction(int ticketId, int messageId, String emoji) async {
+    try {
+      final uri = await _buildUri('/tickets/$ticketId/messages/$messageId/react');
+      final response = await http.post(
+        uri,
+        headers: await _headers(),
+        body: jsonEncode({'emoji': emoji}),
+      );
+      return response.statusCode == 200;
+    } catch (_) {
+      return false;
     }
   }
 

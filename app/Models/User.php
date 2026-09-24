@@ -165,26 +165,28 @@ class User extends Authenticatable
 
     public function avatarUrl(): string
     {
-        if ($this->avatar) {
-            if (str_starts_with($this->avatar, 'http://') || str_starts_with($this->avatar, 'https://')) {
-                return $this->avatar;
+        $avatar = $this->attributes['avatar'] ?? null;
+        if ($avatar) {
+            if (str_starts_with($avatar, 'http://') || str_starts_with($avatar, 'https://')) {
+                return $avatar;
             }
-            if (file_exists(public_path('storage/'.$this->avatar))) {
-                return asset('storage/'.$this->avatar);
+            if (file_exists(public_path('storage/'.$avatar))) {
+                return asset('storage/'.$avatar);
             }
-            if (file_exists(public_path($this->avatar))) {
-                return asset($this->avatar);
+            if (file_exists(public_path($avatar))) {
+                return asset($avatar);
             }
         }
 
-        $name = $this->name ?: 'User';
+        $name = $this->attributes['name'] ?? 'User';
         $bgColors = ['f97316', 'ec4899', '6366f1', '8b5cf6', '10b981', '06b6d4', '3b82f6', 'f59e0b', 'ef4444'];
         $colorIndex = abs(crc32($name)) % count($bgColors);
         $bgHex = $bgColors[$colorIndex];
         $uiAvatarUrl = 'https://ui-avatars.com/api/'.urlencode($name)."/128/{$bgHex}/ffffff?bold=true";
 
-        if ($this->email) {
-            $hash = md5(strtolower(trim($this->email)));
+        $email = $this->attributes['email'] ?? null;
+        if ($email) {
+            $hash = md5(strtolower(trim($email)));
             $encodedDefault = urlencode($uiAvatarUrl);
 
             return "https://www.gravatar.com/avatar/{$hash}?s=128&d={$encodedDefault}";

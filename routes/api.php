@@ -48,4 +48,5 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/tickets/{ticket}/priority', [ApiTicketController::class, 'updatePriority']);
     Route::post('/tickets/{ticket}/assign', [ApiTicketController::class, 'assign']);
     Route::post('/tickets/{ticket}/messages', [ApiTicketController::class, 'addMessage']);
+    Route::post('/tickets/{ticket}/messages/{message}/react', [ApiTicketController::class, 'toggleReaction']);
 });

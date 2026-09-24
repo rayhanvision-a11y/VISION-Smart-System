@@ -25,9 +25,31 @@ class _RosterScreenState extends State<RosterScreen> {
     setState(() => _isLoading = true);
     final data = await ApiService.getRoster();
     if (mounted) {
+      final rosterList = data?['roster'] as List? ?? [];
+      final List<dynamic> allMembers = [];
+      final Map<String, dynamic> teams = {};
+
+      for (var teamItem in rosterList) {
+        if (teamItem is Map) {
+          final tKey = (teamItem['team_key'] ?? '').toString();
+          final tLabel = (teamItem['team_label'] ?? tKey).toString();
+          if (tKey.isNotEmpty) {
+            teams[tKey] = tLabel;
+          }
+          final members = teamItem['members'] as List? ?? [];
+          for (var m in members) {
+            if (m is Map) {
+              final memberMap = Map<String, dynamic>.from(m);
+              memberMap['team_name'] = tLabel;
+              allMembers.add(memberMap);
+            }
+          }
+        }
+      }
+
       setState(() {
-        _allRoster = data?['roster'] as List? ?? [];
-        _teamsMap = data?['teams'] as Map<String, dynamic>? ?? {};
+        _allRoster = allMembers;
+        _teamsMap = teams;
         _isLoading = false;
       });
     }
@@ -35,14 +57,19 @@ class _RosterScreenState extends State<RosterScreen> {
 
   List<dynamic> get _filteredRoster {
     return _allRoster.where((member) {
-      if (_selectedTeam != 'all' && member['team'] != _selectedTeam) {
-        return false;
+      if (_selectedTeam != 'all') {
+        final memberTeamKey = (member['team'] ?? '').toString();
+        final memberTeamLabel = (member['team_name'] ?? '').toString();
+        final selectedLabel = (_teamsMap[_selectedTeam] ?? '').toString();
+        if (memberTeamKey != _selectedTeam && memberTeamLabel != selectedLabel) {
+          return false;
+        }
       }
       if (_searchQuery.isNotEmpty) {
         final q = _searchQuery.toLowerCase();
         final name = (member['name'] ?? '').toString().toLowerCase();
         final role = (member['role'] ?? '').toString().toLowerCase();
-        final team = (member['team'] ?? '').toString().toLowerCase();
+        final team = (member['team_name'] ?? member['team'] ?? '').toString().toLowerCase();
         if (!name.contains(q) && !role.contains(q) && !team.contains(q)) {
           return false;
         }

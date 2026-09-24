@@ -14,7 +14,8 @@ import 'login_screen.dart';
 import 'ticket_detail_screen.dart';
 
 class TicketListScreen extends StatefulWidget {
-  const TicketListScreen({Key? key}) : super(key: key);
+  final String? initialStatus;
+  const TicketListScreen({Key? key, this.initialStatus}) : super(key: key);
 
   @override
   State<TicketListScreen> createState() => _TicketListScreenState();
@@ -24,12 +25,13 @@ class _TicketListScreenState extends State<TicketListScreen> {
   UserModel? _currentUser;
   List<TicketModel> _tickets = [];
   bool _isLoading = true;
-  String _selectedFilter = 'all';
+  late String _selectedFilter;
   StreamSubscription<DatabaseEvent>? _firebaseSub;
 
   @override
   void initState() {
     super.initState();
+    _selectedFilter = widget.initialStatus ?? 'all';
     _loadUserAndTickets();
     _listenToFirebaseRealtime();
   }
@@ -48,11 +50,19 @@ class _TicketListScreenState extends State<TicketListScreen> {
 
   Future<void> _refreshTickets() async {
     final list = await ApiService.fetchTickets(
-      status: _selectedFilter == 'all' ? null : _selectedFilter,
+      status: (_selectedFilter == 'all' || _selectedFilter == 'my_tickets') ? null : _selectedFilter,
     );
     if (!mounted) return;
+
+    List<TicketModel> filteredList = list;
+    if (_selectedFilter == 'my_tickets' && _currentUser != null) {
+      filteredList = list.where((t) {
+        return t.assignedTo == _currentUser!.id || t.createdBy == _currentUser!.id;
+      }).toList();
+    }
+
     setState(() {
-      _tickets = list;
+      _tickets = filteredList;
       _isLoading = false;
     });
   }
@@ -138,6 +148,7 @@ class _TicketListScreenState extends State<TicketListScreen> {
               child: Row(
                 children: [
                   _filterChip('all', 'All'),
+                  _filterChip('my_tickets', 'My Tickets 👤'),
                   _filterChip('in_progress', 'In Progress'),
                   _filterChip('pending', 'Pending'),
                   _filterChip('waiting_for_customer_feedback', 'Waiting'),
@@ -182,6 +193,7 @@ class _TicketListScreenState extends State<TicketListScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'ticket_list_fab_new_ticket',
         backgroundColor: AppConfig.primaryColor,
         icon: const Icon(Icons.add_rounded, color: Colors.white),
         label: const Text('New Ticket', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
@@ -227,10 +239,10 @@ class _TicketListScreenState extends State<TicketListScreen> {
   Widget _buildTicketCard(TicketModel ticket) {
     return Material(
       color: Colors.white,
-      borderRadius: BorderRadius.circular(12),
-      elevation: 0.5,
+      borderRadius: BorderRadius.circular(14),
+      elevation: 0,
       child: InkWell(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
         onTap: () async {
           await Navigator.push(
             context,
@@ -240,32 +252,57 @@ class _TicketListScreenState extends State<TicketListScreen> {
           );
           _refreshTickets();
         },
-        child: Padding(
+        child: Container(
           padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.02),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    '#${ticket.ticketKey}',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13,
-                      color: AppConfig.primaryColor,
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEFF6FF),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: const Color(0xFFBFDBFE)),
+                    ),
+                    child: Text(
+                      '#${ticket.ticketKey}',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 11,
+                        color: Color(0xFF1D4ED8),
+                      ),
                     ),
                   ),
-                  StatusBadge(status: ticket.status),
+                  Row(
+                    children: [
+                      StatusBadge(status: ticket.status),
+                      const SizedBox(width: 4),
+                      const Icon(Icons.chevron_right_rounded, color: Color(0xFF94A3B8), size: 18),
+                    ],
+                  ),
                 ],
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 10),
               Text(
                 ticket.title,
                 style: const TextStyle(
                   fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF1E293B),
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF0F172A),
                 ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
@@ -274,15 +311,29 @@ class _TicketListScreenState extends State<TicketListScreen> {
               Row(
                 children: [
                   PriorityBadge(priority: ticket.priority),
+                  if (ticket.category != null && ticket.category!.isNotEmpty) ...[
+                    const SizedBox(width: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF1F5F9),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        ticket.category!.replaceAll('_', ' ').toUpperCase(),
+                        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Color(0xFF475569)),
+                      ),
+                    ),
+                  ],
                   const Spacer(),
-                  if (ticket.assigneeName != null)
+                  if (ticket.assigneeName != null || ticket.creatorName != null)
                     Row(
                       children: [
-                        Icon(Icons.person_outline, size: 14, color: Colors.grey.shade600),
+                        const Icon(Icons.person_outline, size: 14, color: Color(0xFF64748B)),
                         const SizedBox(width: 4),
                         Text(
-                          ticket.assigneeName!,
-                          style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                          ticket.assigneeName ?? ticket.creatorName ?? '',
+                          style: const TextStyle(fontSize: 11, color: Color(0xFF64748B), fontWeight: FontWeight.w500),
                         ),
                       ],
                     ),

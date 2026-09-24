@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'config/app_config.dart';
 import 'screens/splash_screen.dart';
+import 'screens/login_screen.dart';
+import 'screens/main_navigation_screen.dart';
 import 'services/api_service.dart';
 
 @pragma('vm:entry-point')
@@ -15,9 +17,9 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Firebase safely
-  if (kIsWeb) {
-    try {
+  // Safely attempt Firebase initialization without stopping the app if it fails
+  try {
+    if (kIsWeb) {
       await Firebase.initializeApp(
         options: const FirebaseOptions(
           apiKey: "demo-key",
@@ -26,26 +28,20 @@ void main() async {
           projectId: "vision-smart-system",
         ),
       );
-    } catch (e) {
-      debugPrint('Firebase Web init note: $e');
-    }
-  } else {
-    try {
+    } else {
       await Firebase.initializeApp();
       FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
-      // Request Notification Permissions
       final messaging = FirebaseMessaging.instance;
       await messaging.requestPermission(alert: true, badge: true, sound: true);
 
-      // Get Device FCM Token and update to backend
       final fcmToken = await messaging.getToken();
       if (fcmToken != null) {
         await ApiService.updateFcmToken(fcmToken);
       }
-    } catch (e) {
-      debugPrint('Firebase initialization note: $e');
     }
+  } catch (e) {
+    debugPrint('Firebase safe fallback note: $e');
   }
 
   runApp(const VisionSmartApp());
@@ -74,7 +70,14 @@ class VisionSmartApp extends StatelessWidget {
           elevation: 0,
         ),
       ),
+
+      // 💡 Android Studio Preview Tip:
+      // আপনি যেই স্ক্রিনের সরাসরি প্রিভিউ দেখতে চান, নিচে সেটি সেট করুন:
+      // 1. Full App Flow: const SplashScreen()
+      // 2. Direct Login Page: const LoginScreen()
+      // 3. Direct Dashboard Page: const MainNavigationScreen()
       home: const SplashScreen(),
     );
   }
 }
+

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../config/app_config.dart';
 import '../services/api_service.dart';
 import '../services/storage_service.dart';
 import '../models/user.dart';
@@ -88,10 +89,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     children: [
                       CircleAvatar(
                         radius: 36,
-                        backgroundColor: const Color(0xFF2563EB).withOpacity(0.12),
+                        backgroundColor: AppConfig.primaryColor.withOpacity(0.12),
                         child: Text(
                           (_user?.name.isNotEmpty == true) ? _user!.name[0].toUpperCase() : 'U',
-                          style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFF2563EB)),
+                          style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: AppConfig.primaryColor),
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -148,6 +149,42 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // System & App Info Card (NEW FEATURE DEMO)
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'System Information',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1E293B)),
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text('App Version', style: TextStyle(fontSize: 13, color: Color(0xFF64748B))),
+                          Text('v1.0.0+1', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppConfig.primaryColor)),
+                        ],
+                      ),
+                      const Divider(height: 20, color: Color(0xFFF1F5F9)),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: const [
+                          Text('System Status', style: TextStyle(fontSize: 13, color: Color(0xFF64748B))),
+                          Text('Online & Synchronized', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF10B981))),
                         ],
                       ),
                     ],

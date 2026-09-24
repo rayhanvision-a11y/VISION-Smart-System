@@ -14,9 +14,9 @@ class AppConfig {
   static const String logoUrl = 'https://visiontech.com.bd/wp-content/uploads/2017/11/vision-logo.png';
 
   // App Theme Colors
-  static const Color primaryColor = Color(0xFF2563EB); // Modern Royal Blue
-  static const Color primaryDark = Color(0xFF1D4ED8);
-  static const Color accentColor = Color(0xFF06B6D4);
+  static const Color primaryColor = Color(0xFFDC2626); // Vibrant Red
+  static const Color primaryDark = Color(0xFF991B1B);
+  static const Color accentColor = Color(0xFFF43F5E);
   static const Color backgroundLight = Color(0xFFF8FAFC);
   static const Color cardLight = Colors.white;
   static const Color backgroundDark = Color(0xFF0F172A);

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../config/app_config.dart';
 import '../models/user.dart';
 import '../services/storage_service.dart';
 import 'dashboard_screen.dart';
@@ -109,7 +110,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           onTap: (index) => setState(() => _currentIndex = index),
           type: BottomNavigationBarType.fixed,
           backgroundColor: Colors.white,
-          selectedItemColor: const Color(0xFF2563EB),
+          selectedItemColor: AppConfig.primaryColor,
           unselectedItemColor: const Color(0xFF64748B),
           selectedFontSize: 11,
           unselectedFontSize: 11,

@@ -53,14 +53,72 @@ class ApiTicketController extends Controller
                 'assignedTo:id,name,email,role',
                 'user:id,name,email',
                 'popOffice:id,name',
-                'messages.sender:id,name,avatar',
-                'messages.attachments',
+                'messages.sender:id,name,email,avatar,role',
+                'messages.replyTo.sender:id,name,email',
+                'messages.reactions.user:id,name,email',
+                'notes.user:id,name,email,avatar,role',
                 'attachments',
             ])
             ->findOrFail($id);
 
+        $messages = collect();
+
+        // 1. Add ticket messages
+        foreach ($ticket->messages as $m) {
+            if ($m->canViewPrivate($user)) {
+                $messages->push([
+                    'id' => $m->id,
+                    'ticket_id' => $m->ticket_id,
+                    'sender_id' => $m->sender_id,
+                    'sender' => $m->sender ? [
+                        'id' => $m->sender->id,
+                        'name' => $m->sender->name,
+                        'avatar' => $m->sender->avatarUrl(),
+                        'role' => $m->sender->role,
+                    ] : null,
+                    'message' => $m->message,
+                    'is_private' => (bool) $m->is_private,
+                    'created_at' => $m->created_at ? $m->created_at->toDateTimeString() : null,
+                    'reply_to' => $m->replyTo ? [
+                        'id' => $m->replyTo->id,
+                        'sender' => $m->replyTo->sender ? ['name' => $m->replyTo->sender->name] : null,
+                        'message' => \Illuminate\Support\Str::limit(strip_tags($m->replyTo->message ?? ''), 80),
+                    ] : null,
+                    'reactions' => $m->reactionSummary($user->id),
+                ]);
+            }
+        }
+
+        // 2. Add ticket internal notes (for staff/admin)
+        if (! $user->isReseller()) {
+            foreach ($ticket->notes as $n) {
+                $messages->push([
+                    'id' => 900000 + $n->id,
+                    'ticket_id' => $n->ticket_id,
+                    'sender_id' => $n->user_id,
+                    'sender' => $n->user ? [
+                        'id' => $n->user->id,
+                        'name' => $n->user->name,
+                        'avatar' => $n->user->avatarUrl(),
+                        'role' => $n->user->role,
+                    ] : null,
+                    'message' => $n->note ?? '',
+                    'is_private' => true,
+                    'created_at' => $n->created_at ? $n->created_at->toDateTimeString() : null,
+                    'reply_to' => null,
+                    'reactions' => [],
+                ]);
+            }
+        }
+
+        // Sort all activity chronologically
+        $sortedMessages = $messages->sortBy('created_at')->values();
+
+        $ticketData = $ticket->toArray();
+        $ticketData['messages'] = $sortedMessages;
+
         return response()->json([
-            'ticket' => $ticket,
+            'ticket' => $ticketData,
         ]);
     }
 
@@ -132,18 +190,31 @@ class ApiTicketController extends Controller
         $validated = $request->validate([
             'message' => 'required|string',
             'is_private' => 'nullable|boolean',
+            'reply_to_id' => 'nullable|integer',
         ]);
+
+        $isPrivate = $user->isReseller() ? false : ($validated['is_private'] ?? false);
 
         $message = TicketMessage::create([
             'ticket_id' => $ticket->id,
             'sender_id' => $user->id,
             'message' => $validated['message'],
-            'is_private' => $validated['is_private'] ?? false,
+            'is_private' => $isPrivate,
+            'reply_to_id' => $validated['reply_to_id'] ?? null,
         ]);
+
+        if ($isPrivate) {
+            \App\Models\TicketNote::create([
+                'ticket_id' => $ticket->id,
+                'user_id' => $user->id,
+                'note' => $validated['message'],
+                'is_internal' => true,
+            ]);
+        }
 
         return response()->json([
             'message' => 'Reply added successfully',
-            'data' => $message->load('sender:id,name,avatar'),
+            'data' => $message->load('sender:id,name,avatar,role'),
         ], 201);
     }
 
@@ -236,5 +307,43 @@ class ApiTicketController extends Controller
             ->get(['id', 'name', 'email', 'role', 'team']);
 
         return response()->json(['staff' => $staff]);
+    }
+
+    /**
+     * Toggle emoji reaction on a message.
+     */
+    public function toggleReaction(Request $request, int $ticketId, int $messageId): JsonResponse
+    {
+        $user = $request->user();
+        $ticket = Ticket::forUser($user)->findOrFail($ticketId);
+        $message = TicketMessage::where('ticket_id', $ticket->id)->findOrFail($messageId);
+
+        $validated = $request->validate([
+            'emoji' => 'required|string|max:16',
+        ]);
+
+        $existing = \App\Models\TicketMessageReaction::where('ticket_message_id', $message->id)
+            ->where('user_id', $user->id)
+            ->where('emoji', $validated['emoji'])
+            ->first();
+
+        if ($existing) {
+            $existing->delete();
+            $reacted = false;
+        } else {
+            \App\Models\TicketMessageReaction::create([
+                'ticket_message_id' => $message->id,
+                'user_id' => $user->id,
+                'emoji' => $validated['emoji'],
+            ]);
+            $reacted = true;
+        }
+
+        $message->load('reactions.user');
+
+        return response()->json([
+            'reacted' => $reacted,
+            'reactions' => $message->reactionSummary($user->id),
+        ]);
     }
 }

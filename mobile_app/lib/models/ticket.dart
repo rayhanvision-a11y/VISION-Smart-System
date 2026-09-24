@@ -29,6 +29,9 @@ class TicketModel {
     this.updatedAt,
   });
 
+  int? get assignedToId => assignedTo;
+  int? get userId => createdBy;
+
   factory TicketModel.fromJson(Map<dynamic, dynamic> json) {
     int? parseId(dynamic val) {
       if (val == null) return null;

@@ -25,22 +25,57 @@ class TicketDetailScreen extends StatefulWidget {
   State<TicketDetailScreen> createState() => _TicketDetailScreenState();
 }
 
-class _TicketDetailScreenState extends State<TicketDetailScreen> {
+class _TicketDetailScreenState extends State<TicketDetailScreen> with SingleTickerProviderStateMixin {
   late TicketModel _ticket;
   UserModel? _user;
   final _messageController = TextEditingController();
   bool _isSending = false;
   bool _isPrivateReply = false;
-  final ScrollController _scrollController = ScrollController();
+  late TabController _activityTabController;
+  List<TicketMessageModel> _apiMessages = [];
+  bool _isLoadingApi = true;
 
   @override
   void initState() {
     super.initState();
     _ticket = widget.ticket;
     _user = widget.currentUser;
+    _activityTabController = TabController(length: 3, vsync: this);
     if (_user == null) {
       _loadCurrentUser();
     }
+    _fetchTicketDetails();
+  }
+
+  Future<void> _fetchTicketDetails() async {
+    final details = await ApiService.getTicketDetails(_ticket.id);
+    if (!mounted) return;
+    if (details != null) {
+      final fetchedTicket = details['ticket'];
+      final msgs = details['messages'];
+      setState(() {
+        if (fetchedTicket is TicketModel) {
+          _ticket = fetchedTicket;
+        }
+        if (msgs is List<TicketMessageModel>) {
+          _apiMessages = msgs;
+        } else if (msgs is List) {
+          _apiMessages = msgs.whereType<TicketMessageModel>().toList();
+        }
+        _isLoadingApi = false;
+      });
+      debugPrint('Ticket #${_ticket.id} loaded ${_apiMessages.length} messages');
+    } else {
+      setState(() => _isLoadingApi = false);
+      debugPrint('Ticket #${_ticket.id} details fetch returned null');
+    }
+  }
+
+  @override
+  void dispose() {
+    _activityTabController.dispose();
+    _messageController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadCurrentUser() async {
@@ -56,30 +91,46 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
     return r != 'reseller';
   }
 
+  TicketMessageModel? _replyToMessage;
+
+  void _setReplyTo(TicketMessageModel msg) {
+    setState(() => _replyToMessage = msg);
+  }
+
+  void _cancelReplyTo() {
+    setState(() => _replyToMessage = null);
+  }
+
+  Future<void> _handleReaction(TicketMessageModel msg, String emoji) async {
+    final ok = await ApiService.toggleReaction(_ticket.id, msg.id, emoji);
+    if (ok) {
+      await _fetchTicketDetails();
+    }
+  }
+
   Future<void> _sendMessage() async {
     final text = _messageController.text.trim();
     if (text.isEmpty) return;
 
-    setState(() => _isSending = true);
+    final replyId = _replyToMessage?.id;
+    setState(() {
+      _isSending = true;
+      _replyToMessage = null;
+    });
     _messageController.clear();
 
     final result = await ApiService.addMessage(
       _ticket.id,
       text,
       isPrivate: _isPrivateReply,
+      replyToId: replyId,
     );
 
     if (!mounted) return;
     setState(() => _isSending = false);
 
     if (result['success'] == true) {
-      if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent + 80,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
-      }
+      await _fetchTicketDetails();
     } else {
       // Restore user's text so they don't lose it, and surface the error
       _messageController.text = text;
@@ -372,7 +423,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
       ),
       body: Column(
         children: [
-          // Ticket Header Card
+          // Expanded Ticket Info Card (Website Matching Layout)
           Container(
             padding: const EdgeInsets.all(16),
             decoration: const BoxDecoration(
@@ -382,6 +433,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Title and Badges
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -400,85 +452,154 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
                 const SizedBox(height: 10),
                 Text(
                   _ticket.title,
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
+                  style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
                 ),
                 if (_ticket.description.isNotEmpty) ...[
                   const SizedBox(height: 8),
-                  Text(
-                    _ticket.description,
-                    style: const TextStyle(fontSize: 13, color: Color(0xFF475569), height: 1.4),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                    ),
+                    child: Text(
+                      _ticket.description,
+                      style: const TextStyle(fontSize: 13, color: Color(0xFF334155), height: 1.4),
+                    ),
                   ),
                 ],
                 const SizedBox(height: 12),
-                Wrap(
-                  spacing: 12,
-                  runSpacing: 6,
-                  children: [
-                    if (_ticket.category != null)
-                      _buildMetaChip(Icons.category_outlined, _ticket.category!),
-                    InkWell(
-                      onTap: _isAdminOrStaff ? _showAssignStaffDialog : null,
-                      borderRadius: BorderRadius.circular(4),
-                      child: _buildMetaChip(
-                        Icons.person_outline,
-                        _ticket.assigneeName != null ? 'Assigned: ${_ticket.assigneeName}' : 'Unassigned (Tap to assign)',
-                        color: _ticket.assigneeName != null ? const Color(0xFF2563EB) : const Color(0xFFD97706),
+
+                // Website-Matching Details Grid (Reporter, Assignee, Category)
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF1F5F9),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.person_outline, size: 16, color: Color(0xFF64748B)),
+                          const SizedBox(width: 6),
+                          const Text('Reporter: ', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF475569))),
+                          Expanded(
+                            child: Text(
+                              _ticket.creatorName ?? 'Customer',
+                              style: const TextStyle(fontSize: 12, color: Color(0xFF0F172A)),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          const Icon(Icons.assignment_ind_outlined, size: 16, color: Color(0xFF64748B)),
+                          const SizedBox(width: 6),
+                          const Text('Assigned Staff: ', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF475569))),
+                          Expanded(
+                            child: InkWell(
+                              onTap: _isAdminOrStaff ? _showAssignStaffDialog : null,
+                              child: Text(
+                                _ticket.assigneeName ?? 'Unassigned (Tap to assign)',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: _ticket.assigneeName != null ? const Color(0xFF2563EB) : const Color(0xFFD97706),
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (_ticket.category != null) ...[
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            const Icon(Icons.folder_outlined, size: 16, color: Color(0xFF64748B)),
+                            const SizedBox(width: 6),
+                            const Text('Category: ', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF475569))),
+                            Text(
+                              _ticket.category!.replaceAll('_', ' ').toUpperCase(),
+                              style: const TextStyle(fontSize: 12, color: Color(0xFF0F172A)),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ],
+                  ),
                 ),
               ],
             ),
           ),
 
-          // Real-time Chat Messages Stream
+          // Activity Tabs (All, Comments, Internal Notes)
+          Container(
+            color: Colors.white,
+            child: TabBar(
+              controller: _activityTabController,
+              labelColor: const Color(0xFF2563EB),
+              unselectedLabelColor: const Color(0xFF64748B),
+              indicatorColor: const Color(0xFF2563EB),
+              labelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+              tabs: const [
+                Tab(text: 'All Activity'),
+                Tab(text: 'Public Comments'),
+                Tab(text: 'Internal Notes 🔒'),
+              ],
+            ),
+          ),
+
+          // Real-time Chat Messages Stream (API + Firebase Fallback)
           Expanded(
             child: StreamBuilder<DatabaseEvent>(
               stream: FirebaseRealtimeService.getTicketMessagesStream(_ticket.id),
               builder: (context, snapshot) {
                 if (snapshot.hasError) {
-                  return Center(child: Text('Error loading messages: ${snapshot.error}'));
+                  debugPrint('Firebase stream error: ${snapshot.error}');
                 }
 
-                List<TicketMessageModel> messages = [];
+                List<TicketMessageModel> allMessages = List.from(_apiMessages);
                 if (snapshot.hasData && snapshot.data!.snapshot.value != null) {
-                  messages = FirebaseRealtimeService.parseMessages(
+                  final fbMessages = FirebaseRealtimeService.parseMessages(
                     snapshot.data!.snapshot.value,
                     _ticket.id,
                   );
+                  if (fbMessages.isNotEmpty) {
+                    final existingIds = allMessages.map((m) => m.id).toSet();
+                    for (var fm in fbMessages) {
+                      if (!existingIds.contains(fm.id)) {
+                        allMessages.add(fm);
+                      }
+                    }
+                  }
                 }
 
-                if (messages.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.chat_bubble_outline, size: 48, color: Colors.grey.shade300),
-                        const SizedBox(height: 8),
-                        Text(
-                          'No messages yet. Start the conversation!',
-                          style: TextStyle(color: Colors.grey.shade500, fontSize: 13),
-                        ),
-                      ],
-                    ),
-                  );
+                if (_isLoadingApi && allMessages.isEmpty) {
+                  return const Center(child: CircularProgressIndicator());
                 }
 
-                return ListView.builder(
-                  controller: _scrollController,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-                  itemCount: messages.length,
-                  itemBuilder: (context, index) {
-                    final msg = messages[index];
-                    final isMe = _user != null && msg.senderId == _user!.id;
-                    return MessageBubble(message: msg, isMe: isMe);
-                  },
+                return TabBarView(
+                  controller: _activityTabController,
+                  children: [
+                    // Tab 1: All Activity
+                    _buildMessageList(allMessages),
+                    // Tab 2: Public Comments Only
+                    _buildMessageList(allMessages.where((m) => !m.isPrivate).toList()),
+                    // Tab 3: Internal Notes Only
+                    _buildMessageList(allMessages.where((m) => m.isPrivate).toList()),
+                  ],
                 );
               },
             ),
           ),
 
-          // Message Input Bar
+          // Message Input Bar (Matching Web Composer with Quoted Reply & Reactions)
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
@@ -488,16 +609,66 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
             child: SafeArea(
               child: Column(
                 children: [
+                  // Quoted Reply Preview Bar
+                  if (_replyToMessage != null)
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 6),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEFF6FF),
+                        borderRadius: BorderRadius.circular(8),
+                        border: const Border(left: BorderSide(color: Color(0xFF2563EB), width: 3)),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Replying to ${_replyToMessage!.senderName}',
+                                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF2563EB)),
+                                ),
+                                Text(
+                                  _replyToMessage!.message,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                                ),
+                              ],
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.close, size: 16, color: Color(0xFF64748B)),
+                            onPressed: _cancelReplyTo,
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                          ),
+                        ],
+                      ),
+                    ),
                   if (_isAdminOrStaff)
-                    Row(
-                      children: [
-                        Checkbox(
-                          value: _isPrivateReply,
-                          onChanged: (val) => setState(() => _isPrivateReply = val ?? false),
-                          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        ),
-                        const Text('Internal Note (Visible only to staff)', style: TextStyle(fontSize: 11, color: Colors.grey)),
-                      ],
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 6),
+                      child: Row(
+                        children: [
+                          ChoiceChip(
+                            label: const Text('🌐 Public Reply', style: TextStyle(fontSize: 11)),
+                            selected: !_isPrivateReply,
+                            selectedColor: const Color(0xFF2563EB),
+                            labelStyle: TextStyle(color: !_isPrivateReply ? Colors.white : Colors.black87),
+                            onSelected: (_) => setState(() => _isPrivateReply = false),
+                          ),
+                          const SizedBox(width: 8),
+                          ChoiceChip(
+                            label: const Text('🔒 Internal Note', style: TextStyle(fontSize: 11)),
+                            selected: _isPrivateReply,
+                            selectedColor: const Color(0xFFD97706),
+                            labelStyle: TextStyle(color: _isPrivateReply ? Colors.white : Colors.black87),
+                            onSelected: (_) => setState(() => _isPrivateReply = true),
+                          ),
+                        ],
+                      ),
                     ),
                   Row(
                     children: [
@@ -507,11 +678,11 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
                           minLines: 1,
                           maxLines: 4,
                           decoration: InputDecoration(
-                            hintText: _isPrivateReply ? 'Add internal note...' : 'Type a reply...',
+                            hintText: _isPrivateReply ? 'Add staff internal note...' : 'Type a public reply...',
                             hintStyle: const TextStyle(fontSize: 13),
                             contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                             filled: true,
-                            fillColor: const Color(0xFFF8FAFC),
+                            fillColor: _isPrivateReply ? const Color(0xFFFEF3C7) : const Color(0xFFF8FAFC),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(20),
                               borderSide: BorderSide(color: Colors.grey.shade300),
@@ -524,7 +695,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
                         onPressed: _isSending ? null : _sendMessage,
                         icon: _isSending
                             ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                            : const Icon(Icons.send, color: Color(0xFF2563EB)),
+                            : Icon(Icons.send, color: _isPrivateReply ? const Color(0xFFD97706) : const Color(0xFF2563EB)),
                       ),
                     ],
                   ),
@@ -534,6 +705,39 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildMessageList(List<TicketMessageModel> messages) {
+    if (messages.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.chat_bubble_outline, size: 48, color: Colors.grey.shade300),
+            const SizedBox(height: 8),
+            Text(
+              'No messages found in this view',
+              style: TextStyle(color: Colors.grey.shade500, fontSize: 13),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+      itemCount: messages.length,
+      itemBuilder: (context, index) {
+        final msg = messages[index];
+        final isMe = _user != null && msg.senderId == _user!.id;
+        return MessageBubble(
+          message: msg,
+          isMe: isMe,
+          onReply: _setReplyTo,
+          onReact: _handleReaction,
+        );
+      },
     );
   }
 
