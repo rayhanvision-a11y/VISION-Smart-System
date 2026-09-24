@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:intl/intl.dart';
 import '../services/api_service.dart';
 import '../services/app_state.dart';
 import '../theme/app_theme.dart';
@@ -20,11 +19,8 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
 
   String _selectedPriority = 'medium';
   String _selectedCategoryKey = 'line_fault';
-  int? _selectedPopId;
-  String? _selectedPopName;
   int? _selectedAssigneeId;
   String? _selectedAssigneeName;
-  DateTime? _dueAt;
   final List<_PickedFile> _attachments = [];
   String? _selectedArea;
 
@@ -83,9 +79,7 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
       description: _descController.text.trim(),
       priority: _selectedPriority,
       category: _selectedCategoryKey,
-      popOfficeId: _selectedPopId,
       assignedTo: _selectedAssigneeId,
-      dueAt: _dueAt,
       area: _selectedArea,
     );
 
@@ -258,29 +252,6 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
                     ),
                     const SizedBox(height: 10),
                     _sectionCard(
-                      icon: Icons.business_rounded,
-                      iconColor: AppColors.success,
-                      title: AppState.instance.t('POP Office (Optional)', 'পপ অফিস (ঐচ্ছিক)'),
-                      subtitle: _selectedPopName ?? AppState.instance.t('Select POP office', 'পপ অফিস নির্বাচন করুন'),
-                      onTap: _popOffices.isEmpty
-                          ? null
-                          : () => _showPicker(
-                                title: 'Select POP Office',
-                                icon: Icons.business_rounded,
-                                items: _popOffices,
-                                labelOf: (i) => (i as Map)['name']?.toString() ?? 'POP',
-                                subtitleOf: (_) => '',
-                                onSelect: (i) => () {
-                                  final m = i as Map;
-                                  setState(() {
-                                    _selectedPopId = m['id'] as int?;
-                                    _selectedPopName = m['name']?.toString();
-                                  });
-                                },
-                              ),
-                    ),
-                    const SizedBox(height: 10),
-                    _sectionCard(
                       icon: Icons.person_add_alt_rounded,
                       iconColor: AppColors.accent,
                       title: AppState.instance.t('Assign to Staff (Optional)', 'কর্মী নিয়োগ (ঐচ্ছিক)'),
@@ -324,22 +295,6 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
                               onPressed: () => setState(() => _selectedArea = null),
                             ),
                       onTap: _showAreaPicker,
-                    ),
-                    const SizedBox(height: 10),
-                    _sectionCard(
-                      icon: Icons.event_rounded,
-                      iconColor: AppColors.warning,
-                      title: AppState.instance.t('Due Date (Optional)', 'শেষ তারিখ (ঐচ্ছিক)'),
-                      subtitle: _dueAt != null
-                          ? DateFormat('MMM d, y – h:mm a').format(_dueAt!)
-                          : AppState.instance.t('No deadline set', 'কোনো ডেডলাইন নেই'),
-                      trailing: _dueAt == null
-                          ? null
-                          : IconButton(
-                              icon: Icon(Icons.close_rounded, size: 18, color: AppColors.textMuted),
-                              onPressed: () => setState(() => _dueAt = null),
-                            ),
-                      onTap: _pickDueDate,
                     ),
                     const SizedBox(height: 10),
                     _sectionCard(
@@ -640,26 +595,6 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
         },
       ),
     );
-  }
-
-  Future<void> _pickDueDate() async {
-    final now = DateTime.now();
-    final date = await showDatePicker(
-      context: context,
-      initialDate: _dueAt ?? now.add(const Duration(days: 1)),
-      firstDate: now,
-      lastDate: now.add(const Duration(days: 365)),
-    );
-    if (date == null || !mounted) return;
-    final time = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.fromDateTime(_dueAt ?? now.add(const Duration(hours: 2))),
-    );
-    if (!mounted) return;
-    setState(() {
-      _dueAt = DateTime(date.year, date.month, date.day,
-          time?.hour ?? 17, time?.minute ?? 0);
-    });
   }
 
   Future<void> _pickAttachment() async {
