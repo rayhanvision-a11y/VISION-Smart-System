@@ -38,6 +38,7 @@
                 <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">{{ __('Role') }}</label>
                 <select name="role" required class="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500">
                     <option value="reseller" {{ old('role', $editUser->role) === 'reseller' ? 'selected' : '' }}>{{ __('Reseller') }}</option>
+                    <option value="technician" {{ old('role', $editUser->role) === 'technician' ? 'selected' : '' }}>{{ __('Technician') }}</option>
                     <option value="call_center" {{ old('role', $editUser->role) === 'call_center' ? 'selected' : '' }}>{{ __('Call Center') }}</option>
                     <option value="supervisor" {{ old('role', $editUser->role) === 'supervisor' ? 'selected' : '' }}>{{ __('Supervisor') }}</option>
                     <option value="senior_supervisor" {{ old('role', $editUser->role) === 'senior_supervisor' ? 'selected' : '' }}>{{ __('Senior Supervisor') }}</option>

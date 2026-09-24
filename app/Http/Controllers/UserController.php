@@ -46,8 +46,8 @@ class UserController extends Controller
 
         // Determine allowed roles based on actor
         $allowedRoles = $authUser->isSuperAdmin()
-            ? 'required|in:super_admin,admin,noc,supervisor,senior_supervisor,call_center,reseller'
-            : 'required|in:admin,noc,supervisor,senior_supervisor,call_center,reseller';
+            ? 'required|in:super_admin,admin,noc,supervisor,senior_supervisor,call_center,reseller,technician'
+            : 'required|in:admin,noc,supervisor,senior_supervisor,call_center,reseller,technician';
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -103,8 +103,8 @@ class UserController extends Controller
         }
 
         $allowedRoles = $authUser->isSuperAdmin()
-            ? 'required|in:super_admin,admin,noc,supervisor,senior_supervisor,call_center,reseller'
-            : 'required|in:noc,supervisor,senior_supervisor,call_center,reseller';
+            ? 'required|in:super_admin,admin,noc,supervisor,senior_supervisor,call_center,reseller,technician'
+            : 'required|in:noc,supervisor,senior_supervisor,call_center,reseller,technician';
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',

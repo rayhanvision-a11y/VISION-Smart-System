@@ -48,6 +48,7 @@
             <option value="noc" {{ request('role') === 'noc' ? 'selected' : '' }}>{{ __('NOC') }}</option>
             <option value="call_center" {{ request('role') === 'call_center' ? 'selected' : '' }}>{{ __('Call Center') }}</option>
             <option value="supervisor" {{ request('role') === 'supervisor' ? 'selected' : '' }}>{{ __('Supervisor') }}</option>
+            <option value="technician" {{ request('role') === 'technician' ? 'selected' : '' }}>{{ __('Technician') }}</option>
         </select>
 
         <div class="flex-1 min-w-48">

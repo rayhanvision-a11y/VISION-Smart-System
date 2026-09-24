@@ -30,6 +30,7 @@
                             'senior_supervisor' => 'bg-cyan-100 text-cyan-700 dark:bg-cyan-950/60 dark:text-cyan-300 dark:border dark:border-cyan-800/50',
                             'supervisor'        => 'bg-sky-100 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300 dark:border dark:border-sky-800/50',
                             'call_center'       => 'bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 dark:border dark:border-amber-800/50',
+                            'technician'        => 'bg-purple-100 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300 dark:border dark:border-purple-800/50',
                             default             => 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border dark:border-emerald-800/50',
                         };
                     @endphp
