@@ -1,6 +1,5 @@
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
-import '../config/app_config.dart';
 import '../models/ticket.dart';
 import '../models/ticket_message.dart';
 import '../models/user.dart';
@@ -8,9 +7,8 @@ import '../services/api_service.dart';
 import '../services/firebase_realtime_service.dart';
 import '../services/storage_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/common/status_pill.dart';
 import '../widgets/message_bubble.dart';
-import '../widgets/priority_badge.dart';
-import '../widgets/status_badge.dart';
 
 class TicketDetailScreen extends StatefulWidget {
   final TicketModel ticket;
@@ -35,6 +33,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> with SingleTick
   late TabController _activityTabController;
   List<TicketMessageModel> _apiMessages = [];
   bool _isLoadingApi = true;
+  bool _showInfo = true;
 
   @override
   void initState() {
@@ -187,7 +186,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> with SingleTick
                   width: 12,
                   height: 12,
                   decoration: BoxDecoration(
-                    color: AppConfig.statusColor(s),
+                    color: AppColors.statusColor(s),
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -195,7 +194,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> with SingleTick
                   s.replaceAll('_', ' ').toUpperCase(),
                   style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
                 ),
-                trailing: _ticket.status == s ? const Icon(Icons.check, color: AppConfig.primaryColor) : null,
+                trailing: _ticket.status == s ? Icon(Icons.check, color: AppColors.primary) : null,
                 onTap: () => Navigator.pop(ctx, s),
               ),
             ),
@@ -259,7 +258,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> with SingleTick
                   width: 12,
                   height: 12,
                   decoration: BoxDecoration(
-                    color: AppConfig.priorityColor(p),
+                    color: AppColors.priorityColor(p),
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -267,7 +266,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> with SingleTick
                   p.toUpperCase(),
                   style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
                 ),
-                trailing: _ticket.priority == p ? const Icon(Icons.check, color: AppConfig.primaryColor) : null,
+                trailing: _ticket.priority == p ? Icon(Icons.check, color: AppColors.primary) : null,
                 onTap: () => Navigator.pop(ctx, p),
               ),
             ),
@@ -402,159 +401,143 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> with SingleTick
     return Scaffold(
       backgroundColor: AppColors.bg,
       appBar: AppBar(
-        title: Text(
-          '#${_ticket.ticketKey}',
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                gradient: AppColors.heroGradient,
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text('#${_ticket.ticketKey}',
+                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.white)),
+            ),
+            const SizedBox(width: 8),
+            Flexible(
+              child: Text(
+                _ticket.title,
+                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                maxLines: 1, overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.swap_horiz),
-            tooltip: 'Change Status',
-            onPressed: _showStatusDialog,
+            icon: const Icon(Icons.info_outline_rounded),
+            tooltip: 'Toggle Details',
+            onPressed: () => setState(() => _showInfo = !_showInfo),
           ),
-          if (_isAdminOrStaff) ...[
+          if (_isAdminOrStaff)
+            PopupMenuButton<String>(
+              icon: const Icon(Icons.more_vert_rounded),
+              onSelected: (v) {
+                if (v == 'status') _showStatusDialog();
+                if (v == 'priority') _showPriorityDialog();
+                if (v == 'assign') _showAssignStaffDialog();
+              },
+              itemBuilder: (_) => [
+                const PopupMenuItem(value: 'status', child: Row(children: [Icon(Icons.swap_horiz_rounded, size: 18), SizedBox(width: 10), Text('Change Status')])),
+                const PopupMenuItem(value: 'priority', child: Row(children: [Icon(Icons.flag_outlined, size: 18), SizedBox(width: 10), Text('Change Priority')])),
+                const PopupMenuItem(value: 'assign', child: Row(children: [Icon(Icons.person_add_alt_1_outlined, size: 18), SizedBox(width: 10), Text('Assign Staff')])),
+              ],
+            )
+          else
             IconButton(
-              icon: const Icon(Icons.flag_outlined),
-              tooltip: 'Change Priority',
-              onPressed: _showPriorityDialog,
+              icon: const Icon(Icons.swap_horiz_rounded),
+              tooltip: 'Change Status',
+              onPressed: _showStatusDialog,
             ),
-            IconButton(
-              icon: const Icon(Icons.person_add_alt_1_outlined),
-              tooltip: 'Assign Staff',
-              onPressed: _showAssignStaffDialog,
-            ),
-          ],
         ],
       ),
       body: Column(
         children: [
-          // Expanded Ticket Info Card (Website Matching Layout)
+          // Hero header
           Container(
-            padding: const EdgeInsets.all(16),
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0))),
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
+            decoration: BoxDecoration(
+              color: AppColors.card,
+              border: Border(bottom: BorderSide(color: AppColors.border)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Title and Badges
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     InkWell(
                       onTap: _showStatusDialog,
-                      borderRadius: BorderRadius.circular(6),
-                      child: StatusBadge(status: _ticket.status),
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                      child: StatusPill(status: _ticket.status),
                     ),
+                    const SizedBox(width: 8),
                     InkWell(
                       onTap: _isAdminOrStaff ? _showPriorityDialog : null,
-                      borderRadius: BorderRadius.circular(6),
-                      child: PriorityBadge(priority: _ticket.priority),
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                      child: PriorityPill(priority: _ticket.priority),
                     ),
+                    const Spacer(),
+                    if (_ticket.category != null)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: AppColors.bg,
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                        ),
+                        child: Text(
+                          _ticket.category!.replaceAll('_', ' ').toUpperCase(),
+                          style: AppText.label.copyWith(fontSize: 9),
+                        ),
+                      ),
                   ],
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 12),
                 Text(
                   _ticket.title,
-                  style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                  style: AppText.h2.copyWith(fontSize: 17, height: 1.3),
                 ),
-                if (_ticket.plainDescription.isNotEmpty) ...[
-                  const SizedBox(height: 8),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF8FAFC),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                if (_showInfo) ...[
+                  if (_ticket.plainDescription.isNotEmpty) ...[
+                    const SizedBox(height: 10),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: AppColors.bg,
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        border: Border.all(color: AppColors.border),
+                      ),
+                      child: Text(
+                        _ticket.plainDescription,
+                        style: AppText.bodySm.copyWith(height: 1.5, color: AppColors.textPrimary),
+                      ),
                     ),
-                    child: Text(
-                      _ticket.plainDescription,
-                      style: const TextStyle(fontSize: 13, color: Color(0xFF334155), height: 1.4),
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 12),
-
-                // Website-Matching Details Grid (Reporter, Assignee, Category)
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF1F5F9),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Column(
+                  ],
+                  const SizedBox(height: 10),
+                  // Compact 2x2 meta grid
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: [
-                          const Icon(Icons.person_outline, size: 16, color: Color(0xFF64748B)),
-                          const SizedBox(width: 6),
-                          const Text('Reporter: ', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF475569))),
-                          Expanded(
-                            child: Text(
-                              _ticket.creatorName ?? 'Customer',
-                              style: const TextStyle(fontSize: 12, color: Color(0xFF0F172A)),
-                              overflow: TextOverflow.ellipsis,
-                            ),
+                      Expanded(child: _metaTile(Icons.person_outline_rounded, 'Reporter', _ticket.creatorName ?? 'Customer', AppColors.info)),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: _isAdminOrStaff ? _showAssignStaffDialog : null,
+                          child: _metaTile(
+                            Icons.assignment_ind_outlined,
+                            'Assignee',
+                            _ticket.assigneeName ?? 'Unassigned',
+                            _ticket.assigneeName != null ? AppColors.primary : AppColors.warning,
                           ),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                      Row(
-                        children: [
-                          const Icon(Icons.assignment_ind_outlined, size: 16, color: Color(0xFF64748B)),
-                          const SizedBox(width: 6),
-                          const Text('Assigned Staff: ', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF475569))),
-                          Expanded(
-                            child: InkWell(
-                              onTap: _isAdminOrStaff ? _showAssignStaffDialog : null,
-                              child: Text(
-                                _ticket.assigneeName ?? 'Unassigned (Tap to assign)',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: _ticket.assigneeName != null ? const Color(0xFF2563EB) : const Color(0xFFD97706),
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      if (_ticket.category != null) ...[
-                        const SizedBox(height: 6),
-                        Row(
-                          children: [
-                            const Icon(Icons.folder_outlined, size: 16, color: Color(0xFF64748B)),
-                            const SizedBox(width: 6),
-                            const Text('Category: ', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF475569))),
-                            Text(
-                              _ticket.category!.replaceAll('_', ' ').toUpperCase(),
-                              style: const TextStyle(fontSize: 12, color: Color(0xFF0F172A)),
-                            ),
-                          ],
                         ),
-                      ],
-                      if (_ticket.area != null && _ticket.area!.isNotEmpty) ...[
-                        const SizedBox(height: 6),
-                        Row(
-                          children: [
-                            Icon(Icons.place_rounded, size: 16, color: AppColors.primary),
-                            const SizedBox(width: 6),
-                            const Text('Area: ', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF475569))),
-                            Expanded(
-                              child: Text(
-                                _ticket.area!,
-                                style: TextStyle(fontSize: 12, color: AppColors.primary, fontWeight: FontWeight.w600),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
+                      ),
                     ],
                   ),
-                ),
+                  if (_ticket.area != null && _ticket.area!.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    _metaTile(Icons.place_rounded, 'Area', _ticket.area!, AppColors.accent),
+                  ],
+                ],
               ],
             ),
           ),
@@ -776,6 +759,42 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> with SingleTick
           Icon(icon, size: 13, color: c),
           const SizedBox(width: 4),
           Text(text, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: c)),
+        ],
+      ),
+    );
+  }
+
+  Widget _metaTile(IconData icon, String label, String value, Color accent) {
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: accent.withOpacity(0.06),
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: accent.withOpacity(0.15)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 30, height: 30,
+            decoration: BoxDecoration(
+              color: accent.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+            ),
+            child: Icon(icon, size: 16, color: accent),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label, style: AppText.label.copyWith(fontSize: 9, color: AppColors.textMuted)),
+                const SizedBox(height: 1),
+                Text(value,
+                    style: AppText.bodySm.copyWith(color: accent, fontWeight: FontWeight.w700, fontSize: 12),
+                    maxLines: 1, overflow: TextOverflow.ellipsis),
+              ],
+            ),
+          ),
         ],
       ),
     );
