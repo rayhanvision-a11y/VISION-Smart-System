@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../models/user.dart';
 import '../../theme/app_theme.dart';
 
@@ -23,13 +24,36 @@ class AppHeader extends StatelessWidget {
     final name = user?.name ?? 'Welcome';
     final role = (user?.role ?? '').replaceAll('_', ' ').toUpperCase();
     final initial = name.isNotEmpty ? name[0].toUpperCase() : 'V';
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final headerBg = isDark ? AppColors.cardDark : AppColors.card;
 
-    return Container(
-      padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.md, AppSpacing.lg, AppSpacing.md),
-      decoration: BoxDecoration(color: AppColors.card),
-      child: SafeArea(
-        bottom: false,
-        child: Row(
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle(
+        statusBarColor: headerBg,
+        statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+        statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
+      ),
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, AppSpacing.sm),
+        decoration: BoxDecoration(
+          color: headerBg,
+          border: Border(
+            bottom: BorderSide(
+              color: isDark ? const Color(0xFF334155) : AppColors.border,
+              width: 1,
+            ),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: SafeArea(
+          bottom: false,
+          child: Row(
           children: [
             GestureDetector(
               onTap: onAvatarTap,
@@ -101,8 +125,9 @@ class AppHeader extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _iconBtn(IconData icon, {VoidCallback? onTap}) {
     return InkResponse(

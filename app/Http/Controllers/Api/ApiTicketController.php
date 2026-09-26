@@ -49,7 +49,7 @@ class ApiTicketController extends Controller
     /**
      * Display ticket details.
      */
-    public function show(Request $request, int $id): JsonResponse
+    public function show(Request $request, $id): JsonResponse
     {
         $user = $request->user();
 
@@ -64,7 +64,14 @@ class ApiTicketController extends Controller
                 'notes.user:id,name,email,avatar,role',
                 'attachments',
             ])
-            ->findOrFail($id);
+            ->where(function ($q) use ($id) {
+                if (is_numeric($id)) {
+                    $q->where('id', (int) $id)->orWhere('ticket_key', (string) $id);
+                } else {
+                    $q->where('ticket_key', (string) $id);
+                }
+            })
+            ->firstOrFail();
 
         $messages = collect();
 

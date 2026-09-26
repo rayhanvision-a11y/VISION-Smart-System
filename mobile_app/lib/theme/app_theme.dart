@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../services/app_state.dart';
 
@@ -7,8 +8,8 @@ class AppColors {
   static const primary = Color(0xFF01B39C);      // Brand teal — buttons/main
   static const primaryDark = Color(0xFF32235F);  // Deep purple — gradient start
   static const primaryLight = Color(0xFF20D0BE); // Bright teal highlight
-  static const accent = Color(0xFFF59E0B);       // Warm amber — CTAs/highlights
-  static const accentSoft = Color(0xFFFEF3C7);
+  static const accent = Color(0xFF10B981);       // Brand emerald green #10b981
+  static const accentSoft = Color(0xFFD1FAE5);
   static const coral = Color(0xFFFF6B6B);
 
   static const success = Color(0xFF10B981);
@@ -36,6 +37,7 @@ class AppColors {
 
   static Color get bg => _dark ? bgDark : _bgLight;
   static Color get card => _dark ? cardDark : _cardLight;
+  static Color get surface => card;
   static Color get border => _dark ? _borderDark : _borderLight;
   static Color get divider => _dark ? _dividerDark : _dividerLight;
   static Color get textPrimary => _dark ? _textPrimaryDark : _textPrimaryLight;
@@ -85,11 +87,12 @@ class AppColors {
   static LinearGradient get goldGradient => const LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
-        colors: [Color(0xFFFBBF24), accent],
+        colors: [Color(0xFF34D399), accent],
       );
 }
 
 class AppRadius {
+  static const xs = 4.0;
   static const sm = 8.0;
   static const md = 12.0;
   static const lg = 16.0;
@@ -200,6 +203,14 @@ ThemeData buildDarkTheme() {
       backgroundColor: AppColors.cardDark,
       foregroundColor: Colors.white,
       elevation: 0,
+      scrolledUnderElevation: 0.5,
+      surfaceTintColor: Colors.transparent,
+      shadowColor: Colors.black38,
+      systemOverlayStyle: SystemUiOverlayStyle(
+        statusBarColor: AppColors.cardDark,
+        statusBarIconBrightness: Brightness.light,
+        statusBarBrightness: Brightness.dark,
+      ),
       centerTitle: false,
     ),
     cardTheme: CardThemeData(
@@ -231,6 +242,14 @@ ThemeData buildAppTheme() {
       backgroundColor: AppColors.card,
       foregroundColor: AppColors.textPrimary,
       elevation: 0,
+      scrolledUnderElevation: 0.5,
+      surfaceTintColor: Colors.transparent,
+      shadowColor: Colors.black12,
+      systemOverlayStyle: SystemUiOverlayStyle(
+        statusBarColor: AppColors.card,
+        statusBarIconBrightness: Brightness.dark,
+        statusBarBrightness: Brightness.light,
+      ),
       centerTitle: false,
       titleTextStyle: AppText.h3,
       iconTheme: IconThemeData(color: AppColors.textPrimary),

@@ -45,19 +45,52 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     if (ok) _load();
   }
 
-  Future<void> _openTicket(int notifId, int? ticketId) async {
+  Future<void> _openTicket(int notifId, int? ticketId, String? message) async {
     await ApiService.markNotificationRead(notifId);
     if (!mounted) return;
+
     if (ticketId != null) {
-      // Fetch full ticket details then push detail screen
-      final details = await ApiService.getTicketDetails(ticketId);
-      if (!mounted) return;
-      if (details?['ticket'] is TicketModel) {
-        Navigator.push(context, MaterialPageRoute(
-          builder: (_) => TicketDetailScreen(ticket: details!['ticket'] as TicketModel),
-        )).then((_) => _load());
-        return;
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => const Center(child: CircularProgressIndicator()),
+      );
+
+      Map<String, dynamic>? details;
+      try {
+        details = await ApiService.getTicketDetails(ticketId);
+      } catch (e) {
+        debugPrint('Error loading ticket details: $e');
       }
+
+      if (mounted) Navigator.pop(context); // Dismiss loading dialog
+      if (!mounted) return;
+
+      TicketModel ticketToOpen;
+      if (details != null && details['ticket'] is TicketModel) {
+        ticketToOpen = details['ticket'] as TicketModel;
+      } else {
+        // Fallback ticket model so user can always open the ticket
+        ticketToOpen = TicketModel(
+          id: ticketId,
+          ticketKey: '#$ticketId',
+          title: message ?? 'Ticket #$ticketId',
+          description: message ?? '',
+          priority: 'medium',
+          status: 'in_progress',
+        );
+      }
+
+      Navigator.push(context, MaterialPageRoute(
+        builder: (_) => TicketDetailScreen(ticket: ticketToOpen),
+      )).then((_) => _load());
+      return;
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message ?? AppState.instance.t('Notification marked as read', 'নোটিফিকেশন পঠিত হিসেবে চিহ্নিত করা হয়েছে')),
+        ),
+      );
     }
     _load();
   }
@@ -118,7 +151,17 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   Widget _notifTile(Map<String, dynamic> n) {
     final isRead = n['is_read'] == true;
-    final ticketId = n['ticket_id'] as int?;
+    int? ticketId;
+    if (n['ticket_id'] != null) {
+      ticketId = int.tryParse(n['ticket_id'].toString());
+    }
+    if (ticketId == null && n['message'] != null) {
+      final msg = n['message'].toString();
+      final match = RegExp(r'#(\d+)').firstMatch(msg);
+      if (match != null) {
+        ticketId = int.tryParse(match.group(1)!);
+      }
+    }
     final createdAt = n['created_at']?.toString();
     String timeText = '';
     if (createdAt != null) {
@@ -132,7 +175,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       borderRadius: BorderRadius.circular(AppRadius.md),
       child: InkWell(
         borderRadius: BorderRadius.circular(AppRadius.md),
-        onTap: () => _openTicket(n['id'] as int, ticketId),
+        onTap: () => _openTicket(n['id'] as int, ticketId, n['message']?.toString()),
         child: Container(
           padding: const EdgeInsets.all(AppSpacing.md),
           decoration: BoxDecoration(
@@ -168,7 +211,13 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     ),
                     if (timeText.isNotEmpty) ...[
                       const SizedBox(height: 4),
-                      Text(timeText, style: AppText.label.copyWith(fontSize: 10)),
+                      Row(
+                        children: [
+                          Icon(Icons.calendar_today_rounded, size: 10, color: AppColors.textMuted),
+                          const SizedBox(width: 4),
+                          Text(timeText, style: AppText.label.copyWith(fontSize: 10)),
+                        ],
+                      ),
                     ],
                   ],
                 ),

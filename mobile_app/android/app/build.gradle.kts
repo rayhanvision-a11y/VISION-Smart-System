@@ -6,12 +6,11 @@ plugins {
 
 android {
     namespace = "com.visiontech.vision_smart_system"
-    // Use a fixed compileSdk to avoid AAR metadata mismatches from transitive dependencies.
-    // Some plugins require a higher compileSdk than the default provided by the environment.
-    compileSdk = 35
+    compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
@@ -38,6 +37,10 @@ android {
             signingConfig = signingConfigs.getByName("debug")
         }
     }
+}
+
+dependencies {
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 }
 
 kotlin {

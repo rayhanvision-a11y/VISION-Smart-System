@@ -8,6 +8,7 @@ use App\Http\Controllers\CannedResponseController;
 use App\Http\Controllers\CustomMenuLinkController;
 use App\Http\Controllers\KbCategoryController;
 use App\Http\Controllers\LabelController;
+use App\Http\Controllers\LocationMapController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PopOfficeController;
 use App\Http\Controllers\ProfileAvatarController;
@@ -317,6 +318,12 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/roster', [RosterController::class, 'index'])->name('roster.index');
     Route::post('/roster/update-shift', [RosterController::class, 'updateShift'])->name('roster.update-shift');
     Route::post('/roster/users/{user}/team', [RosterController::class, 'updateTeam'])->name('roster.users.team');
+
+    // ── Live Staff & Technician Map ────────────────────────────────
+    Route::get('/live-map', [LocationMapController::class, 'index'])->name('map.index');
+    Route::get('/live-map/data', [LocationMapController::class, 'data'])->name('map.data');
+    Route::get('/live-map/history/{user}', [LocationMapController::class, 'history'])->name('map.history');
+    Route::post('/live-map/update-my-location', [LocationMapController::class, 'updateMyLocation'])->name('map.update-my-location');
 
     Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
     Route::get('/reports/pdf', [ReportController::class, 'downloadPdf'])->name('reports.pdf');

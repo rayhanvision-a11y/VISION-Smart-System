@@ -8,10 +8,13 @@
         <link rel="manifest" href="{{ asset('manifest.json') }}">
         <link rel="apple-touch-icon" href="{{ asset('images/default-avatar.svg') }}">
         <title>{{ config('app.name', 'ISP Ticket System') }}</title>
-        @php $siteFavicon = \App\Models\Setting::get('favicon_path'); @endphp
-        @if($siteFavicon)
-        <link rel="icon" href="{{ asset('storage/' . $siteFavicon) }}">
-        @endif
+        @php 
+            $siteFavicon = \App\Models\Setting::get('favicon_path'); 
+            $favUrl = $siteFavicon ? asset('storage/' . $siteFavicon) : asset('images/favicon.png');
+        @endphp
+        <link rel="icon" type="image/png" href="{{ $favUrl }}">
+        <link rel="shortcut icon" type="image/png" href="{{ $favUrl }}">
+        <link rel="apple-touch-icon" href="{{ $favUrl }}">
         <script>
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.register('/sw.js').catch(function() {});
@@ -586,6 +589,22 @@
                             <span class="sidebar-text truncate">{{ __('Shift Roster') }}</span>
                         </a>
 
+                        @if(auth()->user()?->isAdmin())
+                        <a href="{{ route('map.index') }}"
+                           :title="sidebarCollapsed ? @js(__('Live Staff Map')) : ''"
+                           class="flex items-center px-3 gap-3 py-2.5 mb-1 rounded-lg text-sm font-medium transition-colors
+                                  {{ request()->routeIs('map.*') ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800' }}">
+                            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            </svg>
+                            <span class="sidebar-text truncate flex-1">{{ __('Live Staff Map') }}</span>
+                            <span class="sidebar-text ml-auto inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500 text-white animate-pulse">
+                                LIVE
+                            </span>
+                        </a>
+                        @endif
+
                         <a href="{{ route('knowledge-base.index') }}"
                            :title="sidebarCollapsed ? @js(__('Knowledge Base')) : ''"
                            class="relative flex items-center px-3 gap-3 py-2.5 mb-1 rounded-lg text-sm font-medium transition-colors
@@ -818,7 +837,7 @@
                 </nav>
 
                 {{-- User Info --}}
-                <div class="sidebar-footer py-4 border-t border-slate-200 dark:border-slate-800/80 flex-shrink-0 bg-slate-50 dark:bg-slate-900/40 px-4">
+                <div class="sidebar-footer pt-4 pb-7 border-t border-slate-200 dark:border-slate-800/80 flex-shrink-0 bg-slate-50 dark:bg-slate-900/40 px-4">
                     <a href="{{ route('profile.edit') }}" class="sidebar-profile-link flex items-center mb-3 hover:opacity-80 transition-opacity gap-3" :title="sidebarCollapsed ? '{{ auth()->user()->name }}' : ''">
                         <img src="{{ auth()->user()->avatarUrl() }}" alt="{{ auth()->user()->name }}"
                              class="w-9 h-9 rounded-full object-cover flex-shrink-0 border border-slate-200 dark:border-slate-700 shadow-sm">
@@ -833,7 +852,7 @@
                             </span>
                         </div>
                     </a>
-                    <form method="POST" action="{{ route('logout') }}">
+                    <form method="POST" action="{{ route('logout') }}" class="mb-2">
                         @csrf
                         <button type="submit"
                                 class="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/50 hover:bg-rose-100 dark:hover:bg-rose-900/60 border border-rose-200 dark:border-rose-800/60 transition-colors shadow-sm"
@@ -1133,7 +1152,7 @@
                 </header>
 
                 {{-- Flash Messages + Main --}}
-                <main class="flex-1 p-3 sm:p-4 lg:p-6 dark:text-slate-200">
+                <main class="flex-1 {{ request()->routeIs('map.*') ? 'p-0' : 'p-3 sm:p-4 lg:p-6' }} dark:text-slate-200">
                     @if(session('success'))
                         <div x-data="{ show: true }" x-show="show"
                              class="mb-4 flex items-center justify-between bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-xl">

@@ -1,7 +1,10 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import '../models/ticket.dart';
+import '../screens/ticket_detail_screen.dart';
 import 'api_service.dart';
 
 class PushService {
@@ -44,11 +47,19 @@ class PushService {
         .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
         ?.createNotificationChannel(_channel);
 
-    // Request notification permission
+    // Request notification permission with sound, alert, badge
     final messaging = FirebaseMessaging.instance;
-    await messaging.requestPermission(alert: true, badge: true, sound: true);
+    await messaging.requestPermission(
+      alert: true,
+      announcement: true,
+      badge: true,
+      carPlay: false,
+      criticalAlert: false,
+      provisional: false,
+      sound: true,
+    );
 
-    // Foreground listener — show local notification
+    // Foreground listener — show local notification & trigger vibration
     FirebaseMessaging.onMessage.listen(_onForegroundMessage);
 
     // Tapped from background/terminated
@@ -63,6 +74,11 @@ class PushService {
   }
 
   Future<void> _onForegroundMessage(RemoteMessage m) async {
+    // Physical device vibration on notification arrival
+    try {
+      HapticFeedback.vibrate();
+    } catch (_) {}
+
     final n = m.notification;
     final title = n?.title ?? m.data['title']?.toString() ?? 'Ticket Update';
     final body = n?.body ?? m.data['body']?.toString() ?? '';
@@ -80,9 +96,14 @@ class PushService {
           priority: Priority.max,
           playSound: true,
           enableVibration: true,
+          vibrationPattern: Int64List.fromList([0, 400, 200, 400]),
           enableLights: true,
         ),
-        iOS: const DarwinNotificationDetails(),
+        iOS: const DarwinNotificationDetails(
+          presentAlert: true,
+          presentBadge: true,
+          presentSound: true,
+        ),
       ),
       payload: _payloadFromMessage(m),
     );
@@ -95,13 +116,36 @@ class PushService {
 
   void _handleFcmOpen(RemoteMessage m) => _handleTap(_payloadFromMessage(m));
 
-  void _handleTap(String? payload) {
+  void _handleTap(String? payload) async {
     if (payload == null || !payload.startsWith('ticket:')) return;
     final id = int.tryParse(payload.substring(7));
     if (id == null) return;
     final nav = navigatorKey.currentState;
     if (nav == null) return;
-    // Deep link: pop to root then push notifications screen (safer than direct detail since we don't have ticket data)
-    debugPrint('FCM tap → ticket $id (navigate handled at app level)');
+
+    debugPrint('Push tap → opening ticket $id');
+    try {
+      final details = await ApiService.getTicketDetails(id);
+      if (details != null && details['ticket'] is TicketModel) {
+        nav.push(MaterialPageRoute(
+          builder: (_) => TicketDetailScreen(ticket: details['ticket'] as TicketModel),
+        ));
+      } else {
+        nav.push(MaterialPageRoute(
+          builder: (_) => TicketDetailScreen(
+            ticket: TicketModel(
+              id: id,
+              ticketKey: '#$id',
+              title: 'Ticket #$id',
+              description: '',
+              priority: 'medium',
+              status: 'in_progress',
+            ),
+          ),
+        ));
+      }
+    } catch (e) {
+      debugPrint('Error navigating to ticket from push tap: $e');
+    }
   }
 }

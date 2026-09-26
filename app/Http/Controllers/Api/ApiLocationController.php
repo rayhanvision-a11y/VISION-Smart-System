@@ -75,13 +75,13 @@ class ApiLocationController extends Controller
     }
 
     /**
-     * Supervisor+ fetches all trackable staff locations.
+     * Admin/Super Admin fetches all trackable staff locations.
      */
     public function all(Request $request): JsonResponse
     {
         $actor = $request->user();
-        if (! $actor->isAdmin() && ! $actor->isSupervisorLevel() && ! $actor->isNoc()) {
-            return response()->json(['error' => 'Not authorized'], 403);
+        if (! $actor || ! $actor->isAdmin()) {
+            return response()->json(['error' => 'Not authorized. Only Admin & Super Admin can view staff locations.'], 403);
         }
 
         $roleFilter = $request->input('role');
@@ -91,7 +91,9 @@ class ApiLocationController extends Controller
             $query->where('role', $roleFilter);
         }
 
-        $users = $query->with('userLocation')->get()->filter(fn ($u) => $u->userLocation !== null);
+        $users = $query->with('userLocation')->get()->filter(function ($u) {
+            return $u->userLocation !== null && (float) $u->userLocation->latitude != 0 && (float) $u->userLocation->longitude != 0;
+        });
 
         $items = $users->map(function ($u) {
             $loc = $u->userLocation;
@@ -134,7 +136,7 @@ class ApiLocationController extends Controller
     public function history(Request $request, int $userId): JsonResponse
     {
         $actor = $request->user();
-        if (! $actor->isAdmin() && ! $actor->isSupervisorLevel()) {
+        if (! $actor || ! $actor->isAdmin()) {
             return response()->json(['error' => 'Not authorized'], 403);
         }
         $hours = min(72, (int) $request->input('hours', 24));

@@ -10,3 +10,4 @@ Artisan::command('inspire', function () {
 
 Schedule::command('app:check-sla-breaches')->everyFifteenMinutes();
 Schedule::command('backup:database')->dailyAt('23:59');
+Schedule::command('app:prune-location-history --days=7')->dailyAt('03:00');

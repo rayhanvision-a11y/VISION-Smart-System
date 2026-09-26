@@ -31,4 +31,7 @@ environment.php
 /scratch
 .claude/
 composer.phar
-
+mobile_app/build/
+mobile_app/.dart_tool/
+mobile_app/android/**/build/
+*.apk

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../services/api_service.dart';
 import '../services/storage_service.dart';
 import '../models/user.dart';
@@ -112,32 +113,33 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.bg,
-      body: RefreshIndicator(
-        onRefresh: _loadData,
-        color: AppColors.primary,
-        child: CustomScrollView(
-          slivers: [
-            SliverToBoxAdapter(
-              child: AppHeader(
-                user: _currentUser,
-                notificationCount: (stats['unread_notifications'] ?? 0) as int? ?? 0,
-                onSearchTap: () => _openTickets(null),
-                onNotificationTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const NotificationsScreen()),
-                ),
-                onAvatarTap: _openProfile,
-              ),
+      body: Column(
+        children: [
+          AppHeader(
+            user: _currentUser,
+            notificationCount: (stats['unread_notifications'] ?? 0) as int? ?? 0,
+            onSearchTap: () => _openTickets(null),
+            onNotificationTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const NotificationsScreen()),
             ),
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, AppSpacing.xxl),
-              sliver: SliverList(
-                delegate: SliverChildListDelegate([
-                  _greetingLine(),
-                  const SizedBox(height: AppSpacing.md),
-                  _heroCard(totalActive, resolved, total),
-                  const SizedBox(height: AppSpacing.lg),
-                  _quickActions(),
+            onAvatarTap: _openProfile,
+          ),
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: _loadData,
+              color: AppColors.primary,
+              child: CustomScrollView(
+                slivers: [
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, AppSpacing.xxl),
+                    sliver: SliverList(
+                      delegate: SliverChildListDelegate([
+                        _greetingLine(),
+                        const SizedBox(height: AppSpacing.md),
+                        _heroCard(totalActive, resolved, total),
+                        const SizedBox(height: AppSpacing.lg),
+                        _quickActions(),
                   const SizedBox(height: AppSpacing.md),
                   SectionHeader(title: AppState.instance.t('Ticket Overview', 'টিকিট সংক্ষিপ্ত')),
                   _isLoading
@@ -173,20 +175,54 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ],
         ),
       ),
+    ),
+    ],
+    ),
     );
   }
 
   Widget _greetingLine() {
     final name = _currentUser?.name.split(' ').first ?? '';
+    final now = DateTime.now();
+    final dateStr = DateFormat('EEE, d MMM').format(now);
     return Padding(
       padding: const EdgeInsets.only(top: 4),
       child: Row(
         children: [
-          Text(AppState.instance.isBengali
-                  ? 'শুভেচ্ছা${name.isNotEmpty ? ", $name" : ""} ✨'
-                  : '$_greeting${name.isNotEmpty ? ", $name" : ""} ✨',
-              style: AppText.bodySm.copyWith(color: AppColors.textSecondary)),
-          const Spacer(),
+          Expanded(
+            child: Wrap(
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 8,
+              runSpacing: 4,
+              children: [
+                Text(
+                  AppState.instance.isBengali
+                      ? 'শুভেচ্ছা${name.isNotEmpty ? ", $name" : ""} ✨'
+                      : '$_greeting${name.isNotEmpty ? ", $name" : ""} ✨',
+                  style: AppText.bodySm.copyWith(color: AppColors.textSecondary),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(AppRadius.xs),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.calendar_today_rounded, size: 11, color: AppColors.primary),
+                      const SizedBox(width: 4),
+                      Text(
+                        dateStr,
+                        style: AppText.label.copyWith(fontSize: 10, color: AppColors.textSecondary),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
             decoration: BoxDecoration(
@@ -196,13 +232,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Container(
-                  width: 6, height: 6,
-                  decoration: const BoxDecoration(color: AppColors.success, shape: BoxShape.circle),
+                const Icon(Icons.signal_cellular_alt_rounded, size: 12, color: AppColors.success),
+                const SizedBox(width: 4),
+                Text(
+                  AppState.instance.t('Online', 'অনলাইন'),
+                  style: AppText.label.copyWith(color: AppColors.success, fontSize: 10),
                 ),
-                const SizedBox(width: 5),
-                Text(AppState.instance.t('System Online', 'সিস্টেম চালু'),
-                    style: AppText.label.copyWith(color: AppColors.success, fontSize: 10)),
               ],
             ),
           ),
@@ -292,7 +327,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   height: 100,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: AppColors.accent.withOpacity(0.15),
+                    color: const Color(0xFFFBBF24).withOpacity(0.12),
                   ),
                 ),
               ),
@@ -307,7 +342,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           color: Colors.white.withOpacity(0.15),
                           borderRadius: BorderRadius.circular(AppRadius.md),
                         ),
-                        child: const Icon(Icons.dashboard_rounded, color: AppColors.accent, size: 18),
+                        child: const Icon(Icons.dashboard_rounded, color: Color(0xFFFBBF24), size: 18),
                       ),
                       const SizedBox(width: AppSpacing.md),
                       Text('Live Overview',
@@ -316,11 +351,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                         decoration: BoxDecoration(
-                          color: AppColors.accent.withOpacity(0.2),
+                          color: const Color(0xFFFBBF24).withOpacity(0.2),
                           borderRadius: BorderRadius.circular(AppRadius.pill),
                         ),
                         child: Text('$resolutionRate% resolved',
-                            style: AppText.label.copyWith(color: AppColors.accent, fontSize: 10)),
+                            style: AppText.label.copyWith(color: const Color(0xFFFBBF24), fontSize: 10)),
                       ),
                     ],
                   ),
@@ -370,7 +405,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 style: AppText.label.copyWith(color: Colors.white.withOpacity(0.8))),
             const Spacer(),
             Text('${(ratio * 100).toStringAsFixed(0)}%',
-                style: AppText.label.copyWith(color: AppColors.accent)),
+                style: AppText.label.copyWith(color: const Color(0xFFFBBF24))),
           ],
         ),
         const SizedBox(height: 6),
@@ -380,7 +415,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             value: ratio.clamp(0.0, 1.0),
             minHeight: 6,
             backgroundColor: Colors.white.withOpacity(0.15),
-            valueColor: const AlwaysStoppedAnimation(AppColors.accent),
+            valueColor: const AlwaysStoppedAnimation(Color(0xFFFBBF24)),
           ),
         ),
       ],
@@ -413,6 +448,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget _quickActions() {
     final role = _currentUser?.role.toLowerCase() ?? '';
     final isSupervisorish = ['supervisor', 'senior_supervisor', 'admin', 'super_admin', 'noc'].contains(role);
+    final isAdmin = ['admin', 'super_admin'].contains(role);
     final items = [
       (Icons.add_circle_rounded, AppState.instance.t('New\nTicket', 'নতুন\nটিকিট'), AppColors.accent, _openCreate),
       (Icons.person_pin_circle_rounded, AppState.instance.t('My\nTickets', 'আমার\nটিকিট'), AppColors.info,
@@ -422,7 +458,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AreaAssignScreen())))
       else
         (Icons.groups_2_rounded, AppState.instance.t('Team\nRoster', 'টিম\nরোস্টার'), AppColors.success, _openRoster),
-      if (isSupervisorish)
+      if (isAdmin)
         (Icons.map_rounded, AppState.instance.t('Live\nMap', 'লাইভ\nম্যাপ'), AppColors.info,
             () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LiveMapScreen())))
       else

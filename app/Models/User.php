@@ -181,10 +181,13 @@ class User extends Authenticatable
                 return $avatar;
             }
             if (file_exists(public_path('storage/'.$avatar))) {
-                return asset('storage/'.$avatar);
+                return url('storage/'.$avatar);
             }
             if (file_exists(public_path($avatar))) {
-                return asset($avatar);
+                return url($avatar);
+            }
+            if (\Storage::disk('public')->exists($avatar)) {
+                return url('storage/'.$avatar);
             }
         }
 
