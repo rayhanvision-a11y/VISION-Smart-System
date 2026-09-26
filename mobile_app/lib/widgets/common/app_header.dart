@@ -64,7 +64,7 @@ class AppHeader extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text('Hi, ${name.split(' ').first} 👋',
+                  Text(name,
                       style: AppText.h3, maxLines: 1, overflow: TextOverflow.ellipsis),
                   if (role.isNotEmpty)
                     Text(role, style: AppText.label.copyWith(color: AppColors.primary)),

@@ -29,7 +29,6 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
   List<String> _areas = [];
 
   List<dynamic> _categoriesApi = [];
-  List<dynamic> _popOffices = [];
   List<dynamic> _staff = [];
 
   final Map<String, String> _fallbackCategories = {
@@ -62,9 +61,8 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
     ]);
     if (!mounted) return;
     setState(() {
-      _categoriesApi = results[0] as List;
-      _popOffices = results[1] as List;
-      _staff = results[2] as List;
+      _categoriesApi = results[0];
+      _staff = results[2];
       _areas = (results[3] as List).map((e) => e.toString()).toList();
       _isLoadingMeta = false;
     });

@@ -11,7 +11,6 @@ import '../theme/app_theme.dart';
 import '../widgets/common/empty_state.dart';
 import '../widgets/common/skeleton.dart';
 import '../widgets/common/status_pill.dart';
-import 'create_ticket_screen.dart';
 import 'ticket_detail_screen.dart';
 
 class TicketListScreen extends StatefulWidget {

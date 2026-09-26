@@ -1051,24 +1051,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> with SingleTick
     );
   }
 
-  Widget _buildMetaChip(IconData icon, String text, {Color? color}) {
-    final c = color ?? const Color(0xFF64748B);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: c.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 13, color: c),
-          const SizedBox(width: 4),
-          Text(text, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: c)),
-        ],
-      ),
-    );
-  }
+
 
   Widget _metaTile(IconData icon, String label, String value, Color accent) {
     return Container(

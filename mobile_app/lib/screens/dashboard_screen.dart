@@ -29,8 +29,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   bool _isLoading = true;
   UserModel? _currentUser;
   Map<String, dynamic>? _dashboardData;
-  bool _showRecent = true;
-  bool _showDuty = true;
+  bool _showRecent = false;
+  bool _showDuty = false;
 
   @override
   void initState() {
@@ -500,12 +500,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
     ];
 
     return GridView.count(
-      crossAxisCount: 2,
+      crossAxisCount: 3,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      crossAxisSpacing: 10,
-      mainAxisSpacing: 10,
-      childAspectRatio: 1.75,
+      crossAxisSpacing: 8,
+      mainAxisSpacing: 8,
+      childAspectRatio: 1.05,
       children: items.map((it) => _statCard(it)).toList(),
     );
   }
@@ -525,31 +525,31 @@ class _DashboardScreenState extends State<DashboardScreen> {
             boxShadow: AppShadows.card,
           ),
           child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.md),
+            padding: const EdgeInsets.all(10),
             child: Stack(
               children: [
                 Positioned(
-                  right: -8,
-                  bottom: -8,
-                  child: Icon(it.icon, size: 60, color: it.color.withOpacity(0.06)),
+                  right: -6,
+                  bottom: -6,
+                  child: Icon(it.icon, size: 44, color: it.color.withOpacity(0.06)),
                 ),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Container(
-                      padding: const EdgeInsets.all(7),
+                      padding: const EdgeInsets.all(5),
                       decoration: BoxDecoration(
                         color: it.color.withOpacity(0.12),
                         borderRadius: BorderRadius.circular(AppRadius.sm),
                       ),
-                      child: Icon(it.icon, size: 16, color: it.color),
+                      child: Icon(it.icon, size: 13, color: it.color),
                     ),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(it.value, style: AppText.h1.copyWith(color: it.color, fontSize: 24)),
-                        Text(it.label, style: AppText.caption),
+                        Text(it.value, style: AppText.h1.copyWith(color: it.color, fontSize: 20)),
+                        Text(it.label, style: AppText.caption.copyWith(fontSize: 10), maxLines: 1, overflow: TextOverflow.ellipsis),
                       ],
                     ),
                   ],
@@ -564,12 +564,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _skeletonStatsGrid() {
     return GridView.count(
-      crossAxisCount: 2,
+      crossAxisCount: 3,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      crossAxisSpacing: 10,
-      mainAxisSpacing: 10,
-      childAspectRatio: 1.75,
+      crossAxisSpacing: 8,
+      mainAxisSpacing: 8,
+      childAspectRatio: 1.05,
       children: List.generate(6, (_) => const SkeletonCard(height: 90)),
     );
   }

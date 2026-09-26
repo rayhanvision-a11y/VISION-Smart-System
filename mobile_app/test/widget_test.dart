@@ -5,7 +5,6 @@
 // gestures. You can also use WidgetTester to find child widgets in the widget
 // tree, read text, and verify that the values of widget properties are correct.
 
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:vision_smart_system/main.dart';
@@ -14,5 +13,6 @@ void main() {
   testWidgets('Vision app loads smoke test', (WidgetTester tester) async {
     await tester.pumpWidget(const VisionSmartApp());
     expect(find.byType(VisionSmartApp), findsOneWidget);
+    await tester.pump(const Duration(seconds: 2));
   });
 }
