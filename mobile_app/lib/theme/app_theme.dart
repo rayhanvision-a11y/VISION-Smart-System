@@ -3,9 +3,9 @@ import 'package:google_fonts/google_fonts.dart';
 import '../services/app_state.dart';
 
 class AppColors {
-  // VISION Technologies Limited brand colors (from company leaflet)
-  static const primary = Color(0xFF02AF99);      // Brand teal — buttons/main
-  static const primaryDark = Color(0xFF302760);  // Deep purple — gradient start
+  // VISION Technologies Limited brand colors
+  static const primary = Color(0xFF01B39C);      // Brand teal — buttons/main
+  static const primaryDark = Color(0xFF32235F);  // Deep purple — gradient start
   static const primaryLight = Color(0xFF20D0BE); // Bright teal highlight
   static const accent = Color(0xFFF59E0B);       // Warm amber — CTAs/highlights
   static const accentSoft = Color(0xFFFEF3C7);
@@ -78,7 +78,8 @@ class AppColors {
   static LinearGradient get heroGradient => const LinearGradient(
         begin: Alignment.bottomLeft,   // 45° = bottom-left → top-right
         end: Alignment.topRight,
-        colors: [Color(0xFF302760), Color(0xFF02AF99)],
+        colors: [Color(0xFF32235F), Color(0xFF01B39C)],
+        stops: [0.6, 1.0],
       );
 
   static LinearGradient get goldGradient => const LinearGradient(
