@@ -290,3 +290,5 @@ ThemeData buildAppTheme() {
     ),
   );
 }
+
+// Build trigger: 20260926-131821
