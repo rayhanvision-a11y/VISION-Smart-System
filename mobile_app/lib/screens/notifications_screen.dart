@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../services/api_service.dart';
 import '../services/app_state.dart';
@@ -175,7 +175,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       borderRadius: BorderRadius.circular(AppRadius.md),
       child: InkWell(
         borderRadius: BorderRadius.circular(AppRadius.md),
-        onTap: () => _openTicket(n['id'] as int, ticketId, n['message']?.toString()),
+        onTap: () { final nid = int.tryParse(n['id']?.toString() ?? '') ?? 0; _openTicket(nid, ticketId, n['message']?.toString()); },
         child: Container(
           padding: const EdgeInsets.all(AppSpacing.md),
           decoration: BoxDecoration(
@@ -233,3 +233,4 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     );
   }
 }
+

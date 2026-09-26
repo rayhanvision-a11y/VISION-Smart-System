@@ -1,3 +1,4 @@
+﻿import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -47,30 +48,36 @@ class PushService {
         .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
         ?.createNotificationChannel(_channel);
 
-    // Request notification permission with sound, alert, badge
-    final messaging = FirebaseMessaging.instance;
-    await messaging.requestPermission(
-      alert: true,
-      announcement: true,
-      badge: true,
-      carPlay: false,
-      criticalAlert: false,
-      provisional: false,
-      sound: true,
-    );
+    // Request notification permission with sound, alert, badge (safe if Firebase ready)
+    try {
+      if (Firebase.apps.isNotEmpty) {
+        final messaging = FirebaseMessaging.instance;
+        await messaging.requestPermission(
+          alert: true,
+          announcement: true,
+          badge: true,
+          carPlay: false,
+          criticalAlert: false,
+          provisional: false,
+          sound: true,
+        );
 
-    // Foreground listener — show local notification & trigger vibration
-    FirebaseMessaging.onMessage.listen(_onForegroundMessage);
+        // Foreground listener — show local notification & trigger vibration
+        FirebaseMessaging.onMessage.listen(_onForegroundMessage);
 
-    // Tapped from background/terminated
-    FirebaseMessaging.onMessageOpenedApp.listen((m) => _handleFcmOpen(m));
-    final initialMsg = await messaging.getInitialMessage();
-    if (initialMsg != null) _handleFcmOpen(initialMsg);
+        // Tapped from background/terminated
+        FirebaseMessaging.onMessageOpenedApp.listen((m) => _handleFcmOpen(m));
+        final initialMsg = await messaging.getInitialMessage();
+        if (initialMsg != null) _handleFcmOpen(initialMsg);
 
-    // Send / refresh token
-    final token = await messaging.getToken();
-    if (token != null) await ApiService.updateFcmToken(token);
-    messaging.onTokenRefresh.listen((t) => ApiService.updateFcmToken(t));
+        // Send / refresh token
+        final token = await messaging.getToken();
+        if (token != null) await ApiService.updateFcmToken(token);
+        messaging.onTokenRefresh.listen((t) => ApiService.updateFcmToken(t));
+      }
+    } catch (e) {
+      debugPrint('FCM init safe note: $e');
+    }
   }
 
   Future<void> _onForegroundMessage(RemoteMessage m) async {
@@ -149,3 +156,4 @@ class PushService {
     }
   }
 }
+

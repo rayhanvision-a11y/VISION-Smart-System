@@ -1,4 +1,4 @@
-import 'package:firebase_database/firebase_database.dart';
+﻿import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
@@ -40,6 +40,11 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> with SingleTick
   List<dynamic> _mentionCandidates = [];
   List<dynamic> _allStaff = [];
   int _mentionAnchor = -1;
+
+  /// Built once in initState. Never call into Firebase from build(): if Firebase
+  /// is not initialised the call throws, and a throw inside build() renders the
+  /// whole screen blank in release builds.
+  Stream<DatabaseEvent> _messagesStream = const Stream<DatabaseEvent>.empty();
 
   void _onMessageChanged(String value) {
     final selection = _messageController.selection;
@@ -102,6 +107,11 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> with SingleTick
     _ticket = widget.ticket;
     _user = widget.currentUser;
     _activityTabController = TabController(length: 3, vsync: this);
+    try {
+      _messagesStream = FirebaseRealtimeService.getTicketMessagesStream(_ticket.id);
+    } catch (e) {
+      debugPrint('Ticket #${_ticket.id} realtime stream unavailable: $e');
+    }
     if (_user == null) {
       _loadCurrentUser();
     }
@@ -557,7 +567,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> with SingleTick
                 gradient: AppColors.heroGradient,
                 borderRadius: BorderRadius.circular(6),
               ),
-              child: Text('#${_ticket.ticketKey}',
+              child: Text(_ticket.ticketKey.startsWith('#') ? _ticket.ticketKey : '#${_ticket.ticketKey}',
                   style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.white)),
             ),
             const SizedBox(width: 8),
@@ -747,7 +757,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> with SingleTick
           // Real-time Chat Messages Stream (API + Firebase Fallback)
           Expanded(
             child: StreamBuilder<DatabaseEvent>(
-              stream: FirebaseRealtimeService.getTicketMessagesStream(_ticket.id),
+              stream: _messagesStream,
               builder: (context, snapshot) {
                 if (snapshot.hasError) {
                   debugPrint('Firebase stream error: ${snapshot.error}');
@@ -1131,3 +1141,4 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> with SingleTick
     );
   }
 }
+
