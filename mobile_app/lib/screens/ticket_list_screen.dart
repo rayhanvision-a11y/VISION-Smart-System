@@ -160,11 +160,11 @@ class _TicketListScreenState extends State<TicketListScreen> {
   Widget _filterChips() {
     final filters = [
       ('all', 'All', Icons.apps_rounded),
-      ('my_tickets', 'Mine', Icons.person_pin_rounded),
-      ('in_progress', 'Active', Icons.autorenew_rounded),
+      ('my_tickets', 'My Tickets', Icons.person_pin_rounded),
+      ('in_progress', 'In Progress', Icons.autorenew_rounded),
       ('pending', 'Pending', Icons.hourglass_top_rounded),
-      ('waiting_for_customer_feedback', 'Waiting', Icons.forum_rounded),
-      ('resolved', 'Done', Icons.check_circle_rounded),
+      ('waiting_for_customer_feedback', 'Waiting Feedback', Icons.forum_rounded),
+      ('resolved', 'Resolved', Icons.check_circle_rounded),
     ];
     return SizedBox(
       height: 40,

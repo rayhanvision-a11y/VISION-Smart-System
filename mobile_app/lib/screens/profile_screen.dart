@@ -4,6 +4,7 @@ import '../models/user.dart';
 import '../services/api_service.dart';
 import '../services/storage_service.dart';
 import '../services/app_state.dart';
+import '../services/location_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common/primary_button.dart';
 import 'login_screen.dart';
@@ -41,6 +42,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       setState(() {
         _user = user;
         _serverUrl = url;
+        _currentShift = user?.currentShift;
         _isLoading = false;
       });
     }
@@ -190,6 +192,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             activeColor: AppColors.primary,
                             onChanged: (_) async {
                               await AppState.instance.toggleTheme();
+                              if (mounted) setState(() {});
+                            },
+                          ),
+                        ),
+                        _menuItem(
+                          Icons.my_location_rounded,
+                          AppState.instance.t('Share Live Location', 'লাইভ লোকেশন শেয়ার'),
+                          AppColors.success,
+                          () async {
+                            await LocationService.instance.setSharing(!LocationService.instance.isSharing);
+                            if (mounted) setState(() {});
+                          },
+                          trailing: Switch(
+                            value: LocationService.instance.isSharing,
+                            activeColor: AppColors.success,
+                            onChanged: (v) async {
+                              await LocationService.instance.setSharing(v);
                               if (mounted) setState(() {});
                             },
                           ),
@@ -408,15 +427,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
       _isShiftLoading = false;
       if (res['success'] == true) {
         _currentShift = res['current_shift']?.toString();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${AppState.instance.t('Duty updated:', 'ডিউটি:')} ${_shiftLabel(_currentShift)}'),
-            backgroundColor: AppColors.success,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
       }
     });
+    if (res['success'] == true) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${AppState.instance.t('Duty updated:', 'ডিউটি:')} ${_shiftLabel(_currentShift)}'),
+          backgroundColor: AppColors.success,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(res['message']?.toString() ??
+              AppState.instance.t('Failed. Server may need update.', 'ব্যর্থ। সার্ভার আপডেট দরকার।')),
+          backgroundColor: AppColors.danger,
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 4),
+        ),
+      );
+    }
   }
 
   String _shiftLabel(String? s) {

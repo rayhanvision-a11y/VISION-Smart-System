@@ -83,6 +83,8 @@ class ApiAuthController extends Controller
                 'phone' => $user->phone,
                 'avatar' => $user->avatar,
                 'avatar_url' => $user->avatarUrl(),
+                'current_shift' => $user->current_shift,
+                'is_on_duty' => $user->isOnDuty(),
                 'locale' => $user->locale,
                 'fcm_token' => $user->fcm_token,
             ],

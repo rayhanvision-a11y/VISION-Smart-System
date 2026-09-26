@@ -35,6 +35,13 @@ Route::middleware('auth:sanctum')->group(function () {
     // Team Roster & Duty Shifts
     Route::get('/roster', [ApiRosterController::class, 'index']);
     Route::post('/user/shift', [ApiRosterController::class, 'updateOwnShift']);
+    Route::post('/roster/user/{id}/shift', [ApiRosterController::class, 'updateUserShift']);
+
+    // Live technician location tracking
+    Route::post('/user/location', [\App\Http\Controllers\Api\ApiLocationController::class, 'updateOwn']);
+    Route::post('/user/location/toggle', [\App\Http\Controllers\Api\ApiLocationController::class, 'toggleSharing']);
+    Route::get('/locations/all', [\App\Http\Controllers\Api\ApiLocationController::class, 'all']);
+    Route::get('/locations/user/{id}/history', [\App\Http\Controllers\Api\ApiLocationController::class, 'history']);
 
     // Notifications
     Route::get('/notifications', [\App\Http\Controllers\Api\ApiNotificationController::class, 'index']);

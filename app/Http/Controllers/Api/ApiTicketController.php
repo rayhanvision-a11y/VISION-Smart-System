@@ -354,7 +354,21 @@ class ApiTicketController extends Controller
             ->distinct()->orderBy('area')->pluck('area')->all();
         $merged = collect(array_unique(array_merge($names, $legacy)))->values();
 
-        return response()->json(['areas' => $merged]);
+        // Active-ticket counts per area (not resolved/closed)
+        $counts = Ticket::whereNotNull('area')->where('area', '!=', '')
+            ->whereNotIn('status', ['resolved', 'closed'])
+            ->select('area', \DB::raw('count(*) as c'))
+            ->groupBy('area')->pluck('c', 'area');
+
+        $withCounts = $merged->map(fn ($name) => [
+            'name' => $name,
+            'active_count' => (int) ($counts[$name] ?? 0),
+        ])->sortByDesc('active_count')->values();
+
+        return response()->json([
+            'areas' => $merged, // back-compat
+            'areas_with_counts' => $withCounts,
+        ]);
     }
 
     /**

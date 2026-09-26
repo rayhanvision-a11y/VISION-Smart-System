@@ -17,7 +17,7 @@ class AreaAssignScreen extends StatefulWidget {
 
 class _AreaAssignScreenState extends State<AreaAssignScreen> {
   final _searchController = TextEditingController();
-  List<String> _allAreas = [];
+  List<Map<String, dynamic>> _allAreas = [];
   String? _selectedArea;
   bool _isLoadingAreas = true;
   bool _isLoadingTickets = false;
@@ -38,7 +38,7 @@ class _AreaAssignScreenState extends State<AreaAssignScreen> {
   }
 
   Future<void> _loadAreas() async {
-    final areas = await ApiService.getAreas();
+    final areas = await ApiService.getAreasWithCounts();
     if (!mounted) return;
     setState(() {
       _allAreas = areas;
@@ -200,14 +200,11 @@ class _AreaAssignScreenState extends State<AreaAssignScreen> {
       ),
       body: Column(
         children: [
-          _areaSearchSection(),
+          _searchHeader(),
+          if (_selectedArea != null) _selectedAreaBar(),
           Expanded(
             child: _selectedArea == null
-                ? EmptyState(
-                    icon: Icons.place_rounded,
-                    title: AppState.instance.t('Select an area', 'একটি এলাকা নির্বাচন করুন'),
-                    subtitle: AppState.instance.t('Choose an area to see tickets and bulk-assign', 'এলাকা বাছুন → টিকিট দেখুন → নিয়োগ দিন'),
-                  )
+                ? _areaListView()
                 : _ticketList(),
           ),
           if (_selectedIds.isNotEmpty) _actionBar(),
@@ -216,83 +213,175 @@ class _AreaAssignScreenState extends State<AreaAssignScreen> {
     );
   }
 
-  Widget _areaSearchSection() {
+  Widget _searchHeader() {
     return Container(
       color: AppColors.card,
       padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.md, AppSpacing.lg, AppSpacing.md),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: TextField(
+        controller: _searchController,
+        decoration: InputDecoration(
+          hintText: AppState.instance.t('Search area…', 'এলাকা খুঁজুন…'),
+          prefixIcon: const Icon(Icons.search_rounded, size: 20),
+          suffixIcon: _searchController.text.isNotEmpty
+              ? IconButton(
+                  icon: const Icon(Icons.close_rounded, size: 18),
+                  onPressed: () {
+                    _searchController.clear();
+                    setState(() {});
+                  },
+                )
+              : null,
+        ),
+        onChanged: (_) => setState(() {}),
+      ),
+    );
+  }
+
+  Widget _selectedAreaBar() {
+    return Container(
+      color: AppColors.primary.withOpacity(0.06),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: 10),
+      child: Row(
         children: [
-          TextField(
-            controller: _searchController,
-            decoration: InputDecoration(
-              hintText: AppState.instance.t('Type area name…', 'এলাকার নাম লিখুন…'),
-              prefixIcon: const Icon(Icons.search_rounded, size: 20),
-              suffixIcon: _searchController.text.isNotEmpty
-                  ? IconButton(
-                      icon: const Icon(Icons.close_rounded, size: 18),
-                      onPressed: () {
-                        _searchController.clear();
-                        setState(() {});
-                      },
-                    )
-                  : null,
+          const Icon(Icons.place_rounded, color: AppColors.primary, size: 18),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              _selectedArea!,
+              style: AppText.body.copyWith(color: AppColors.primary, fontWeight: FontWeight.w700),
             ),
-            onChanged: (v) => setState(() {}),
           ),
-          const SizedBox(height: AppSpacing.sm),
-          if (_isLoadingAreas)
-            const Skeleton(width: 200, height: 12)
-          else
-            SizedBox(
-              height: 40,
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                children: _filteredAreas().map((a) {
-                  final selected = _selectedArea == a;
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 6),
-                    child: Material(
-                      color: selected ? AppColors.primary : AppColors.bg,
-                      borderRadius: BorderRadius.circular(AppRadius.pill),
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(AppRadius.pill),
-                        onTap: () => _loadTicketsForArea(a),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(AppRadius.pill),
-                            border: Border.all(color: selected ? AppColors.primary : AppColors.border),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.place_rounded, size: 14,
-                                  color: selected ? Colors.white : AppColors.primary),
-                              const SizedBox(width: 4),
-                              Text(a,
-                                  style: AppText.caption.copyWith(
-                                    color: selected ? Colors.white : AppColors.textPrimary,
-                                    fontWeight: FontWeight.w600,
-                                  )),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  );
-                }).toList(),
-              ),
-            ),
+          TextButton.icon(
+            onPressed: () => setState(() {
+              _selectedArea = null;
+              _tickets = [];
+              _selectedIds.clear();
+            }),
+            icon: const Icon(Icons.arrow_back_rounded, size: 16),
+            label: Text(AppState.instance.t('Areas', 'এলাকা')),
+          ),
         ],
       ),
     );
   }
 
-  List<String> _filteredAreas() {
+  Widget _areaListView() {
+    if (_isLoadingAreas) {
+      return ListView.separated(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        itemCount: 6,
+        separatorBuilder: (_, __) => const SizedBox(height: 8),
+        itemBuilder: (_, __) => const SkeletonCard(height: 64),
+      );
+    }
+    final filtered = _filteredAreas();
+    if (filtered.isEmpty) {
+      return EmptyState(
+        icon: Icons.place_outlined,
+        title: AppState.instance.t('No areas found', 'কোনো এলাকা নেই'),
+        subtitle: AppState.instance.t('Add areas from Settings → Manage Areas', 'সেটিংস → Manage Areas এ যোগ করুন'),
+      );
+    }
+    return RefreshIndicator(
+      color: AppColors.primary,
+      onRefresh: _loadAreas,
+      child: ListView.separated(
+        padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.md, AppSpacing.lg, AppSpacing.xxl),
+        itemCount: filtered.length,
+        separatorBuilder: (_, __) => const SizedBox(height: 8),
+        itemBuilder: (_, i) => _areaCard(filtered[i], i),
+      ),
+    );
+  }
+
+  Widget _areaCard(Map<String, dynamic> a, int rank) {
+    final name = a['name']?.toString() ?? '—';
+    final count = (a['active_count'] as int?) ?? 0;
+    final isTop = rank == 0 && count > 0;
+    final busy = count > 10;
+    final medium = count > 3 && count <= 10;
+    final Color badgeColor = count == 0
+        ? AppColors.textMuted
+        : busy
+            ? AppColors.danger
+            : medium
+                ? AppColors.warning
+                : AppColors.success;
+
+    return Material(
+      color: isTop ? AppColors.accent.withOpacity(0.08) : AppColors.card,
+      borderRadius: BorderRadius.circular(AppRadius.lg),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        onTap: () => _loadTicketsForArea(name),
+        child: Container(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            border: Border.all(color: isTop ? AppColors.accent : AppColors.border),
+            boxShadow: AppShadows.card,
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 44, height: 44,
+                decoration: BoxDecoration(
+                  gradient: isTop ? AppColors.goldGradient : null,
+                  color: isTop ? null : AppColors.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                ),
+                child: Icon(Icons.place_rounded, size: 22, color: isTop ? Colors.white : AppColors.primary),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        if (isTop) ...[
+                          const Text('🔥 ', style: TextStyle(fontSize: 14)),
+                        ],
+                        Flexible(
+                          child: Text(name,
+                              style: AppText.body.copyWith(fontWeight: FontWeight.w700),
+                              maxLines: 1, overflow: TextOverflow.ellipsis),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      count == 0
+                          ? AppState.instance.t('No active tickets', 'কোনো সক্রিয় টিকিট নেই')
+                          : '$count ${AppState.instance.t('active tickets', 'সক্রিয় টিকিট')}',
+                      style: AppText.caption.copyWith(fontSize: 11),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: badgeColor.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                ),
+                child: Text('$count',
+                    style: AppText.h3.copyWith(color: badgeColor, fontSize: 16)),
+              ),
+              const SizedBox(width: 4),
+              Icon(Icons.chevron_right_rounded, color: AppColors.textMuted),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  List<Map<String, dynamic>> _filteredAreas() {
     final q = _searchController.text.trim().toLowerCase();
     if (q.isEmpty) return _allAreas;
-    return _allAreas.where((a) => a.toLowerCase().contains(q)).toList();
+    return _allAreas.where((a) =>
+      (a['name']?.toString().toLowerCase() ?? '').contains(q)).toList();
   }
 
   Widget _ticketList() {

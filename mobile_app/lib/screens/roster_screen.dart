@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import '../models/user.dart';
 import '../services/api_service.dart';
 import '../services/app_state.dart';
+import '../services/storage_service.dart';
 import '../theme/app_theme.dart';
 
 class RosterScreen extends StatefulWidget {
@@ -12,6 +14,7 @@ class RosterScreen extends StatefulWidget {
 
 class _RosterScreenState extends State<RosterScreen> {
   bool _isLoading = true;
+  UserModel? _currentUser;
   List<dynamic> _allRoster = [];
   Map<String, dynamic> _teamsMap = {};
   String _selectedTeam = 'all';
@@ -23,8 +26,15 @@ class _RosterScreenState extends State<RosterScreen> {
     _loadRoster();
   }
 
+  bool get _canChangeShift {
+    if (_currentUser == null) return false;
+    final r = _currentUser!.role.toLowerCase();
+    return r == 'admin' || r == 'super_admin' || r == 'supervisor' || r == 'senior_supervisor';
+  }
+
   Future<void> _loadRoster() async {
     setState(() => _isLoading = true);
+    _currentUser = await StorageService.getUser();
     final data = await ApiService.getRoster();
     if (mounted) {
       final rosterList = data?['roster'] as List? ?? [];
@@ -171,9 +181,9 @@ class _RosterScreenState extends State<RosterScreen> {
   Widget _buildFilterChip(String label, String key) {
     final isSelected = _selectedTeam == key;
     return ChoiceChip(
-      label: Text(label, style: TextStyle(color: isSelected ? Colors.white : const Color(0xFF334155), fontSize: 12, fontWeight: FontWeight.w600)),
+      label: Text(label, style: TextStyle(color: isSelected ? Colors.white : AppColors.textPrimary, fontSize: 12, fontWeight: FontWeight.w600)),
       selected: isSelected,
-      selectedColor: const Color(0xFF2563EB),
+      selectedColor: AppColors.primary,
       backgroundColor: AppColors.card,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),
@@ -199,7 +209,7 @@ class _RosterScreenState extends State<RosterScreen> {
       shiftBg = const Color(0xFFEEF2FF);
       shiftLabel = 'Night Shift';
     } else if (shift == 'day_off') {
-      shiftColor = const Color(0xFF64748B);
+      shiftColor = AppColors.textSecondary;
       shiftBg = const Color(0xFFF1F5F9);
       shiftLabel = 'Day Off';
     }
@@ -220,7 +230,7 @@ class _RosterScreenState extends State<RosterScreen> {
           children: [
             CircleAvatar(
               radius: 22,
-              backgroundColor: const Color(0xFF2563EB).withOpacity(0.1),
+              backgroundColor: AppColors.primary.withOpacity(0.1),
               child: Text(
                 name.isNotEmpty ? name[0].toUpperCase() : '?',
                 style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2563EB)),
@@ -233,17 +243,17 @@ class _RosterScreenState extends State<RosterScreen> {
                 children: [
                   Text(
                     name,
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1E293B)),
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.textPrimary),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     '$role • $teamName',
-                    style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                    style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
                   ),
                   if (email.isNotEmpty)
                     Text(
                       email,
-                      style: const TextStyle(fontSize: 10, color: Color(0xFF94A3B8)),
+                      style: TextStyle(fontSize: 10, color: AppColors.textMuted),
                     ),
                 ],
               ),
@@ -264,7 +274,7 @@ class _RosterScreenState extends State<RosterScreen> {
                       Icon(
                         Icons.circle,
                         size: 7,
-                        color: isOnDuty ? const Color(0xFF10B981) : const Color(0xFF94A3B8),
+                        color: isOnDuty ? AppColors.success : AppColors.textMuted,
                       ),
                       const SizedBox(width: 4),
                       Text(
@@ -272,7 +282,7 @@ class _RosterScreenState extends State<RosterScreen> {
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
-                          color: isOnDuty ? const Color(0xFF047857) : const Color(0xFF64748B),
+                          color: isOnDuty ? const Color(0xFF047857) : AppColors.textSecondary,
                         ),
                       ),
                     ],
@@ -354,7 +364,7 @@ class _RosterScreenState extends State<RosterScreen> {
                           ),
                           child: Text(
                             isOnDuty ? 'On Duty' : 'Off Duty',
-                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: isOnDuty ? const Color(0xFF047857) : const Color(0xFF64748B)),
+                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: isOnDuty ? const Color(0xFF047857) : AppColors.textSecondary),
                           ),
                         ),
                       ],
@@ -370,10 +380,88 @@ class _RosterScreenState extends State<RosterScreen> {
               if (shift.isNotEmpty) _staffRow(Icons.schedule_outlined, 'Current Shift', shift),
               if (email.isNotEmpty) _staffRow(Icons.email_outlined, 'Email', email),
               if (phone.isNotEmpty) _staffRow(Icons.phone_outlined, 'Phone', phone),
+              if (_canChangeShift) ...[
+                const SizedBox(height: 12),
+                const Divider(height: 1),
+                const SizedBox(height: 14),
+                Text(AppState.instance.t('Change Shift (Admin)', 'শিফট পরিবর্তন (অ্যাডমিন)'),
+                    style: AppText.label),
+                const SizedBox(height: 8),
+                _shiftButtons(member, ctx),
+              ],
             ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget _shiftButtons(dynamic member, BuildContext sheetContext) {
+    final userId = member['id'] as int?;
+    final current = (member['current_shift'] ?? '').toString();
+    final options = [
+      ('day_shift', '☀️', AppState.instance.t('Day', 'দিন'), AppColors.warning),
+      ('night_shift', '🌙', AppState.instance.t('Night', 'রাত'), AppColors.info),
+      ('day_off', '🏖️', AppState.instance.t('Off', 'ছুটি'), AppColors.textMuted),
+      ('unassigned', '❔', AppState.instance.t('Unassigned', 'অনির্ধারিত'), AppColors.textMuted),
+    ];
+    return Row(
+      children: options.map((o) {
+        final selected = current == o.$1;
+        return Expanded(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 3),
+            child: Material(
+              color: selected ? o.$4 : AppColors.bg,
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(AppRadius.md),
+                onTap: userId == null ? null : () async {
+                  final res = await ApiService.updateUserShift(userId, o.$1);
+                  if (!mounted) return;
+                  if (res['success'] == true) {
+                    Navigator.pop(sheetContext);
+                    _loadRoster();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('${member['name']} → ${o.$3}'),
+                        backgroundColor: AppColors.success,
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(res['message']?.toString() ?? 'Failed'),
+                        backgroundColor: AppColors.danger,
+                      ),
+                    );
+                  }
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                    border: Border.all(color: selected ? o.$4 : AppColors.border),
+                  ),
+                  child: Column(
+                    children: [
+                      Text(o.$2, style: const TextStyle(fontSize: 16)),
+                      const SizedBox(height: 2),
+                      Text(o.$3,
+                          style: AppText.label.copyWith(
+                            color: selected ? Colors.white : AppColors.textSecondary,
+                            fontSize: 10,
+                          )),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      }).toList(),
     );
   }
 
@@ -383,7 +471,7 @@ class _RosterScreenState extends State<RosterScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 18, color: const Color(0xFF64748B)),
+          Icon(icon, size: 18, color: AppColors.textSecondary),
           const SizedBox(width: 12),
           Expanded(
             child: Column(

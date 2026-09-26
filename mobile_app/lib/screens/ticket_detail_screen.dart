@@ -584,26 +584,6 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> with SingleTick
             tooltip: 'Toggle Details',
             onPressed: () => setState(() => _showInfo = !_showInfo),
           ),
-          if (_isAdminOrStaff)
-            PopupMenuButton<String>(
-              icon: const Icon(Icons.more_vert_rounded),
-              onSelected: (v) {
-                if (v == 'status') _showStatusDialog();
-                if (v == 'priority') _showPriorityDialog();
-                if (v == 'assign') _showAssignStaffDialog();
-              },
-              itemBuilder: (_) => [
-                const PopupMenuItem(value: 'status', child: Row(children: [Icon(Icons.swap_horiz_rounded, size: 18), SizedBox(width: 10), Text('Change Status')])),
-                const PopupMenuItem(value: 'priority', child: Row(children: [Icon(Icons.flag_outlined, size: 18), SizedBox(width: 10), Text('Change Priority')])),
-                const PopupMenuItem(value: 'assign', child: Row(children: [Icon(Icons.person_add_alt_1_outlined, size: 18), SizedBox(width: 10), Text('Assign Staff')])),
-              ],
-            )
-          else
-            IconButton(
-              icon: const Icon(Icons.swap_horiz_rounded),
-              tooltip: 'Change Status',
-              onPressed: _showStatusDialog,
-            ),
         ],
       ),
       body: Column(
@@ -708,6 +688,40 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> with SingleTick
                     const SizedBox(height: 8),
                     _metaTile(Icons.place_rounded, 'Area', _ticket.area!, AppColors.accent),
                   ],
+                  const SizedBox(height: 10),
+                  // Inline action tiles — Change Status / Priority / Assign
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _actionTile(
+                          Icons.swap_horiz_rounded,
+                          'Change Status',
+                          AppColors.info,
+                          _showStatusDialog,
+                        ),
+                      ),
+                      if (_isAdminOrStaff) ...[
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: _actionTile(
+                            Icons.flag_outlined,
+                            'Change Priority',
+                            AppColors.warning,
+                            _showPriorityDialog,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: _actionTile(
+                            Icons.person_add_alt_1_outlined,
+                            'Assign',
+                            AppColors.primary,
+                            _showAssignStaffDialog,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
                 ],
               ],
             ),
@@ -1052,6 +1066,34 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> with SingleTick
   }
 
 
+
+  Widget _actionTile(IconData icon, String label, Color accent, VoidCallback onTap) {
+    return Material(
+      color: accent.withOpacity(0.08),
+      borderRadius: BorderRadius.circular(AppRadius.md),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            border: Border.all(color: accent.withOpacity(0.25)),
+          ),
+          child: Column(
+            children: [
+              Icon(icon, size: 18, color: accent),
+              const SizedBox(height: 4),
+              Text(label,
+                  textAlign: TextAlign.center,
+                  style: AppText.label.copyWith(color: accent, fontSize: 10, fontWeight: FontWeight.w700),
+                  maxLines: 2),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
   Widget _metaTile(IconData icon, String label, String value, Color accent) {
     return Container(

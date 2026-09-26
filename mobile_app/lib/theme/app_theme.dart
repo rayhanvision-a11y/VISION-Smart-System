@@ -3,11 +3,12 @@ import 'package:google_fonts/google_fonts.dart';
 import '../services/app_state.dart';
 
 class AppColors {
-  static const primary = Color(0xFF1B3A6B);
-  static const primaryDark = Color(0xFF0F2547);
-  static const primaryLight = Color(0xFF2E5695);
-  static const accent = Color(0xFFD4A02A);
-  static const accentSoft = Color(0xFFF5E4B4);
+  // VISION Technologies Limited brand colors (from company leaflet)
+  static const primary = Color(0xFF02AF99);      // Brand teal — buttons/main
+  static const primaryDark = Color(0xFF302760);  // Deep purple — gradient start
+  static const primaryLight = Color(0xFF20D0BE); // Bright teal highlight
+  static const accent = Color(0xFFF59E0B);       // Warm amber — CTAs/highlights
+  static const accentSoft = Color(0xFFFEF3C7);
   static const coral = Color(0xFFFF6B6B);
 
   static const success = Color(0xFF10B981);
@@ -15,7 +16,7 @@ class AppColors {
   static const danger = Color(0xFFEF4444);
   static const info = Color(0xFF3B82F6);
 
-  static const _bgLight = Color(0xFFF5F7FA);
+  static const _bgLight = Color(0xFFEFFBF9);     // Very soft teal-tint background
   static const _cardLight = Color(0xFFFFFFFF);
   static const _borderLight = Color(0xFFE5E9F0);
   static const _dividerLight = Color(0xFFEEF1F6);
@@ -23,8 +24,8 @@ class AppColors {
   static const _textSecondaryLight = Color(0xFF64748B);
   static const _textMutedLight = Color(0xFF94A3B8);
 
-  static const bgDark = Color(0xFF0B1220);
-  static const cardDark = Color(0xFF1B2438);
+  static const bgDark = Color(0xFF06231F);       // Deep teal-black
+  static const cardDark = Color(0xFF0F3B36);     // Card in dark mode
   static const _borderDark = Color(0xFF2A3448);
   static const _dividerDark = Color(0xFF232D42);
   static const _textPrimaryDark = Color(0xFFF1F5F9);
@@ -73,16 +74,17 @@ class AppColors {
     }
   }
 
+  // VISION brand hero gradient — deep purple #302760 → teal #02AF99 at 45°
   static LinearGradient get heroGradient => const LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [primary, primaryDark],
+        begin: Alignment.bottomLeft,   // 45° = bottom-left → top-right
+        end: Alignment.topRight,
+        colors: [Color(0xFF302760), Color(0xFF02AF99)],
       );
 
   static LinearGradient get goldGradient => const LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
-        colors: [Color(0xFFE5B94A), accent],
+        colors: [Color(0xFFFBBF24), accent],
       );
 }
 

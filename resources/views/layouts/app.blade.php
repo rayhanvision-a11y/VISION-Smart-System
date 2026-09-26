@@ -1098,7 +1098,8 @@
 
                             {{-- Dropdown --}}
                             <div x-show="open" x-cloak @click.outside="open = false"
-                                 class="absolute right-0 top-full mt-2 w-[calc(100vw-1rem)] sm:w-80 max-w-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg z-50 overflow-hidden">
+                                 style="width: 280px; max-width: 92vw; z-index: 99999;"
+                                 class="absolute left-1/2 -translate-x-1/2 top-full mt-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl overflow-hidden">
                                 <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-slate-700">
                                     <span class="text-sm font-semibold text-slate-700 dark:text-slate-200">{{ __('Notifications') }}
                                         <span x-show="count > 0" class="ml-1 px-1.5 py-0.5 bg-red-100 text-red-600 rounded-full text-xs font-bold" x-text="count"></span>
@@ -1106,7 +1107,7 @@
                                     <a href="{{ route('notifications.index') }}"
                                        class="text-xs text-indigo-600 hover:text-indigo-800 font-medium">{{ __('View all') }}</a>
                                 </div>
-                                <div class="max-h-72 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-700" id="notif-list">
+                                <div class="max-h-[70vh] overflow-y-auto divide-y divide-slate-100 dark:divide-slate-700" id="notif-list">
                                     <p class="px-4 py-8 text-center text-sm text-slate-400">{{ __('Loading…') }}</p>
                                 </div>
                                 <div class="px-4 py-2 border-t border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 flex items-center justify-between">

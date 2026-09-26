@@ -101,4 +101,32 @@ class ApiRosterController extends Controller
             'is_on_duty' => $user->isOnDuty(),
         ]);
     }
+
+    /**
+     * Admin/Supervisor: update another user's shift.
+     */
+    public function updateUserShift(Request $request, int $userId): JsonResponse
+    {
+        $actor = $request->user();
+        if (! $actor->isAdmin() && ! $actor->isSupervisorLevel()) {
+            return response()->json(['error' => 'Not authorized'], 403);
+        }
+
+        $validated = $request->validate([
+            'shift' => 'required|in:unassigned,day_shift,night_shift,day_off',
+        ]);
+
+        $target = User::findOrFail($userId);
+        $target->update([
+            'current_shift' => $validated['shift'],
+            'shift_date' => now()->toDateString(),
+        ]);
+
+        return response()->json([
+            'message' => 'Shift updated',
+            'user_id' => $target->id,
+            'current_shift' => $target->current_shift,
+            'is_on_duty' => $target->isOnDuty(),
+        ]);
+    }
 }

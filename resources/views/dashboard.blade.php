@@ -6,27 +6,25 @@
     @endphp
 
     {{-- Greeting --}}
-    <div class="mb-5 sm:mb-6 flex flex-wrap items-end justify-between gap-3">
-        <div class="min-w-0">
+    <div class="mb-5 sm:mb-6 flex items-end justify-between gap-3">
+        <div class="min-w-0 flex-1">
             <h1 class="text-xl sm:text-2xl lg:text-3xl font-bold text-slate-800 dark:text-white tracking-tight">{{ __($greeting) }}, {{ $user->name }}!</h1>
             <p class="text-slate-500 dark:text-slate-400 text-xs sm:text-sm mt-1">{{ __("Here's what's happening with your tickets today.") }}</p>
         </div>
 
         @if($user->isAdmin() && isset($resellersQuick) && $resellersQuick->isNotEmpty())
-        <div class="flex items-center gap-2 w-full sm:w-auto">
-            <span class="px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider bg-slate-100 dark:bg-slate-800/90 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700/80 shadow-xs">
+        <div class="flex items-center gap-2 flex-shrink-0 ml-auto">
+            <span class="hidden sm:inline-flex px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider bg-slate-100 dark:bg-slate-800/90 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700/80 shadow-xs">
                 {{ __('RESELLER') }}
             </span>
-            <div class="relative">
-                <select id="reseller_quick"
-                        onchange="if (this.value) window.location = this.value"
-                        class="text-xs sm:text-sm bg-white dark:bg-[#131b2e] text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700/80 rounded-lg px-3 py-1.5 pr-8 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 shadow-xs cursor-pointer">
-                    <option value="">{{ __('View Reseller Report') }}</option>
-                    @foreach($resellersQuick as $reseller)
-                    <option value="{{ route('reports.index', ['tab' => 'reseller', 'person_id' => $reseller->id]) }}">{{ $reseller->name }}</option>
-                    @endforeach
-                </select>
-            </div>
+            <select id="reseller_quick"
+                    onchange="if (this.value) window.location = this.value"
+                    class="text-xs sm:text-sm bg-white dark:bg-[#131b2e] text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700/80 rounded-lg px-3 py-1.5 pr-8 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 shadow-xs cursor-pointer max-w-[180px] sm:max-w-none">
+                <option value="">{{ __('View Reseller Report') }}</option>
+                @foreach($resellersQuick as $reseller)
+                <option value="{{ route('reports.index', ['tab' => 'reseller', 'person_id' => $reseller->id]) }}">{{ $reseller->name }}</option>
+                @endforeach
+            </select>
         </div>
         @endif
     </div>

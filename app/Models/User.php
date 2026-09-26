@@ -116,6 +116,11 @@ class User extends Authenticatable
         return $this->role === 'technician';
     }
 
+    public function userLocation()
+    {
+        return $this->hasOne(UserLocation::class);
+    }
+
     public const TEAMS = [
         'IT Team' => 'IT Team',
         'NOC team' => 'NOC team',

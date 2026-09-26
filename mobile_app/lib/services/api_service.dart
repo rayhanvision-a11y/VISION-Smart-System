@@ -243,6 +243,68 @@ class ApiService {
     }
   }
 
+  // Location tracking
+  static Future<bool> updateLocation({
+    required double lat,
+    required double lng,
+    int? accuracy,
+    int? battery,
+    double? speed,
+  }) async {
+    try {
+      final uri = await _buildUri('/user/location');
+      final r = await http.post(uri, headers: await _headers(), body: jsonEncode({
+        'lat': lat,
+        'lng': lng,
+        if (accuracy != null) 'accuracy': accuracy,
+        if (battery != null) 'battery': battery,
+        if (speed != null) 'speed': speed,
+      }));
+      return r.statusCode == 200;
+    } catch (_) { return false; }
+  }
+
+  static Future<bool> toggleLocationSharing(bool on) async {
+    try {
+      final uri = await _buildUri('/user/location/toggle');
+      final r = await http.post(uri, headers: await _headers(), body: jsonEncode({'sharing': on}));
+      return r.statusCode == 200;
+    } catch (_) { return false; }
+  }
+
+  static Future<List<Map<String, dynamic>>> getAllLocations({String? role}) async {
+    try {
+      final uri = await _buildUri('/locations/all', {if (role != null && role.isNotEmpty) 'role': role});
+      final r = await http.get(uri, headers: await _headers());
+      if (r.statusCode == 200) {
+        final data = jsonDecode(r.body);
+        if (data is Map && data['locations'] is List) {
+          return (data['locations'] as List)
+              .whereType<Map>()
+              .map((e) => Map<String, dynamic>.from(e))
+              .toList();
+        }
+      }
+    } catch (_) {}
+    return [];
+  }
+
+  // 3f. Admin: update another user's shift
+  static Future<Map<String, dynamic>> updateUserShift(int userId, String shift) async {
+    try {
+      final uri = await _buildUri('/roster/user/$userId/shift');
+      final response = await http.post(uri, headers: await _headers(), body: jsonEncode({'shift': shift}));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return {'success': true, 'current_shift': data['current_shift'], 'is_on_duty': data['is_on_duty']};
+      }
+      final data = jsonDecode(response.body);
+      return {'success': false, 'message': data['message'] ?? data['error'] ?? 'Failed'};
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
   // 3e. Update own shift/duty
   static Future<Map<String, dynamic>> updateOwnShift(String shift) async {
     try {
@@ -510,6 +572,30 @@ class ApiService {
         final data = jsonDecode(response.body);
         if (data is Map && data['areas'] is List) {
           return (data['areas'] as List).map((e) => e.toString()).toList();
+        }
+      }
+    } catch (_) {}
+    return [];
+  }
+
+  // 15a2. Areas with active ticket counts (sorted busiest first)
+  static Future<List<Map<String, dynamic>>> getAreasWithCounts({String? search}) async {
+    try {
+      final uri = await _buildUri('/areas', {if (search != null && search.isNotEmpty) 'search': search});
+      final response = await http.get(uri, headers: await _headers());
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data is Map && data['areas_with_counts'] is List) {
+          return (data['areas_with_counts'] as List)
+              .whereType<Map>()
+              .map((e) => Map<String, dynamic>.from(e))
+              .toList();
+        }
+        // fallback if server hasn't been updated
+        if (data is Map && data['areas'] is List) {
+          return (data['areas'] as List)
+              .map((n) => {'name': n.toString(), 'active_count': 0})
+              .toList();
         }
       }
     } catch (_) {}

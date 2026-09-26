@@ -7,6 +7,7 @@ class UserModel {
   final String? avatar;
   final String? avatarUrl;
   final String? phone;
+  final String? currentShift;
 
   UserModel({
     required this.id,
@@ -17,6 +18,7 @@ class UserModel {
     this.avatar,
     this.avatarUrl,
     this.phone,
+    this.currentShift,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -33,6 +35,7 @@ class UserModel {
       avatar: j['avatar']?.toString(),
       avatarUrl: j['avatar_url']?.toString() ?? j['avatarUrl']?.toString(),
       phone: j['phone']?.toString(),
+      currentShift: j['current_shift']?.toString(),
     );
   }
 

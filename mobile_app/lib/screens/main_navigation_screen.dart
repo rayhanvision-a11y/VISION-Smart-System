@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/user.dart';
 import '../services/storage_service.dart';
 import '../services/app_state.dart';
+import '../services/location_service.dart';
 import '../theme/app_theme.dart';
 import 'dashboard_screen.dart';
 import 'ticket_list_screen.dart';
@@ -36,6 +37,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         _currentUser = user;
         _isLoading = false;
       });
+    }
+    // Auto-start location sharing for technicians
+    if (user != null && user.role.toLowerCase() == 'technician') {
+      LocationService.instance.start();
     }
   }
 

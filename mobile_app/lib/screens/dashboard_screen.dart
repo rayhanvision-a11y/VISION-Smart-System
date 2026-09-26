@@ -15,6 +15,7 @@ import 'roster_screen.dart';
 import 'profile_screen.dart';
 import 'notifications_screen.dart';
 import 'area_assign_screen.dart';
+import 'live_map_screen.dart';
 import '../services/app_state.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -63,16 +64,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => Scaffold(
-          appBar: AppBar(
-            title: Text(
-              statusFilter == null
-                  ? 'All Tickets'
-                  : 'Tickets: ${statusFilter.replaceAll('_', ' ').toUpperCase()}',
-            ),
-          ),
-          body: TicketListScreen(initialStatus: statusFilter),
-        ),
+        builder: (_) => TicketListScreen(initialStatus: statusFilter),
       ),
     );
   }
@@ -430,8 +422,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
             () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AreaAssignScreen())))
       else
         (Icons.groups_2_rounded, AppState.instance.t('Team\nRoster', 'টিম\nরোস্টার'), AppColors.success, _openRoster),
-      (Icons.local_fire_department_rounded, AppState.instance.t('Urgent\nOnly', 'জরুরি\nমাত্র'), AppColors.danger,
-          () => _openTickets('urgent')),
+      if (isSupervisorish)
+        (Icons.map_rounded, AppState.instance.t('Live\nMap', 'লাইভ\nম্যাপ'), AppColors.info,
+            () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LiveMapScreen())))
+      else
+        (Icons.local_fire_department_rounded, AppState.instance.t('Urgent\nOnly', 'জরুরি\nমাত্র'), AppColors.danger,
+            () => _openTickets('urgent')),
     ];
 
     return Row(
