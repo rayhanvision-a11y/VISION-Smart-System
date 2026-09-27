@@ -23,13 +23,14 @@ class PushService {
   final FlutterLocalNotificationsPlugin _local = FlutterLocalNotificationsPlugin();
   static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
-  static const _channel = AndroidNotificationChannel(
-    'vision_ticket_channel_v2',
+  static final _channel = AndroidNotificationChannel(
+    'vision_ticket_channel_v3',
     'Ticket Updates',
     description: 'Ticket assignment, status change, new messages',
     importance: Importance.max,
     playSound: true,
     enableVibration: true,
+    vibrationPattern: Int64List.fromList([0, 500, 250, 500]),
     enableLights: true,
   );
 

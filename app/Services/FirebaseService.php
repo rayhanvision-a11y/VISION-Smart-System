@@ -116,6 +116,16 @@ class FirebaseService
                     'title' => $title,
                     'body' => $body,
                     'sound' => 'default',
+                    'android_channel_id' => 'vision_ticket_channel_v3',
+                ],
+                'android' => [
+                    'priority' => 'high',
+                    'notification' => [
+                        'channel_id' => 'vision_ticket_channel_v3',
+                        'sound' => 'default',
+                        'default_vibrate_timings' => true,
+                        'default_sound' => true,
+                    ],
                 ],
                 'data' => array_merge([
                     'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
