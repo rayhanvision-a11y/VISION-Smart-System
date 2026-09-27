@@ -66,6 +66,21 @@ class User extends Authenticatable
         return $this->hasMany(Ticket::class, 'assigned_to');
     }
 
+    public function activeTicketsCount(): int
+    {
+        return Ticket::forUser($this)->whereNotIn('status', ['resolved', 'closed'])->count();
+    }
+
+    public function totalTicketsCount(): int
+    {
+        return Ticket::forUser($this)->count();
+    }
+
+    public function resolvedTicketsCount(): int
+    {
+        return Ticket::forUser($this)->whereIn('status', ['resolved', 'closed'])->count();
+    }
+
     public function isSuperAdmin(): bool
     {
         return $this->role === 'super_admin';

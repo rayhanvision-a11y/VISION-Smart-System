@@ -821,7 +821,7 @@
 
                 {{-- User Info --}}
                 <div class="sidebar-footer pt-4 pb-7 border-t border-slate-200 dark:border-slate-800/80 flex-shrink-0 bg-slate-50 dark:bg-slate-900/40 px-4">
-                    <a href="{{ route('profile.edit') }}" class="sidebar-profile-link flex items-center mb-3 hover:opacity-80 transition-opacity gap-3" :title="sidebarCollapsed ? '{{ auth()->user()->name }}' : ''">
+                    <a href="{{ route('profile.edit') }}" @click.prevent="window.showUserProfileModal()" class="sidebar-profile-link flex items-center mb-3 hover:opacity-80 transition-opacity gap-3 cursor-pointer" :title="sidebarCollapsed ? '{{ auth()->user()->name }}' : '{{ __('View Profile & Active Tickets') }}'">
                         <img src="{{ auth()->user()->avatarUrl() }}" alt="{{ auth()->user()->name }}"
                              class="w-9 h-9 rounded-full object-cover flex-shrink-0 border border-slate-200 dark:border-slate-700 shadow-sm">
                         <div class="min-w-0 sidebar-text">
@@ -1124,6 +1124,25 @@
                             </div>
                         </div>
 
+                        {{-- User Quick Profile Pill in Header (Click to open profile details & active tickets) --}}
+                        <button type="button"
+                                @click="window.showUserProfileModal()"
+                                class="flex items-center gap-1.5 sm:gap-2 pl-1 sm:pl-1.5 pr-2 sm:pr-2.5 py-1 rounded-full bg-slate-100 hover:bg-slate-200/80 dark:bg-slate-800 dark:hover:bg-slate-700/80 border border-slate-200/80 dark:border-slate-700 transition-all cursor-pointer shadow-2xs group"
+                                title="{{ __('View Profile & Active Tickets') }}">
+                            <div class="relative flex-shrink-0">
+                                <img src="{{ auth()->user()->avatarUrl() }}" alt="{{ auth()->user()->name }}"
+                                     class="w-6 h-6 sm:w-7 sm:h-7 rounded-full object-cover border border-indigo-400/40">
+                                @if(auth()->user()->activeTicketsCount() > 0)
+                                <span class="absolute -top-1 -right-1 min-w-[15px] h-[15px] px-1 rounded-full bg-indigo-600 text-white text-[9px] font-bold flex items-center justify-center shadow-xs">
+                                    {{ auth()->user()->activeTicketsCount() > 99 ? '99+' : auth()->user()->activeTicketsCount() }}
+                                </span>
+                                @endif
+                            </div>
+                            <span class="hidden md:inline text-xs font-semibold text-slate-700 dark:text-slate-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors max-w-[110px] truncate">
+                                {{ auth()->user()->name }}
+                            </span>
+                        </button>
+
                         <div class="hidden sm:flex items-center gap-2 text-sm text-slate-500">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -1389,5 +1408,322 @@
             m.style.display = 'flex';
         }
     </script>
+
+    @auth
+    @php
+        $authUser = auth()->user();
+        $authActiveTickets = $authUser->activeTicketsCount();
+        $authResolvedTickets = $authUser->resolvedTicketsCount();
+        $authTotalTickets = $authUser->totalTicketsCount();
+        $authSystemActive = $authUser->isAdmin()
+            ? \App\Models\Ticket::whereNotIn('status', ['resolved', 'closed'])->count()
+            : null;
+
+        if ($authUser->isReseller()) {
+            $authTicketsUrl = route('tickets.index', ['created_by' => $authUser->id]);
+            $authActiveTicketsUrl = route('tickets.index', ['created_by' => $authUser->id, 'status' => 'active']);
+        } elseif ($authUser->isAdmin()) {
+            $authTicketsUrl = route('tickets.index');
+            $authActiveTicketsUrl = route('tickets.index', ['status' => 'active']);
+        } else {
+            $authTicketsUrl = route('tickets.index', ['assigned' => 'me']);
+            $authActiveTicketsUrl = route('tickets.index', ['assigned' => 'me', 'status' => 'active']);
+        }
+
+        $authProfileData = [
+            'id' => $authUser->id,
+            'name' => $authUser->name,
+            'email' => $authUser->email,
+            'phone' => $authUser->phone ?? '',
+            'role' => $authUser->role,
+            'role_label' => strtoupper(str_replace('_', ' ', $authUser->role)),
+            'team' => $authUser->team ?? '',
+            'avatar_url' => $authUser->avatarUrl(),
+            'current_shift' => $authUser->current_shift ?? 'unassigned',
+            'current_shift_label' => \App\Models\User::SHIFTS[$authUser->current_shift ?? 'unassigned'] ?? ($authUser->current_shift ?? 'Unassigned'),
+            'is_on_duty' => $authUser->isOnDuty(),
+            'active_tickets' => $authActiveTickets,
+            'resolved_tickets' => $authResolvedTickets,
+            'total_tickets' => $authTotalTickets,
+            'system_active_tickets' => $authSystemActive,
+            'tickets_url' => $authTicketsUrl,
+            'active_tickets_url' => $authActiveTicketsUrl,
+            'is_me' => true,
+            'profile_url' => route('profile.edit'),
+        ];
+    @endphp
+
+    {{-- User Profile & Active Tickets Modal (Matches Mobile App UI) --}}
+    <div x-data="userProfileModal(@js($authProfileData))"
+         x-show="isOpen"
+         x-cloak
+         @open-user-profile.window="openModal($event.detail)"
+         @keydown.escape.window="closeModal()"
+         class="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4 overflow-y-auto"
+         role="dialog"
+         aria-modal="true"
+         style="display: none;">
+
+        {{-- Backdrop --}}
+        <div x-show="isOpen"
+             x-transition:enter="ease-out duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="ease-in duration-200"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             @click="closeModal()"
+             class="fixed inset-0 bg-slate-950/70 backdrop-blur-xs transition-opacity"></div>
+
+        {{-- Modal Dialog --}}
+        <div x-show="isOpen"
+             x-transition:enter="ease-out duration-300"
+             x-transition:enter-start="opacity-0 translate-y-3 sm:scale-95"
+             x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+             x-transition:leave="ease-in duration-200"
+             x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+             x-transition:leave-end="opacity-0 translate-y-3 sm:scale-95"
+             class="relative w-full max-w-sm sm:max-w-md bg-white dark:bg-[#0f172a] rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800/90 overflow-hidden z-10 transition-all text-slate-800 dark:text-slate-100 my-auto">
+
+            {{-- Top Hero Gradient with Ambient Circles --}}
+            <div class="relative h-28 sm:h-32 bg-gradient-to-tr from-indigo-600 via-indigo-700 to-purple-800 p-4 flex items-start justify-between overflow-hidden">
+                <div class="absolute -top-10 -right-10 w-36 h-36 rounded-full bg-white/10 blur-xl pointer-events-none"></div>
+                <div class="absolute -bottom-8 -left-8 w-32 h-32 rounded-full bg-indigo-400/20 blur-lg pointer-events-none"></div>
+
+                <div class="relative z-10 flex items-center gap-2 text-white/90">
+                    <svg class="w-4 h-4 text-indigo-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                    </svg>
+                    <span class="text-xs font-semibold uppercase tracking-wider text-indigo-100">
+                        {{ app()->getLocale() === 'bn' ? 'প্রোফাইল বিবরণ' : 'Profile Details' }}
+                    </span>
+                </div>
+
+                <button type="button"
+                        @click="closeModal()"
+                        class="relative z-10 w-8 h-8 rounded-full bg-black/20 hover:bg-black/35 text-white/90 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+                        title="{{ __('Close') }}">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+
+            {{-- Avatar & Identity Section --}}
+            <div class="px-5 sm:px-6 pt-0 pb-5">
+                <div class="flex flex-col items-center -mt-14 sm:-mt-16 text-center">
+                    <div class="relative inline-block mb-2.5">
+                        <img :src="profile.avatar_url"
+                             :alt="profile.name"
+                             class="w-24 h-24 sm:w-28 sm:h-28 rounded-full object-cover border-4 border-white dark:border-[#0f172a] shadow-xl bg-slate-100 dark:bg-slate-800">
+
+                        {{-- Status Dot --}}
+                        <span x-show="profile.is_on_duty"
+                              class="absolute bottom-1 right-1 w-5 h-5 rounded-full bg-emerald-500 border-2 sm:border-3 border-white dark:border-[#0f172a] shadow-sm flex items-center justify-center"
+                              title="{{ app()->getLocale() === 'bn' ? 'অন ডিউটি' : 'On Duty' }}">
+                            <span class="w-2 h-2 rounded-full bg-white animate-pulse"></span>
+                        </span>
+                        <span x-show="!profile.is_on_duty"
+                              class="absolute bottom-1 right-1 w-5 h-5 rounded-full bg-slate-400 border-2 sm:border-3 border-white dark:border-[#0f172a] shadow-sm"
+                              title="{{ app()->getLocale() === 'bn' ? 'অফ ডিউটি' : 'Off Duty' }}">
+                        </span>
+                    </div>
+
+                    {{-- User Name --}}
+                    <h3 class="text-xl font-bold text-slate-900 dark:text-white leading-snug" x-text="profile.name"></h3>
+
+                    {{-- Contact Info (Email & Phone) --}}
+                    <div class="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 mt-1 text-xs text-slate-500 dark:text-slate-400">
+                        <span class="flex items-center gap-1.5">
+                            <svg class="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                            </svg>
+                            <span x-text="profile.email"></span>
+                        </span>
+                        <span x-show="profile.phone" class="flex items-center gap-1.5">
+                            <svg class="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                            </svg>
+                            <span x-text="profile.phone"></span>
+                        </span>
+                    </div>
+
+                    {{-- Role & Team Badges --}}
+                    <div class="flex flex-wrap items-center justify-center gap-2 mt-2.5">
+                        <span class="px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider border shadow-2xs"
+                              :class="roleBadgeClass()"
+                              x-text="profile.role_label"></span>
+
+                        <span x-show="profile.team"
+                              class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                            <svg class="w-3 h-3 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            </svg>
+                            <span x-text="profile.team"></span>
+                        </span>
+                    </div>
+                </div>
+
+                {{-- Ticket Stats (Active, Resolved, Total) --}}
+                <div class="mt-4">
+                    <div class="flex items-center justify-between mb-2 px-1">
+                        <span class="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                            {{ app()->getLocale() === 'bn' ? 'টিকিট পরিসংখ্যান' : 'Ticket Overview' }}
+                        </span>
+                        <a :href="profile.tickets_url" class="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-0.5">
+                            {{ app()->getLocale() === 'bn' ? 'সব টিকিট' : 'View all' }} →
+                        </a>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-2.5">
+                        {{-- Active Tickets (Interactive & Highlighted) --}}
+                        <a :href="profile.active_tickets_url"
+                           class="group relative bg-gradient-to-b from-indigo-50 to-indigo-100/60 dark:from-indigo-950/50 dark:to-indigo-900/30 hover:from-indigo-100 hover:to-indigo-200/70 dark:hover:from-indigo-900/60 dark:hover:to-indigo-800/40 border border-indigo-200 dark:border-indigo-700/60 rounded-2xl p-2.5 sm:p-3 flex flex-col items-center justify-center text-center transition-all hover:scale-[1.03] shadow-xs cursor-pointer">
+                            <div class="flex items-center gap-1.5 mb-1">
+                                <span class="relative flex h-2.5 w-2.5">
+                                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                                    <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-indigo-600 dark:bg-indigo-400"></span>
+                                </span>
+                                <span class="text-2xl font-black text-indigo-700 dark:text-indigo-300 tracking-tight" x-text="profile.active_tickets"></span>
+                            </div>
+                            <span class="text-[11px] font-bold text-indigo-700 dark:text-indigo-300 flex items-center gap-0.5">
+                                {{ app()->getLocale() === 'bn' ? 'সক্রিয় টিকিট' : 'Active' }}
+                                <svg class="w-3 h-3 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                            </span>
+                        </a>
+
+                        {{-- Resolved Tickets --}}
+                        <div class="bg-slate-50 dark:bg-slate-900/50 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/20 border border-slate-200 dark:border-slate-800 rounded-2xl p-2.5 sm:p-3 flex flex-col items-center justify-center text-center transition-colors">
+                            <span class="text-2xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight mb-1" x-text="profile.resolved_tickets"></span>
+                            <span class="text-[11px] font-semibold text-slate-600 dark:text-slate-400">
+                                {{ app()->getLocale() === 'bn' ? 'সমাধানকৃত' : 'Resolved' }}
+                            </span>
+                        </div>
+
+                        {{-- Total Tickets --}}
+                        <div class="bg-slate-50 dark:bg-slate-900/50 hover:bg-slate-100/60 dark:hover:bg-slate-800/40 border border-slate-200 dark:border-slate-800 rounded-2xl p-2.5 sm:p-3 flex flex-col items-center justify-center text-center transition-colors">
+                            <span class="text-2xl font-black text-slate-800 dark:text-slate-200 tracking-tight mb-1" x-text="profile.total_tickets"></span>
+                            <span class="text-[11px] font-semibold text-slate-600 dark:text-slate-400">
+                                {{ app()->getLocale() === 'bn' ? 'মোট টিকিট' : 'Total' }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Duty Shift Card (For Staff / NOC) --}}
+                <div class="mt-3 bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-2xl p-3 flex items-center justify-between">
+                    <div class="flex items-center gap-2.5 min-w-0">
+                        <div class="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center flex-shrink-0">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </div>
+                        <div class="min-w-0">
+                            <p class="text-[11px] font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wide">
+                                {{ app()->getLocale() === 'bn' ? 'ডিউটি শিফট' : 'Duty Shift' }}
+                            </p>
+                            <p class="text-xs font-bold text-slate-800 dark:text-slate-200 truncate" x-text="profile.current_shift_label"></p>
+                        </div>
+                    </div>
+
+                    <div class="flex-shrink-0">
+                        <span x-show="profile.is_on_duty"
+                              class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/50">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                            {{ app()->getLocale() === 'bn' ? 'অন ডিউটি' : 'On Duty' }}
+                        </span>
+                        <span x-show="!profile.is_on_duty"
+                              class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                            {{ app()->getLocale() === 'bn' ? 'অফ ডিউটি' : 'Off Duty' }}
+                        </span>
+                    </div>
+                </div>
+
+                {{-- Action Buttons --}}
+                <div class="mt-4 flex items-center gap-2.5">
+                    <a :href="profile.active_tickets_url"
+                       class="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-sm shadow-indigo-600/20 hover:shadow-indigo-600/30">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/>
+                        </svg>
+                        <span>{{ app()->getLocale() === 'bn' ? 'সক্রিয় টিকিট দেখুন' : 'View Active Tickets' }}</span>
+                    </a>
+
+                    <a :href="profile.profile_url"
+                       class="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold border border-slate-200 dark:border-slate-700 transition-all">
+                        <svg class="w-4 h-4 text-slate-500 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                        </svg>
+                        <span>{{ app()->getLocale() === 'bn' ? 'প্রোফাইল সম্পাদনা' : 'Edit Profile' }}</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    function userProfileModal(initialData) {
+        return {
+            isOpen: false,
+            isLoading: false,
+            profile: initialData || {},
+
+            init() {
+                window.showUserProfileModal = (userId = null) => {
+                    this.openModal(userId);
+                };
+            },
+
+            openModal(userId = null) {
+                this.isOpen = true;
+                if (!userId || (this.profile && userId === this.profile.id)) {
+                    this.fetchData(null);
+                } else {
+                    this.fetchData(userId);
+                }
+            },
+
+            closeModal() {
+                this.isOpen = false;
+            },
+
+            fetchData(userId) {
+                this.isLoading = true;
+                const url = userId ? `{{ url('/profile/card-data') }}/${userId}` : `{{ url('/profile/card-data') }}`;
+                fetch(url, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data && data.name) {
+                        this.profile = data;
+                    }
+                })
+                .catch(() => {})
+                .finally(() => {
+                    this.isLoading = false;
+                });
+            },
+
+            roleBadgeClass() {
+                const r = (this.profile.role || '').toLowerCase();
+                if (r === 'super_admin') {
+                    return 'bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800/50';
+                } else if (r === 'admin') {
+                    return 'bg-red-100 dark:bg-red-950/60 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800/50';
+                } else if (r === 'noc') {
+                    return 'bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800/50';
+                } else if (r === 'reseller') {
+                    return 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/50';
+                }
+                return 'bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800/50';
+            }
+        };
+    }
+    </script>
+    @endauth
     </body>
 </html>

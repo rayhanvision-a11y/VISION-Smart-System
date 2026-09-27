@@ -31,7 +31,9 @@ class TicketController extends Controller
             if ($request->status === 'overdue') {
                 $query->whereNotNull('due_at')
                     ->where('due_at', '<', now())
-                    ->whereNotIn('status', ['resolved']);
+                    ->whereNotIn('status', ['resolved', 'closed']);
+            } elseif ($request->status === 'active') {
+                $query->whereNotIn('status', ['resolved', 'closed']);
             } else {
                 $query->where('status', $request->status);
             }
@@ -60,6 +62,9 @@ class TicketController extends Controller
         }
         if ($request->filled('created_by') && auth()->user()->isAdmin()) {
             $query->where('created_by', $request->created_by);
+        }
+        if ($request->filled('assigned_to') && (auth()->user()->isAdmin() || auth()->user()->isNoc())) {
+            $query->where('assigned_to', $request->assigned_to);
         }
         if ($request->filled('label')) {
             $query->whereHas('labels', fn ($q) => $q->where('labels.id', $request->label));
