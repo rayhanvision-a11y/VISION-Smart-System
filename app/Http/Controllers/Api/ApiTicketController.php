@@ -9,6 +9,7 @@ use App\Models\TicketCategory;
 use App\Models\TicketMessage;
 use App\Models\TicketAttachment;
 use App\Models\User;
+use App\Services\NotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -166,6 +167,14 @@ class ApiTicketController extends Controller
             'created_by' => $user->id,
         ]);
 
+        if (! empty($ticket->assigned_to)) {
+            NotificationService::send(
+                $ticket->assigned_to,
+                "🎫 New ticket #{$ticket->ticket_key} assigned to you: {$ticket->title}",
+                $ticket->id
+            );
+        }
+
         return response()->json([
             'message' => 'Ticket created successfully',
             'ticket' => $ticket->load(['user']),
@@ -189,6 +198,15 @@ class ApiTicketController extends Controller
             'status' => $validated['status'],
             'resolved_at' => $validated['status'] === 'resolved' ? now() : $ticket->resolved_at,
         ]);
+
+        $statusName = strtoupper(str_replace('_', ' ', $validated['status']));
+        $notifMsg = "🔄 Ticket #{$ticket->ticket_key} status updated to {$statusName} by {$user->name}";
+        if ($ticket->created_by && $ticket->created_by !== $user->id) {
+            NotificationService::send($ticket->created_by, $notifMsg, $ticket->id);
+        }
+        if ($ticket->assigned_to && $ticket->assigned_to !== $user->id && $ticket->assigned_to !== $ticket->created_by) {
+            NotificationService::send($ticket->assigned_to, $notifMsg, $ticket->id);
+        }
 
         return response()->json([
             'message' => 'Ticket status updated successfully',
@@ -230,6 +248,16 @@ class ApiTicketController extends Controller
             ]);
         }
 
+        // Notify ticket creator & assignee
+        $preview = \Illuminate\Support\Str::limit($validated['message'], 60);
+        $notifMsg = "💬 New message on ticket #{$ticket->ticket_key} by {$user->name}: {$preview}";
+        if ($ticket->created_by && $ticket->created_by !== $user->id) {
+            NotificationService::send($ticket->created_by, $notifMsg, $ticket->id);
+        }
+        if ($ticket->assigned_to && $ticket->assigned_to !== $user->id && $ticket->assigned_to !== $ticket->created_by) {
+            NotificationService::send($ticket->assigned_to, $notifMsg, $ticket->id);
+        }
+
         return response()->json([
             'message' => 'Reply added successfully',
             'data' => $message->load('sender:id,name,avatar,role'),
@@ -257,6 +285,14 @@ class ApiTicketController extends Controller
             'assigned_to' => $validated['assigned_to'] ?? null,
         ]);
 
+        if (! empty($ticket->assigned_to) && $ticket->assigned_to !== $currentUser->id) {
+            NotificationService::send(
+                $ticket->assigned_to,
+                "🎯 You were assigned to ticket #{$ticket->ticket_key} by {$currentUser->name}",
+                $ticket->id
+            );
+        }
+
         return response()->json([
             'message' => 'Ticket assigned successfully',
             'ticket' => $ticket->fresh(['assignedTo:id,name,email,role']),
@@ -283,6 +319,15 @@ class ApiTicketController extends Controller
         $ticket->update([
             'priority' => $validated['priority'],
         ]);
+
+        $priorityName = strtoupper($validated['priority']);
+        $notifMsg = "⚡ Ticket #{$ticket->ticket_key} priority changed to {$priorityName} by {$currentUser->name}";
+        if ($ticket->created_by && $ticket->created_by !== $currentUser->id) {
+            NotificationService::send($ticket->created_by, $notifMsg, $ticket->id);
+        }
+        if ($ticket->assigned_to && $ticket->assigned_to !== $currentUser->id && $ticket->assigned_to !== $ticket->created_by) {
+            NotificationService::send($ticket->assigned_to, $notifMsg, $ticket->id);
+        }
 
         return response()->json([
             'message' => 'Ticket priority updated successfully',

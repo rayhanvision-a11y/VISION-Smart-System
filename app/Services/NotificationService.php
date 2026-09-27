@@ -29,6 +29,21 @@ class NotificationService
             'message' => $message,
             'is_read' => false,
         ]);
+
+        // Send WhatsApp-style FCM Push Notification to device (background / app closed)
+        try {
+            if (! empty($user->fcm_token)) {
+                $firebase = app(\App\Services\FirebaseService::class);
+                $firebase->notifyUser(
+                    $user,
+                    'VISION Ticket Alert',
+                    $message,
+                    ['ticket_id' => (string) $ticketId]
+                );
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Push notification trigger error: '.$e->getMessage());
+        }
     }
 
     public static function sendToMany(array $userIds, string $message, ?int $ticketId = null, bool $checkPermissions = true): void

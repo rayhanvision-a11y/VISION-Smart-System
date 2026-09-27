@@ -1,4 +1,4 @@
-﻿import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -7,6 +7,14 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import '../models/ticket.dart';
 import '../screens/ticket_detail_screen.dart';
 import 'api_service.dart';
+
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  try {
+    await Firebase.initializeApp();
+    debugPrint('FCM Background Message Received: ${message.messageId}');
+  } catch (_) {}
+}
 
 class PushService {
   static final PushService instance = PushService._();
@@ -30,6 +38,9 @@ class PushService {
   Future<void> init() async {
     if (_initialized || kIsWeb) return;
     _initialized = true;
+
+    // Background handler for terminated / background state
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
     // Local notifications setup
     const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');

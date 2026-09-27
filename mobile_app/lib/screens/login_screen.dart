@@ -3,6 +3,7 @@ import '../config/app_config.dart';
 import '../services/api_service.dart';
 import '../services/storage_service.dart';
 import '../services/app_state.dart';
+import '../services/biometric_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common/primary_button.dart';
 import 'main_navigation_screen.dart';
@@ -20,64 +21,36 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   bool _isLoading = false;
   bool _obscurePassword = true;
+  bool _rememberMe = true;
+  bool _hasSavedCreds = false;
   String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSaved();
+  }
+
+  Future<void> _loadSaved() async {
+    final creds = await StorageService.getSavedCredentials();
+    if (!mounted) return;
+    setState(() {
+      _rememberMe = creds['remember'] as bool? ?? true;
+      final savedEmail = creds['email'] as String? ?? '';
+      final savedPass = creds['password'] as String? ?? '';
+      if (savedEmail.isNotEmpty && savedPass.isNotEmpty) {
+        _emailController.text = savedEmail;
+        _passwordController.text = savedPass;
+        _hasSavedCreds = true;
+      }
+    });
+  }
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
-  }
-
-  Future<void> _showServerSettings() async {
-    final currentUrl = await ApiService.getBaseUrl();
-    final urlController = TextEditingController(text: currentUrl);
-    if (!mounted) return;
-
-    await showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.lg)),
-        title: Text('Server URL', style: AppText.h3),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Enter your Laravel API base URL', style: AppText.caption),
-            const SizedBox(height: AppSpacing.md),
-            TextField(
-              controller: urlController,
-              decoration: const InputDecoration(hintText: 'https://your-domain.com/api'),
-              keyboardType: TextInputType.url,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () async {
-              final messenger = ScaffoldMessenger.of(ctx);
-              await StorageService.setServerUrl(AppConfig.defaultApiBaseUrl);
-              if (!ctx.mounted) return;
-              Navigator.pop(ctx);
-              messenger.showSnackBar(const SnackBar(content: Text('Reset to default')));
-            },
-            child: const Text('Reset'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              final u = urlController.text.trim();
-              if (u.isEmpty) return;
-              final messenger = ScaffoldMessenger.of(ctx);
-              await StorageService.setServerUrl(u);
-              if (!ctx.mounted) return;
-              Navigator.pop(ctx);
-              messenger.showSnackBar(SnackBar(content: Text('Saved: $u')));
-            },
-            child: const Text('Save'),
-          ),
-        ],
-      ),
-    );
   }
 
   Future<void> _submit() async {
@@ -93,6 +66,15 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!mounted) return;
     setState(() => _isLoading = false);
     if (res['success'] == true) {
+      await StorageService.saveCredentials(
+        _emailController.text.trim(),
+        _passwordController.text,
+        _rememberMe,
+      );
+      if (_rememberMe) {
+        await StorageService.setBiometricEnabled(true);
+      }
+      if (!mounted) return;
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const MainNavigationScreen()),
@@ -101,6 +83,38 @@ class _LoginScreenState extends State<LoginScreen> {
       setState(() {
         _errorMessage = res['message'] ?? 'Login failed. Check your credentials.';
       });
+    }
+  }
+
+  Future<void> _biometricLogin() async {
+    final creds = await StorageService.getSavedCredentials();
+    final savedEmail = (creds['email'] as String? ?? '').isNotEmpty
+        ? creds['email'] as String
+        : _emailController.text.trim();
+    final savedPass = (creds['password'] as String? ?? '').isNotEmpty
+        ? creds['password'] as String
+        : _passwordController.text;
+
+    if (savedEmail.isEmpty || savedPass.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppState.instance.t(
+            'Please login once with Email & Password to activate Fingerprint login.',
+            'ফিঙ্গারপ্রিন্ট অ্যাক্টিভ করতে প্রথমে একবার ইমেইল ও পাসওয়ার্ড দিয়ে লগইন করুন।',
+          )),
+          backgroundColor: AppColors.info,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    _emailController.text = savedEmail;
+    _passwordController.text = savedPass;
+
+    final ok = await BiometricService.instance.authenticate(context: context);
+    if (ok && mounted) {
+      _submit();
     }
   }
 
@@ -168,10 +182,6 @@ class _LoginScreenState extends State<LoginScreen> {
                                     style: AppText.label.copyWith(color: Colors.white, fontSize: 11)),
                               ],
                             ),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.settings_outlined, color: Colors.white),
-                            onPressed: _showServerSettings,
                           ),
                         ],
                       ),
@@ -265,21 +275,85 @@ class _LoginScreenState extends State<LoginScreen> {
                             validator: (v) => (v == null || v.isEmpty) ? 'Password is required' : null,
                           ),
 
-                          const SizedBox(height: AppSpacing.xl),
-                          PrimaryButton(
-                            label: AppState.instance.t('Sign In', 'সাইন-ইন'),
-                            icon: Icons.login_rounded,
-                            kind: PrimaryButtonKind.primary,
-                            loading: _isLoading,
-                            onPressed: _submit,
+                          const SizedBox(height: AppSpacing.sm),
+                          Row(
+                            children: [
+                              SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: Checkbox(
+                                  value: _rememberMe,
+                                  activeColor: AppColors.primary,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                                  onChanged: (v) => setState(() => _rememberMe = v ?? true),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                AppState.instance.t('Remember Me', 'তথ্য সংরক্ষণ রাখুন'),
+                                style: AppText.bodySm.copyWith(fontSize: 13),
+                              ),
+                            ],
+                          ),
+
+                          const SizedBox(height: AppSpacing.lg),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: PrimaryButton(
+                                  label: AppState.instance.t('Sign In', 'সাইন-ইন'),
+                                  icon: Icons.login_rounded,
+                                  kind: PrimaryButtonKind.primary,
+                                  loading: _isLoading,
+                                  onPressed: _submit,
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Tooltip(
+                                message: AppState.instance.t('Biometric / Fingerprint Login', 'ফিঙ্গারপ্রিন্ট লগইন'),
+                                child: Material(
+                                  color: AppColors.primary.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(AppRadius.lg),
+                                  child: InkWell(
+                                    onTap: _biometricLogin,
+                                    borderRadius: BorderRadius.circular(AppRadius.lg),
+                                    child: Container(
+                                      width: 52,
+                                      height: 52,
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(AppRadius.lg),
+                                        border: Border.all(color: AppColors.primary, width: 1.5),
+                                      ),
+                                      child: const Icon(
+                                        Icons.fingerprint_rounded,
+                                        color: AppColors.primary,
+                                        size: 32,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                           const SizedBox(height: AppSpacing.md),
                           Center(
-                            child: TextButton.icon(
-                              onPressed: _showServerSettings,
-                              icon: Icon(Icons.dns_outlined, size: 16, color: AppColors.textMuted),
-                              label: Text('Server settings',
-                                  style: AppText.caption.copyWith(color: AppColors.textMuted)),
+                            child: InkWell(
+                              onTap: _biometricLogin,
+                              borderRadius: BorderRadius.circular(AppRadius.md),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.fingerprint_rounded, size: 20, color: AppColors.primary),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      AppState.instance.t('Quick Biometric / Fingerprint Login', 'ফিঙ্গারপ্রিন্ট দিয়ে দ্রুত লগইন করুন'),
+                                      style: AppText.bodySm.copyWith(color: AppColors.primary, fontWeight: FontWeight.w600),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
                           ),
                         ],
@@ -301,3 +375,4 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 }
+

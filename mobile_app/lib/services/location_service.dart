@@ -5,8 +5,6 @@ import 'api_service.dart';
 import 'storage_service.dart';
 
 /// Periodically pushes the current user's GPS location to backend.
-/// Runs only while the app is in the foreground (background service is
-/// platform-specific and deferred to a follow-up batch).
 class LocationService {
   static final LocationService instance = LocationService._();
   LocationService._();
@@ -20,33 +18,36 @@ class LocationService {
   bool get isRunning => _running;
   bool get isSharing => _sharingEnabled;
 
-  Future<void> setSharing(bool on) async {
+  Future<bool> setSharing(bool on) async {
     _sharingEnabled = on;
     if (on) {
-      await start();
+      final started = await start();
+      try {
+        await ApiService.toggleLocationSharing(on);
+      } catch (_) {}
+      return started;
     } else {
       stop();
+      try {
+        await ApiService.toggleLocationSharing(on);
+      } catch (_) {}
+      return true;
     }
-    try {
-      await ApiService.toggleLocationSharing(on);
-    } catch (_) {}
   }
 
-  Future<void> start({Duration interval = _defaultInterval}) async {
-    if (kIsWeb) return; // browser geolocation deferred
-    if (_running) return;
+  Future<bool> start({Duration interval = _defaultInterval}) async {
+    if (_running) return true;
     final user = await StorageService.getUser();
-    if (user == null) return;
-    // Only technicians (and staff who opt-in) share by default; supervisors don't.
-    final role = user.role.toLowerCase();
-    if (role != 'technician' && !_sharingEnabled) return;
+    if (user == null) return false;
 
-    if (! await _ensurePermission()) return;
+    final hasPermission = await _ensurePermission();
+    if (!hasPermission) return false;
 
     _running = true;
     // Push immediately
     _pushOnce();
     _timer = Timer.periodic(interval, (_) => _pushOnce());
+    return true;
   }
 
   void stop() {
@@ -55,17 +56,36 @@ class LocationService {
     _running = false;
   }
 
+  Future<bool> requestPermissionExplicitly() async {
+    return await _ensurePermission();
+  }
+
   Future<bool> _ensurePermission() async {
     try {
       final serviceOn = await Geolocator.isLocationServiceEnabled();
-      if (!serviceOn) return false;
+      if (!serviceOn) {
+        debugPrint('Location service is disabled on device');
+        // Prompt user to open location settings if service is disabled
+        await Geolocator.openLocationSettings();
+        return false;
+      }
+
       var perm = await Geolocator.checkPermission();
       if (perm == LocationPermission.denied) {
         perm = await Geolocator.requestPermission();
       }
-      if (perm == LocationPermission.deniedForever || perm == LocationPermission.denied) {
+
+      if (perm == LocationPermission.deniedForever) {
+        debugPrint('Location permission is denied forever. Opening app settings.');
+        await Geolocator.openAppSettings();
         return false;
       }
+
+      if (perm == LocationPermission.denied) {
+        debugPrint('Location permission denied by user.');
+        return false;
+      }
+
       return true;
     } catch (e) {
       debugPrint('Location permission error: $e');
@@ -76,19 +96,32 @@ class LocationService {
   Future<void> _pushOnce() async {
     if (!_sharingEnabled) return;
     try {
-      final pos = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-        timeLimit: const Duration(seconds: 20),
-      );
+      Position? pos;
+      try {
+        pos = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high,
+          timeLimit: const Duration(seconds: 15),
+        );
+      } catch (e) {
+        debugPrint('getCurrentPosition failed or timed out: $e. Falling back to last known position.');
+        pos = await Geolocator.getLastKnownPosition();
+      }
+
+      if (pos == null) {
+        debugPrint('Location is null, cannot update.');
+        return;
+      }
+
       await ApiService.updateLocation(
         lat: pos.latitude,
         lng: pos.longitude,
         accuracy: pos.accuracy.round(),
         speed: pos.speed,
       );
-      debugPrint('LocationService pushed ${pos.latitude},${pos.longitude}');
+      debugPrint('LocationService successfully pushed ${pos.latitude},${pos.longitude}');
     } catch (e) {
       debugPrint('LocationService push failed: $e');
     }
   }
 }
+

@@ -31,6 +31,8 @@ class ApiDashboardController extends Controller
             SUM(CASE WHEN due_at IS NOT NULL AND due_at < '{$now}' AND status != 'resolved' THEN 1 ELSE 0 END) as overdue
         ")->first();
 
+        $unreadCount = \App\Models\Notification::forUser($user)->where('is_read', false)->count();
+
         $stats = [
             'total' => (int) ($aggregated->total ?? 0),
             'in_progress' => (int) ($aggregated->in_progress ?? 0),
@@ -39,6 +41,7 @@ class ApiDashboardController extends Controller
             'resolved' => (int) ($aggregated->resolved ?? 0),
             'urgent' => (int) ($aggregated->urgent ?? 0),
             'overdue' => (int) ($aggregated->overdue ?? 0),
+            'unread_notifications' => $unreadCount,
         ];
 
         // Active Team Duty calculations

@@ -24,6 +24,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String _serverUrl = '';
   bool _isLoading = true;
   bool _isUploading = false;
+  bool _isBiometricEnabled = false;
 
   @override
   void initState() {
@@ -35,6 +36,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     setState(() => _isLoading = true);
     var user = await StorageService.getUser();
     final url = await ApiService.getBaseUrl();
+    final bioEnabled = await StorageService.isBiometricEnabled();
     // Try refresh from server to pick up latest avatar_url
     final refreshed = await ApiService.refreshCurrentUser();
     if (refreshed != null) user = refreshed;
@@ -43,6 +45,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _user = user;
         _serverUrl = url;
         _currentShift = user?.currentShift;
+        _isBiometricEnabled = bioEnabled;
         _isLoading = false;
       });
     }
@@ -201,15 +204,60 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           AppState.instance.t('Share Live Location', 'লাইভ লোকেশন শেয়ার'),
                           AppColors.success,
                           () async {
-                            await LocationService.instance.setSharing(!LocationService.instance.isSharing);
-                            if (mounted) setState(() {});
+                            final targetState = !LocationService.instance.isSharing;
+                            final success = await LocationService.instance.setSharing(targetState);
+                            if (!mounted) return;
+                            if (targetState && !success) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(AppState.instance.t(
+                                    'Location permission required or GPS is OFF. Please allow location.',
+                                    'লোকেশনের অনুমতি প্রয়োজন অথবা GPS বন্ধ রয়েছে। অনুগ্রহ করে লোকেশন অন করুন।',
+                                  )),
+                                  backgroundColor: AppColors.danger,
+                                  behavior: SnackBarBehavior.floating,
+                                ),
+                              );
+                            }
+                            setState(() {});
                           },
                           trailing: Switch(
                             value: LocationService.instance.isSharing,
                             activeColor: AppColors.success,
                             onChanged: (v) async {
-                              await LocationService.instance.setSharing(v);
-                              if (mounted) setState(() {});
+                              final success = await LocationService.instance.setSharing(v);
+                              if (!mounted) return;
+                              if (v && !success) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(AppState.instance.t(
+                                      'Location permission required or GPS is OFF. Please allow location.',
+                                      'লোকেশনের অনুমতি প্রয়োজন অথবা GPS বন্ধ রয়েছে। অনুগ্রহ করে লোকেশন অন করুন।',
+                                    )),
+                                    backgroundColor: AppColors.danger,
+                                    behavior: SnackBarBehavior.floating,
+                                  ),
+                                );
+                              }
+                              setState(() {});
+                            },
+                          ),
+                        ),
+                        _menuItem(
+                          Icons.fingerprint_rounded,
+                          AppState.instance.t('Biometric / Fingerprint Login', 'বায়োমেট্রিক ও ফিঙ্গারপ্রিন্ট লগইন'),
+                          AppColors.primary,
+                          () async {
+                            final newState = !_isBiometricEnabled;
+                            await StorageService.setBiometricEnabled(newState);
+                            if (mounted) setState(() => _isBiometricEnabled = newState);
+                          },
+                          trailing: Switch(
+                            value: _isBiometricEnabled,
+                            activeColor: AppColors.primary,
+                            onChanged: (v) async {
+                              await StorageService.setBiometricEnabled(v);
+                              if (mounted) setState(() => _isBiometricEnabled = v);
                             },
                           ),
                         ),

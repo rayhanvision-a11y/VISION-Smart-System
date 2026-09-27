@@ -3,6 +3,7 @@ import '../models/user.dart';
 import '../services/storage_service.dart';
 import '../services/app_state.dart';
 import '../services/location_service.dart';
+import '../services/offline_service.dart';
 import '../theme/app_theme.dart';
 import 'dashboard_screen.dart';
 import 'ticket_list_screen.dart';
@@ -27,7 +28,14 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   void initState() {
     super.initState();
     _currentIndex = widget.initialIndex;
+    OfflineService.instance.init();
     _loadUser();
+  }
+
+  @override
+  void dispose() {
+    OfflineService.instance.dispose();
+    super.dispose();
   }
 
   Future<void> _loadUser() async {
@@ -38,8 +46,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         _isLoading = false;
       });
     }
-    // Auto-start location sharing for technicians
-    if (user != null && user.role.toLowerCase() == 'technician') {
+    // Auto-start location sharing for logged-in user
+    if (user != null) {
       LocationService.instance.start();
     }
   }
@@ -69,7 +77,82 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
     return Scaffold(
       extendBody: true,
-      body: IndexedStack(index: _currentIndex, children: pages),
+      body: Column(
+        children: [
+          // Offline Banner
+          ValueListenableBuilder<bool>(
+            valueListenable: OfflineService.instance.isOnlineNotifier,
+            builder: (_, isOnline, __) {
+              if (isOnline) {
+                return ValueListenableBuilder<int>(
+                  valueListenable: OfflineService.instance.pendingCountNotifier,
+                  builder: (_, count, __) {
+                    if (count == 0) return const SizedBox.shrink();
+                    return Container(
+                      width: double.infinity,
+                      color: AppColors.info,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                      child: SafeArea(
+                        bottom: false,
+                        child: Row(
+                          children: [
+                            const Icon(Icons.sync_rounded, color: Colors.white, size: 16),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                '${AppState.instance.t('Offline items pending sync', 'অফলাইন আইটেম সিঙ্ক বাকি')}: $count',
+                                style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
+                              ),
+                            ),
+                            TextButton(
+                              style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: Size.zero),
+                              onPressed: () async {
+                                final done = await OfflineService.instance.syncPending();
+                                if (mounted && done > 0) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('Synced $done pending offline actions!'),
+                                      backgroundColor: AppColors.success,
+                                    ),
+                                  );
+                                }
+                              },
+                              child: const Text('SYNC NOW', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                );
+              }
+              return Container(
+                width: double.infinity,
+                color: Colors.amber.shade800,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                child: SafeArea(
+                  bottom: false,
+                  child: Row(
+                    children: [
+                      const Icon(Icons.wifi_off_rounded, color: Colors.white, size: 16),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          AppState.instance.t('Offline Mode - Changes will auto-sync when online', 'অফলাইন মোড - সংযোগ পেলে স্বয়ংক্রিয় সিঙ্ক হবে'),
+                          style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+          Expanded(
+            child: IndexedStack(index: _currentIndex, children: pages),
+          ),
+        ],
+      ),
       floatingActionButton: _isTechnician
           ? null
           : FloatingActionButton(
