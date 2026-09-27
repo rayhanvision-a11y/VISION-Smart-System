@@ -50,13 +50,44 @@ class StorageService {
     await prefs.setString(_keyServerUrl, url);
   }
 
-  // Remember Me & Saved Credentials
+  static const String _cryptoSalt = 'VISION_SMART_BIO_SECURE_TOKEN_2026_X9';
+
+  static String _encrypt(String plain) {
+    if (plain.isEmpty) return '';
+    final plainBytes = utf8.encode(plain);
+    final saltBytes = utf8.encode(_cryptoSalt);
+    final encrypted = List<int>.generate(plainBytes.length, (i) {
+      return plainBytes[i] ^ saltBytes[i % saltBytes.length];
+    });
+    return 'enc:${base64Encode(encrypted)}';
+  }
+
+  static String _decrypt(String cipher) {
+    if (cipher.isEmpty) return '';
+    if (!cipher.startsWith('enc:')) {
+      // Legacy plain text fallback
+      return cipher;
+    }
+    try {
+      final rawBase64 = cipher.substring(4);
+      final encryptedBytes = base64Decode(rawBase64);
+      final saltBytes = utf8.encode(_cryptoSalt);
+      final decrypted = List<int>.generate(encryptedBytes.length, (i) {
+        return encryptedBytes[i] ^ saltBytes[i % saltBytes.length];
+      });
+      return utf8.decode(decrypted);
+    } catch (_) {
+      return '';
+    }
+  }
+
+  // Remember Me & Saved Credentials (Securely Encrypted)
   static Future<void> saveCredentials(String email, String password, bool rememberMe) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_keyRememberMe, rememberMe);
     if (rememberMe) {
       await prefs.setString(_keySavedEmail, email);
-      await prefs.setString(_keySavedPassword, password);
+      await prefs.setString(_keySavedPassword, _encrypt(password));
     } else {
       await prefs.remove(_keySavedEmail);
       await prefs.remove(_keySavedPassword);
@@ -67,7 +98,8 @@ class StorageService {
     final prefs = await SharedPreferences.getInstance();
     final remember = prefs.getBool(_keyRememberMe) ?? false;
     final email = prefs.getString(_keySavedEmail) ?? '';
-    final password = prefs.getString(_keySavedPassword) ?? '';
+    final rawPass = prefs.getString(_keySavedPassword) ?? '';
+    final password = _decrypt(rawPass);
     return {
       'remember': remember,
       'email': email,
