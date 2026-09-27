@@ -51,6 +51,8 @@ class SettingController extends Controller
 
             'themePrimary' => Setting::get('theme_primary_color', '#4f46e5'),
             'themeSecondary' => Setting::get('theme_secondary_color', '#10b981'),
+            'googleSheetSyncEnabled' => Setting::get('google_sheet_sync_enabled', '0'),
+            'googleSheetWebhookUrl' => Setting::get('google_sheet_webhook_url', ''),
             'categories' => TicketCategory::orderBy('name')->get(),
             'backups' => $backupService->listBackups(),
         ]);
@@ -270,6 +272,55 @@ class SettingController extends Controller
         ActivityLog::record('setting_changed', "Theme colors updated — primary: {$validated['primary_color']}, secondary: {$validated['secondary_color']}");
 
         return back()->with('status', __('Theme colors updated successfully!'));
+    }
+
+    public function updateGoogleSheet(Request $request)
+    {
+        if (! auth()->user()->isAdmin()) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'google_sheet_sync_enabled' => 'nullable',
+            'google_sheet_webhook_url' => 'nullable|url|max:500',
+        ]);
+
+        $enabled = $request->has('google_sheet_sync_enabled') && $request->input('google_sheet_sync_enabled') == '1' ? '1' : '0';
+        Setting::set('google_sheet_sync_enabled', $enabled);
+        Setting::set('google_sheet_webhook_url', $validated['google_sheet_webhook_url'] ?? '');
+
+        ActivityLog::record('setting_changed', 'Google Sheet synchronization settings updated');
+
+        return redirect()->route('settings.edit', ['tab' => 'googlesheet'])->with('status', __('Google Sheet sync settings saved successfully!'));
+    }
+
+    public function testGoogleSheet(Request $request)
+    {
+        if (! auth()->user()->isAdmin()) {
+            abort(403);
+        }
+
+        $webhookUrl = Setting::get('google_sheet_webhook_url');
+        if (! $webhookUrl) {
+            return redirect()->route('settings.edit', ['tab' => 'googlesheet'])->with('error', __('Please enter and save a Google Apps Script Webhook URL first.'));
+        }
+
+        try {
+            $response = \Illuminate\Support\Facades\Http::timeout(10)->post($webhookUrl, [
+                'action' => 'test',
+                'timestamp' => now()->toIso8601String(),
+                'message' => 'Connection test from ISP Ticket System',
+                'user' => auth()->user()->name,
+            ]);
+
+            if ($response->successful()) {
+                return redirect()->route('settings.edit', ['tab' => 'googlesheet'])->with('status', '✅ Webhook connection successful! Google Sheet responded: ' . substr($response->body(), 0, 150));
+            }
+
+            return redirect()->route('settings.edit', ['tab' => 'googlesheet'])->with('error', '⚠️ Webhook responded with HTTP ' . $response->status() . ': ' . substr($response->body(), 0, 150));
+        } catch (\Throwable $e) {
+            return redirect()->route('settings.edit', ['tab' => 'googlesheet'])->with('error', '❌ Could not connect to Google Sheet Webhook: ' . $e->getMessage());
+        }
     }
 
     public function backupExport()

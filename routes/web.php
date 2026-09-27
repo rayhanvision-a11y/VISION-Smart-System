@@ -363,6 +363,8 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/settings/notice', [SettingController::class, 'updateNotice'])->name('settings.notice.update');
     Route::post('/settings/notice/toggle', [SettingController::class, 'toggleNotice'])->name('settings.notice.toggle');
     Route::post('/settings/theme', [SettingController::class, 'updateTheme'])->name('settings.theme.update');
+    Route::post('/settings/google-sheet', [SettingController::class, 'updateGoogleSheet'])->name('settings.googlesheet.update');
+    Route::post('/settings/google-sheet/test', [SettingController::class, 'testGoogleSheet'])->name('settings.googlesheet.test');
     Route::get('/settings/backup/export', [SettingController::class, 'backupExport'])->name('settings.backup.export');
     Route::post('/settings/backup/restore', [SettingController::class, 'backupRestore'])->name('settings.backup.restore');
 

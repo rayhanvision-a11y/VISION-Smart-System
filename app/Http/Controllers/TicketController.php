@@ -14,6 +14,7 @@ use App\Models\TicketHistory;
 use App\Models\TicketLink;
 use App\Models\TicketNote;
 use App\Models\User;
+use App\Services\GoogleSheetSyncService;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -105,6 +106,11 @@ class TicketController extends Controller
             'labels' => 'nullable|array',
             'labels.*' => 'exists:labels,id',
             'area' => 'nullable|string|max:120',
+            'client_id' => 'nullable|string|max:100',
+            'client_name' => 'nullable|string|max:255',
+            'complaint_source' => 'nullable|string|max:60',
+            'onu_power' => 'nullable|string|max:100',
+            'forwarded_to' => 'nullable|string|max:100',
         ]);
 
         $ticket = Ticket::create([
@@ -118,6 +124,11 @@ class TicketController extends Controller
             'assigned_to' => auth()->user()->isReseller() ? null : ($validated['assigned_to'] ?? null),
             'pop_office_id' => auth()->user()->isReseller() ? null : ($validated['pop_office_id'] ?? null),
             'area' => isset($validated['area']) ? trim($validated['area']) : null,
+            'client_id' => $validated['client_id'] ?? null,
+            'client_name' => $validated['client_name'] ?? null,
+            'complaint_source' => $validated['complaint_source'] ?? null,
+            'onu_power' => $validated['onu_power'] ?? null,
+            'forwarded_to' => $validated['forwarded_to'] ?? null,
         ]);
 
         $slaPolicy = SlaPolicy::forPriority($validated['priority']);
@@ -140,6 +151,9 @@ class TicketController extends Controller
             'new_assignee_id' => $ticket->assigned_to,
             'changed_by' => auth()->id(),
         ]);
+
+        // Sync to Google Sheet
+        GoogleSheetSyncService::syncTicketCreated($ticket);
 
         // Notify team members who have permission to view this ticket
         $recipientUsers = User::where('id', '!=', auth()->id())
@@ -276,6 +290,7 @@ class TicketController extends Controller
         }
 
         $ticket->update($data);
+        GoogleSheetSyncService::syncTicketUpdated($ticket);
 
         $label = ucfirst(str_replace('_', ' ', $newStatus));
 
@@ -302,6 +317,7 @@ class TicketController extends Controller
         ]);
 
         $ticket->update(['status' => 'resolved', 'resolved_at' => now()]);
+        GoogleSheetSyncService::syncTicketUpdated($ticket, $validated['resolution_note'] ?? null);
 
         TicketNote::create([
             'ticket_id' => $ticket->id,
@@ -357,6 +373,7 @@ class TicketController extends Controller
         ]);
 
         $ticket->update(['status' => 'in_progress', 'resolved_at' => null, 'sla_notified_at' => null]);
+        GoogleSheetSyncService::syncTicketUpdated($ticket, $validated['reopen_reason'] ?? 'Reopened');
 
         TicketNote::create([
             'ticket_id' => $ticket->id,
@@ -410,6 +427,7 @@ class TicketController extends Controller
         }
 
         $ticket->update(['status' => 'resolved', 'resolved_at' => $ticket->resolved_at ?? now()]);
+        GoogleSheetSyncService::syncTicketUpdated($ticket, 'Closed');
 
         TicketHistory::create([
             'ticket_id' => $ticket->id,
@@ -518,6 +536,8 @@ class TicketController extends Controller
             }
         }
 
+        GoogleSheetSyncService::syncTicketUpdated($ticket);
+
         return redirect()->route('tickets.show', $ticket)->with('success', 'Ticket updated successfully.');
     }
 
@@ -541,6 +561,7 @@ class TicketController extends Controller
 
         $oldAssignee = $ticket->assigned_to;
         $ticket->update(['assigned_to' => $validated['assigned_to']]);
+        GoogleSheetSyncService::syncTicketUpdated($ticket);
 
         TicketHistory::create([
             'ticket_id' => $ticket->id,

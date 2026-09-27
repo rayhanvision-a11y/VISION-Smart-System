@@ -227,6 +227,23 @@
                 </span>
             </button>
             @endif
+
+            {{-- Google Sheet Sync Tab (Admin) --}}
+            @if(auth()->user()->isAdmin())
+            <button type="button" @click="setTab('googlesheet')"
+                    :class="activeTab === 'googlesheet' 
+                        ? 'bg-emerald-600 text-white shadow-xs font-bold' 
+                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 font-semibold'"
+                    class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs whitespace-nowrap transition-all cursor-pointer">
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14H6v-2h6v2zm0-4H6v-2h6v2zm0-4H6V7h6v2zm6 8h-4v-2h4v2zm0-4h-4v-2h4v2zm0-4h-4V7h4v2z"/>
+                </svg>
+                <span>{{ __('Google Sheet Sync') }}</span>
+                @if(($googleSheetSyncEnabled ?? '0') === '1')
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                @endif
+            </button>
+            @endif
         </div>
 
         {{-- Switch styling --}}
@@ -1210,6 +1227,341 @@
                         <span>🛡️</span>
                         <span><strong>{{ __('Auto Retention (FIFO):') }}</strong> {{ __('Keeps up to 30 daily archives automatically, pruning the oldest.') }}</span>
                     </div>
+                </div>
+            </div>
+        </div>
+        @endif
+
+        {{-- 📊 Google Sheet Auto Sync Tab (Admin) --}}
+        @if(auth()->user()->isAdmin())
+        <div x-show="activeTab === 'googlesheet'" x-cloak class="space-y-4" x-data="{ copied: false }">
+            {{-- Top Header Card --}}
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-xs">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div class="flex items-start gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0">
+                            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14H6v-2h6v2zm0-4H6v-2h6v2zm0-4H6V7h6v2zm6 8h-4v-2h4v2zm0-4h-4v-2h4v2zm0-4h-4V7h4v2z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h2 class="text-sm font-bold text-slate-800 dark:text-white">{{ __('Google Sheet Auto Sync') }}</h2>
+                                @if(($googleSheetSyncEnabled ?? '0') === '1')
+                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-950/80 dark:text-emerald-300">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                        {{ __('Active') }}
+                                    </span>
+                                @else
+                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                                        {{ __('Disabled') }}
+                                    </span>
+                                @endif
+                            </div>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                {{ __('Automatically record tickets into your Complaint Tracking Sheet (2026) without manual entry.') }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Webhook Configuration Form --}}
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xs overflow-hidden">
+                <div class="px-4 py-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/40 flex items-center justify-between">
+                    <h3 class="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider flex items-center gap-2">
+                        <span>⚙️</span> {{ __('Webhook Connection Settings') }}
+                    </h3>
+                </div>
+
+                <div class="p-4 sm:p-5 space-y-4">
+                    <form method="POST" action="{{ route('settings.googlesheet.update') }}" class="space-y-4">
+                        @csrf
+
+                        {{-- Toggle Enable/Disable --}}
+                        <div class="flex items-center justify-between p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20">
+                            <div>
+                                <label for="sheet-sync-toggle" class="text-xs font-bold text-slate-800 dark:text-slate-200 cursor-pointer">
+                                    {{ __('Enable Google Sheet Sync') }}
+                                </label>
+                                <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                                    {{ __('When enabled, all newly created tickets and status updates will automatically sync to your Google Sheet.') }}
+                                </p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="sheet-sync-toggle" name="google_sheet_sync_enabled" value="1"
+                                       class="sr-only peer" {{ ($googleSheetSyncEnabled ?? '0') === '1' ? 'checked' : '' }}>
+                                <div class="w-11 h-6 bg-slate-300 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:width-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+                            </label>
+                        </div>
+
+                        {{-- Webhook URL Input --}}
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                                {{ __('Google Apps Script Web App URL') }}
+                            </label>
+                            <input type="url" name="google_sheet_webhook_url" value="{{ old('google_sheet_webhook_url', $googleSheetWebhookUrl ?? '') }}"
+                                   placeholder="https://script.google.com/macros/s/AKfycbx.../exec"
+                                   class="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3.5 py-2 text-xs font-mono text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500 bg-white dark:bg-slate-800">
+                            <p class="text-[11px] text-slate-400 mt-1">
+                                {{ __('Deploy your Google Apps Script as a Web App (Access: Anyone) and paste the deployed URL here.') }}
+                            </p>
+                        </div>
+
+                        <div class="flex items-center gap-3 pt-2">
+                            <button type="submit" class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-colors shadow-xs cursor-pointer">
+                                💾 {{ __('Save Settings') }}
+                            </button>
+                        </div>
+                    </form>
+
+                    {{-- Test Connection Button --}}
+                    @if(!empty($googleSheetWebhookUrl))
+                    <div class="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                        <div>
+                            <span class="text-xs font-semibold text-slate-700 dark:text-slate-300">{{ __('Verify Webhook Connection') }}</span>
+                            <p class="text-[11px] text-slate-400">{{ __('Send a test ping to your Google Sheet webhook to confirm connectivity.') }}</p>
+                        </div>
+                        <form method="POST" action="{{ route('settings.googlesheet.test') }}">
+                            @csrf
+                            <button type="submit" class="px-3.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1.5">
+                                <span>⚡</span> {{ __('Test Connection') }}
+                            </button>
+                        </form>
+                    </div>
+                    @endif
+                </div>
+            </div>
+
+            {{-- 16-Column Structure Guide Card --}}
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xs overflow-hidden">
+                <div class="px-4 py-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/40 flex items-center justify-between">
+                    <h3 class="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider flex items-center gap-2">
+                        <span>📋</span> {{ __('Sheet Column Mapping (Complaint Tracking Sheet)') }}
+                    </h3>
+                    <span class="text-[10px] text-slate-400">{{ __('Columns A to P (16 Columns)') }}</span>
+                </div>
+                <div class="p-4 overflow-x-auto">
+                    <table class="w-full text-left text-xs border-collapse">
+                        <thead>
+                            <tr class="border-b border-slate-200 dark:border-slate-800 text-[11px] font-bold text-slate-500 uppercase tracking-wider bg-slate-50 dark:bg-slate-800/50">
+                                <th class="p-2">Col</th>
+                                <th class="p-2">Header Name</th>
+                                <th class="p-2">Data Synced From ISP System</th>
+                                <th class="p-2">Example Value</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-[11px]">
+                            <tr><td class="p-2 font-mono font-bold text-indigo-600">A</td><td class="p-2 font-semibold">Master SL</td><td class="p-2 text-slate-500">Auto calculated increment (+1)</td><td class="p-2 font-mono text-slate-600 dark:text-slate-300">54</td></tr>
+                            <tr><td class="p-2 font-mono font-bold text-indigo-600">B</td><td class="p-2 font-semibold">Daily SL</td><td class="p-2 text-slate-500">Daily ticket serial number (+1)</td><td class="p-2 font-mono text-slate-600 dark:text-slate-300">3</td></tr>
+                            <tr><td class="p-2 font-mono font-bold text-indigo-600">C</td><td class="p-2 font-semibold">Date</td><td class="p-2 text-slate-500">Ticket creation date</td><td class="p-2 font-mono text-slate-600 dark:text-slate-300">27 Sep, 26</td></tr>
+                            <tr><td class="p-2 font-mono font-bold text-indigo-600">D</td><td class="p-2 font-semibold">User Entry Time</td><td class="p-2 text-slate-500">Entry time (12-hour format)</td><td class="p-2 font-mono text-slate-600 dark:text-slate-300">01:08 PM</td></tr>
+                            <tr><td class="p-2 font-mono font-bold text-indigo-600">E</td><td class="p-2 font-semibold">Complaint Source</td><td class="p-2 text-slate-500">Source: Phone, Office, Online, WhatsApp</td><td class="p-2 font-mono text-slate-600 dark:text-slate-300">Phone</td></tr>
+                            <tr><td class="p-2 font-mono font-bold text-indigo-600">F</td><td class="p-2 font-semibold">ID</td><td class="p-2 text-slate-500">Client ID (or Ticket Key fallback)</td><td class="p-2 font-mono text-slate-600 dark:text-slate-300">15642</td></tr>
+                            <tr><td class="p-2 font-mono font-bold text-indigo-600">G</td><td class="p-2 font-semibold">Name</td><td class="p-2 text-slate-500">Client Name (or Ticket Title)</td><td class="p-2 font-mono text-slate-600 dark:text-slate-300">Md. Mikdad Hossain</td></tr>
+                            <tr><td class="p-2 font-mono font-bold text-indigo-600">H</td><td class="p-2 font-semibold">Address</td><td class="p-2 text-slate-500">Ticket Area</td><td class="p-2 font-mono text-slate-600 dark:text-slate-300">Rampura</td></tr>
+                            <tr><td class="p-2 font-mono font-bold text-indigo-600">I</td><td class="p-2 font-semibold">Type</td><td class="p-2 text-slate-500">Ticket Category Name</td><td class="p-2 font-mono text-slate-600 dark:text-slate-300">Net Off (ONU Optical Power Los)</td></tr>
+                            <tr><td class="p-2 font-mono font-bold text-indigo-600">J</td><td class="p-2 font-semibold">Received By</td><td class="p-2 text-slate-500">Name of person who created ticket</td><td class="p-2 font-mono text-slate-600 dark:text-slate-300">Rayhan</td></tr>
+                            <tr><td class="p-2 font-mono font-bold text-indigo-600">K</td><td class="p-2 font-semibold">Forwarded To</td><td class="p-2 text-slate-500">Forwarded department or team</td><td class="p-2 font-mono text-slate-600 dark:text-slate-300">NOC Team</td></tr>
+                            <tr><td class="p-2 font-mono font-bold text-indigo-600">L</td><td class="p-2 font-semibold">ONU Power Check IT Team</td><td class="p-2 text-slate-500">ONU Optical Power dBm</td><td class="p-2 font-mono text-slate-600 dark:text-slate-300">-23.56</td></tr>
+                            <tr><td class="p-2 font-mono font-bold text-indigo-600">M</td><td class="p-2 font-semibold">Assigned To (Technician)</td><td class="p-2 text-slate-500">Assigned technician name</td><td class="p-2 font-mono text-slate-600 dark:text-slate-300">Hazrot</td></tr>
+                            <tr><td class="p-2 font-mono font-bold text-indigo-600">N</td><td class="p-2 font-semibold">Current Status</td><td class="p-2 text-slate-500">Status (Assigned / Pending / Solved)</td><td class="p-2 font-mono text-slate-600 dark:text-slate-300">Solved</td></tr>
+                            <tr><td class="p-2 font-mono font-bold text-indigo-600">O</td><td class="p-2 font-semibold">Feedback Received</td><td class="p-2 text-slate-500">Customer feedback if received</td><td class="p-2 font-mono text-slate-600 dark:text-slate-300">Good</td></tr>
+                            <tr><td class="p-2 font-mono font-bold text-indigo-600">P</td><td class="p-2 font-semibold">Remarks</td><td class="p-2 text-slate-500">Ticket description or update remarks</td><td class="p-2 font-mono text-slate-600 dark:text-slate-300">Resolved fiber cut</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            {{-- Setup Instructions & Apps Script Code Box --}}
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xs overflow-hidden">
+                <div class="px-4 py-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/40 flex items-center justify-between">
+                    <h3 class="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider flex items-center gap-2">
+                        <span>📝</span> {{ __('Google Apps Script Code (Copy & Paste)') }}
+                    </h3>
+                    <button type="button" @click="navigator.clipboard.writeText(document.getElementById('gas-script-box').innerText); copied = true; setTimeout(() => copied = false, 2500)"
+                            class="px-2.5 py-1 rounded bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/60 dark:hover:bg-indigo-900/60 text-indigo-600 dark:text-indigo-400 text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer">
+                        <span x-show="!copied">📋 {{ __('Copy Script') }}</span>
+                        <span x-show="copied" class="text-emerald-600">✓ {{ __('Copied!') }}</span>
+                    </button>
+                </div>
+
+                <div class="p-4 space-y-3">
+                    <div class="space-y-1 text-xs text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-800/40 p-3 rounded-lg border border-slate-200 dark:border-slate-700">
+                        <p class="font-bold text-slate-800 dark:text-white mb-1">🚀 4-Step Setup Guide:</p>
+                        <p>1. Open your <strong>Complaint Tracking Sheet (2026)</strong> in Google Sheets.</p>
+                        <p>2. In the top menu, click <strong>Extensions</strong> &rarr; <strong>Apps Script</strong>.</p>
+                        <p>3. Delete any default code inside <code class="font-mono bg-white dark:bg-slate-900 px-1 py-0.5 rounded border border-slate-200 dark:border-slate-700">Code.gs</code>, paste the script below, and click <strong>Save 💾</strong>.</p>
+                        <p>4. Click <strong>Deploy</strong> &rarr; <strong>New deployment</strong>:
+                            <br>&bull; Select type: <strong>Web app</strong>
+                            <br>&bull; Description: <code>Ticket Sync Webhook</code>
+                            <br>&bull; Execute as: <strong>Me</strong>
+                            <br>&bull; Who has access: <strong>Anyone</strong>
+                            <br>&bull; Click <strong>Deploy</strong>, copy the <strong>Web App URL</strong>, and paste it into the Webhook URL field above!
+                        </p>
+                    </div>
+
+                    <pre id="gas-script-box" class="p-3.5 bg-slate-900 text-slate-100 rounded-lg text-[11px] font-mono leading-relaxed overflow-x-auto max-h-96 selection:bg-indigo-500">/**
+ * ISP Ticket System — Google Sheet Auto Sync Webhook
+ * Sheet: Complaint Tracking Sheet (2026)
+ * Supports monthly tabs (e.g. September, August) and columns A to P.
+ */
+
+function doPost(e) {
+  var lock = LockService.getScriptLock();
+  lock.tryLock(10000);
+  
+  try {
+    var rawData = e.postData ? e.postData.contents : null;
+    if (!rawData) {
+      return ContentService.createTextOutput(JSON.stringify({ status: 'error', message: 'No payload received' }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    
+    var data = JSON.parse(rawData);
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    
+    // Connection test action
+    if (data.action === 'test') {
+      return ContentService.createTextOutput(JSON.stringify({
+        status: 'success',
+        message: 'Connected to spreadsheet &quot;' + ss.getName() + '&quot; successfully!'
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+    
+    // Determine Sheet Tab (e.g., &quot;September&quot;, &quot;October&quot;, or provided sheet_name)
+    var sheetName = data.sheet_name;
+    var sheet = null;
+    if (sheetName) {
+      sheet = ss.getSheetByName(sheetName);
+    }
+    if (!sheet) {
+      var monthNames = [&quot;January&quot;, &quot;February&quot;, &quot;March&quot;, &quot;April&quot;, &quot;May&quot;, &quot;June&quot;, &quot;July&quot;, &quot;August&quot;, &quot;September&quot;, &quot;October&quot;, &quot;November&quot;, &quot;December&quot;];
+      var currentMonth = monthNames[new Date().getMonth()];
+      sheet = ss.getSheetByName(currentMonth);
+    }
+    if (!sheet) {
+      sheet = ss.getSheets()[0]; // Fallback to first sheet
+    }
+    
+    // UPDATE TICKET ACTION (When status, assignee, or remarks change)
+    if (data.action === 'update') {
+      var ticketId = String(data.id || data.client_id || data.ticket_key || '').trim();
+      var foundRow = -1;
+      var sheetsToSearch = [sheet];
+      
+      var allSheets = ss.getSheets();
+      for (var s = 0; s &lt; allSheets.length; s++) {
+        if (allSheets[s].getName() !== sheet.getName()) {
+          sheetsToSearch.push(allSheets[s]);
+        }
+      }
+      
+      for (var i = 0; i &lt; sheetsToSearch.length; i++) {
+        var curSheet = sheetsToSearch[i];
+        var lastR = curSheet.getLastRow();
+        if (lastR &lt; 2) continue;
+        
+        var idValues = curSheet.getRange(2, 6, lastR - 1, 1).getValues(); // Column F is ID
+        for (var r = idValues.length - 1; r &gt;= 0; r--) {
+          var cellVal = String(idValues[r][0]).trim();
+          if (cellVal &amp;&amp; (cellVal === ticketId || cellVal === String(data.ticket_key || '').trim())) {
+            foundRow = r + 2;
+            sheet = curSheet;
+            break;
+          }
+        }
+        if (foundRow &gt; 0) break;
+      }
+      
+      if (foundRow &gt; 0) {
+        if (data.assigned_to) {
+          sheet.getRange(foundRow, 13).setValue(data.assigned_to); // Col M: Assigned To (Technician)
+        }
+        if (data.status || data.current_status) {
+          sheet.getRange(foundRow, 14).setValue(data.status || data.current_status); // Col N: Current Status
+        }
+        if (data.remarks) {
+          var currentRemarks = sheet.getRange(foundRow, 16).getValue();
+          sheet.getRange(foundRow, 16).setValue(data.remarks + (currentRemarks ? ' | ' + currentRemarks : '')); // Col P: Remarks
+        }
+        return ContentService.createTextOutput(JSON.stringify({
+          status: 'success',
+          message: 'Row ' + foundRow + ' updated in ' + sheet.getName(),
+          row: foundRow
+        })).setMimeType(ContentService.MimeType.JSON);
+      }
+    }
+    
+    // CREATE TICKET ACTION
+    var lastRow = sheet.getLastRow();
+    var masterSl = 1;
+    var dailySl = 1;
+    var targetDate = data.date || Utilities.formatDate(new Date(), &quot;Asia/Dhaka&quot;, &quot;dd MMM, yy&quot;);
+    var targetTime = data.time || Utilities.formatDate(new Date(), &quot;Asia/Dhaka&quot;, &quot;hh:mm a&quot;);
+    
+    if (lastRow &gt;= 2) {
+      // Find last Master SL from Col A
+      var lastMasterVal = sheet.getRange(lastRow, 1).getValue();
+      if (!isNaN(parseInt(lastMasterVal))) {
+        masterSl = parseInt(lastMasterVal) + 1;
+      } else {
+        masterSl = lastRow;
+      }
+      
+      // Calculate Daily SL from Col B &amp; Date from Col C
+      var lastDateVal = String(sheet.getRange(lastRow, 3).getValue()).trim();
+      var lastDailyVal = sheet.getRange(lastRow, 2).getValue();
+      if (lastDateVal === targetDate &amp;&amp; !isNaN(parseInt(lastDailyVal))) {
+        dailySl = parseInt(lastDailyVal) + 1;
+      } else {
+        dailySl = 1;
+      }
+    }
+    
+    var newRow = [
+      masterSl,                                        // Col A (1): Master SL
+      dailySl,                                         // Col B (2): Daily SL
+      targetDate,                                      // Col C (3): Date
+      targetTime,                                      // Col D (4): User Entry Time
+      data.complaint_source || 'Phone',                // Col E (5): Complaint Source
+      data.id || data.client_id || data.ticket_key || '', // Col F (6): ID
+      data.name || data.client_name || data.title || '', // Col G (7): Name
+      data.address || data.area || 'N/A',              // Col H (8): Address
+      data.type || data.category || '',                // Col I (9): Type
+      data.received_by || '',                          // Col J (10): Received By
+      data.forwarded_to || '',                         // Col K (11): Forwarded To
+      data.onu_power || '',                            // Col L (12): ONU Power Check IT Team
+      data.assigned_to || 'Unassigned',                // Col M (13): Assigned To (Technician)
+      data.status || data.current_status || 'Pending', // Col N (14): Current Status
+      data.feedback || '',                             // Col O (15): Feedback Received
+      data.remarks || ''                               // Col P (16): Remarks
+    ];
+    
+    sheet.appendRow(newRow);
+    
+    return ContentService.createTextOutput(JSON.stringify({
+      status: 'success',
+      message: 'Ticket recorded successfully',
+      sheet: sheet.getName(),
+      row: sheet.getLastRow(),
+      master_sl: masterSl,
+      daily_sl: dailySl
+    })).setMimeType(ContentService.MimeType.JSON);
+    
+  } catch (error) {
+    return ContentService.createTextOutput(JSON.stringify({
+      status: 'error',
+      message: error.toString()
+    })).setMimeType(ContentService.MimeType.JSON);
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function doGet(e) {
+  return ContentService.createTextOutput(&quot;ISP Ticket Google Sheet Sync Webhook is running active!&quot;);
+}</pre>
                 </div>
             </div>
         </div>

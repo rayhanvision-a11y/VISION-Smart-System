@@ -109,6 +109,68 @@
                         $oldAssigned = old('assigned_to');
                         $preSelected = $nocUsers->firstWhere('id', (int) $oldAssigned);
                     @endphp
+                    {{-- Client & Complaint Tracking (Optional / Google Sheet Sync) --}}
+                    <div class="mb-5 p-4 rounded-xl bg-slate-50/80 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800">
+                        <div class="flex items-center justify-between mb-3">
+                            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                                <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                </svg>
+                                {{ __('Client & Tracking Info') }}
+                                <span class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300">{{ __('Optional') }}</span>
+                            </h4>
+                            <span class="text-[11px] text-slate-400">{{ __('Google Sheet Sync') }}</span>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+                            {{-- Client ID --}}
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                                    {{ __('Client ID') }}
+                                </label>
+                                <input type="text" name="client_id" value="{{ old('client_id') }}"
+                                       placeholder="e.g. 15642"
+                                       class="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-800">
+                            </div>
+
+                            {{-- Client Name --}}
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                                    {{ __('Client Name') }}
+                                </label>
+                                <input type="text" name="client_name" value="{{ old('client_name') }}"
+                                       placeholder="e.g. Md. Mikdad Hossain"
+                                       class="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-800">
+                            </div>
+
+                            {{-- Complaint Source --}}
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                                    {{ __('Complaint Source') }} <span class="text-[10px] font-normal text-slate-400">({{ __('Optional') }})</span>
+                                </label>
+                                <select name="complaint_source"
+                                        class="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-800">
+                                    <option value="">{{ __('-- Select Source (Optional) --') }}</option>
+                                    <option value="Phone" {{ old('complaint_source') === 'Phone' ? 'selected' : '' }}>Phone</option>
+                                    <option value="Office" {{ old('complaint_source') === 'Office' ? 'selected' : '' }}>Office</option>
+                                    <option value="Online" {{ old('complaint_source') === 'Online' ? 'selected' : '' }}>Online</option>
+                                    <option value="WhatsApp" {{ old('complaint_source') === 'WhatsApp' ? 'selected' : '' }}>WhatsApp</option>
+                                    <option value="Reseller" {{ old('complaint_source') === 'Reseller' ? 'selected' : '' }}>Reseller</option>
+                                </select>
+                            </div>
+
+                            {{-- ONU Power --}}
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                                    {{ __('ONU Power / Reading') }}
+                                </label>
+                                <input type="text" name="onu_power" value="{{ old('onu_power') }}"
+                                       placeholder="e.g. -23.56 dBm"
+                                       class="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-800">
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
                         {{-- 📍 Area (searchable dropdown + add-new toggle) --}}
                         <div x-data="{ mode: '{{ $isCustom ? 'custom' : 'select' }}', value: @js($oldArea) }">

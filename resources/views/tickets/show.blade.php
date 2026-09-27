@@ -734,7 +734,7 @@
             @endif
 
             {{-- Ticket Info Sidebar --}}
-            <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden" x-data="{ open: false }">
+            <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden" x-data="{ open: true }">
                 <button type="button" @click="open = !open" class="w-full flex items-center justify-between px-5 py-3 border-b border-slate-100 bg-slate-50">
                     <h2 class="text-sm font-semibold text-slate-600">{{ __('Details') }}</h2>
                     <svg class="w-4 h-4 text-slate-400 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
@@ -766,6 +766,32 @@
                             <span class="text-sm text-slate-700">{{ $ticket->creator->name ?? __('N/A') }}</span>
                         </div>
                     </div>
+                    @if(!empty($ticket->client_id) || !empty($ticket->client_name))
+                    <div class="px-5 py-3 bg-slate-50/50 dark:bg-slate-800/40">
+                        <p class="text-xs text-slate-400 font-semibold uppercase tracking-wide mb-1">👤 {{ __('Client Info') }}</p>
+                        @if($ticket->client_id)
+                            <div class="text-xs font-mono font-bold text-slate-800 dark:text-slate-100">ID: <span class="text-indigo-600 dark:text-indigo-400">{{ $ticket->client_id }}</span></div>
+                        @endif
+                        @if($ticket->client_name)
+                            <div class="text-xs text-slate-600 dark:text-slate-300 font-medium">{{ $ticket->client_name }}</div>
+                        @endif
+                    </div>
+                    @endif
+
+                    @if(!empty($ticket->complaint_source))
+                    <div class="px-5 py-3">
+                        <p class="text-xs text-slate-400 font-semibold uppercase tracking-wide mb-1">📞 {{ __('Source') }}</p>
+                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">{{ $ticket->complaint_source }}</span>
+                    </div>
+                    @endif
+
+                    @if(!empty($ticket->onu_power))
+                    <div class="px-5 py-3">
+                        <p class="text-xs text-slate-400 font-semibold uppercase tracking-wide mb-1">⚡ {{ __('ONU Power') }}</p>
+                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300">{{ $ticket->onu_power }}</span>
+                    </div>
+                    @endif
+
                     @if(!empty($ticket->area))
                     <div class="px-5 py-3">
                         <p class="text-xs text-slate-400 font-semibold uppercase tracking-wide mb-1">📍 {{ __('Area') }}</p>
