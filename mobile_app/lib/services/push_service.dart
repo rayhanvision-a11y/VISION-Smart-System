@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
@@ -35,13 +36,18 @@ class PushService {
   );
 
   bool _initialized = false;
+  Timer? _pollTimer;
+  final Set<int> _knownNotificationIds = {};
+  bool _firstPollDone = false;
 
   Future<void> init() async {
     if (_initialized || kIsWeb) return;
     _initialized = true;
 
     // Background handler for terminated / background state
-    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+    try {
+      FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+    } catch (_) {}
 
     // Local notifications setup
     const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
@@ -55,10 +61,16 @@ class PushService {
       onDidReceiveNotificationResponse: (resp) => _handleTap(resp.payload),
     );
 
-    // Android channel
-    await _local
-        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
-        ?.createNotificationChannel(_channel);
+    // Android channel & Android 13+ runtime POST_NOTIFICATIONS permission
+    try {
+      final androidPlugin = _local.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+      if (androidPlugin != null) {
+        await androidPlugin.createNotificationChannel(_channel);
+        await androidPlugin.requestNotificationsPermission();
+      }
+    } catch (e) {
+      debugPrint('Android notification permission error: $e');
+    }
 
     // Request notification permission with sound, alert, badge (safe if Firebase ready)
     try {
@@ -89,6 +101,95 @@ class PushService {
     } catch (e) {
       debugPrint('FCM init safe note: $e');
     }
+
+    // Start Real-time In-App / System notification poller
+    startNotificationPolling();
+  }
+
+  void startNotificationPolling() {
+    _pollTimer?.cancel();
+    _checkNewNotifications();
+    _pollTimer = Timer.periodic(const Duration(seconds: 10), (_) {
+      _checkNewNotifications();
+    });
+  }
+
+  void stopNotificationPolling() {
+    _pollTimer?.cancel();
+    _pollTimer = null;
+  }
+
+  Future<void> _checkNewNotifications() async {
+    try {
+      final data = await ApiService.getNotifications();
+      final list = ((data['notifications'] as List?) ?? [])
+          .whereType<Map>()
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList();
+
+      if (!_firstPollDone) {
+        // First run: Seed known IDs so old notifications don't trigger alerts
+        for (final item in list) {
+          final id = item['id'] as int?;
+          if (id != null) _knownNotificationIds.add(id);
+        }
+        _firstPollDone = true;
+        return;
+      }
+
+      // Subsequent checks: Find new unread notifications
+      for (final item in list) {
+        final id = item['id'] as int?;
+        final isRead = item['is_read'] as bool? ?? false;
+        if (id != null && !isRead && !_knownNotificationIds.contains(id)) {
+          _knownNotificationIds.add(id);
+          final message = (item['message'] as String?) ?? 'New ticket update received';
+          final ticketId = item['ticket_id'] as int?;
+
+          await showNotificationDirectly(
+            id,
+            'VISION Ticket Alert',
+            message,
+            ticketId: ticketId,
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('Notification poller check note: $e');
+    }
+  }
+
+  Future<void> showNotificationDirectly(int id, String title, String body, {int? ticketId}) async {
+    try {
+      HapticFeedback.heavyImpact();
+    } catch (_) {}
+
+    await _local.show(
+      id,
+      title,
+      body,
+      NotificationDetails(
+        android: AndroidNotificationDetails(
+          _channel.id,
+          _channel.name,
+          channelDescription: _channel.description,
+          icon: '@mipmap/ic_launcher',
+          importance: Importance.max,
+          priority: Priority.max,
+          playSound: true,
+          enableVibration: true,
+          vibrationPattern: Int64List.fromList([0, 500, 250, 500]),
+          enableLights: true,
+          fullScreenIntent: true,
+        ),
+        iOS: const DarwinNotificationDetails(
+          presentAlert: true,
+          presentBadge: true,
+          presentSound: true,
+        ),
+      ),
+      payload: ticketId != null ? 'ticket:$ticketId' : '',
+    );
   }
 
   Future<void> sendTokenToServer() async {
@@ -106,7 +207,6 @@ class PushService {
   }
 
   Future<void> _onForegroundMessage(RemoteMessage m) async {
-    // Physical device vibration on notification arrival
     try {
       HapticFeedback.vibrate();
     } catch (_) {}
@@ -128,8 +228,9 @@ class PushService {
           priority: Priority.max,
           playSound: true,
           enableVibration: true,
-          vibrationPattern: Int64List.fromList([0, 400, 200, 400]),
+          vibrationPattern: Int64List.fromList([0, 500, 250, 500]),
           enableLights: true,
+          fullScreenIntent: true,
         ),
         iOS: const DarwinNotificationDetails(
           presentAlert: true,
@@ -181,4 +282,3 @@ class PushService {
     }
   }
 }
-
