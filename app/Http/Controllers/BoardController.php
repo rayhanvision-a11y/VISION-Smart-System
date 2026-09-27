@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Ticket;
 use App\Models\TicketHistory;
 use App\Models\User;
+use App\Services\GoogleSheetSyncService;
 use Illuminate\Http\Request;
 
 class BoardController extends Controller
@@ -81,6 +82,8 @@ class BoardController extends Controller
             'new_assignee_id' => null,
             'changed_by' => $user->id,
         ]);
+
+        GoogleSheetSyncService::syncTicketUpdated($ticket);
 
         return response()->json(['success' => true]);
     }

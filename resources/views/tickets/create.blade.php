@@ -111,7 +111,7 @@
                     @endphp
                     {{-- Client & Complaint Tracking (Optional / Google Sheet Sync) --}}
                     <div class="mb-5 p-4 rounded-xl bg-slate-50/80 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800">
-                        <div class="flex items-center justify-between mb-3">
+                        <div class="flex flex-wrap items-center justify-between gap-2 mb-3 pb-2.5 border-b border-slate-200/60 dark:border-slate-700/60">
                             <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
                                 <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
@@ -119,7 +119,15 @@
                                 {{ __('Client & Tracking Info') }}
                                 <span class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300">{{ __('Optional') }}</span>
                             </h4>
-                            <span class="text-[11px] text-slate-400">{{ __('Google Sheet Sync') }}</span>
+
+                            {{-- Google Sheet Sync Checkbox --}}
+                            <label class="inline-flex items-center gap-2 cursor-pointer select-none bg-emerald-50/90 dark:bg-emerald-950/40 border border-emerald-300/80 dark:border-emerald-800/80 px-3 py-1.5 rounded-lg hover:bg-emerald-100/70 transition shadow-xs">
+                                <input type="checkbox" name="sync_to_google_sheet" value="1" {{ old('sync_to_google_sheet', '1') == '1' ? 'checked' : '' }}
+                                       class="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300 cursor-pointer">
+                                <span class="text-xs font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-1">
+                                    📊 {{ __('Sync to Google Sheet') }}
+                                </span>
+                            </label>
                         </div>
 
                         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
@@ -214,77 +222,23 @@
                             @error('area')<p class="text-red-500 text-xs mt-1.5">{{ $message }}</p>@enderror
                         </div>
 
-                        {{-- Assign To — searchable combobox --}}
+                        {{-- Assign To — clean, reliable select --}}
                         @if(!auth()->user()->isReseller())
-                        <div x-data="{
-                            open: false,
-                            query: '',
-                            selectedId: {{ $oldAssigned ? (int) $oldAssigned : 'null' }},
-                            selectedLabel: @js($preSelected ? ($preSelected->isOnDuty() ? '🟢 ' : '⚪ ').$preSelected->name.($preSelected->team ? ' · '.$preSelected->team : '') : ''),
-                            users: @js($assignableUsers),
-                            get filtered() {
-                                if (!this.query) return this.users;
-                                const q = this.query.toLowerCase();
-                                return this.users.filter(u =>
-                                    u.name.toLowerCase().includes(q) ||
-                                    (u.team||'').toLowerCase().includes(q) ||
-                                    (u.role||'').toLowerCase().includes(q)
-                                );
-                            },
-                            pick(u) {
-                                this.selectedId = u.id;
-                                this.selectedLabel = (u.on_duty ? '🟢 ' : '⚪ ') + u.name + (u.team ? ' · ' + u.team : '');
-                                this.open = false;
-                                this.query = '';
-                            },
-                            clear() {
-                                this.selectedId = null;
-                                this.selectedLabel = '';
-                                this.query = '';
-                                this.open = false;
-                            }
-                        }" class="relative">
-                            <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">{{ __('Assign To') }}</label>
-                            <input type="hidden" name="assigned_to" :value="selectedId ?? ''">
-
-                            <div @click.away="open = false">
-                                <button type="button" @click="open = !open"
-                                        class="w-full flex items-center justify-between border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 text-sm text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 bg-slate-50 dark:bg-slate-800 text-left">
-                                    <span x-show="selectedLabel" x-text="selectedLabel" class="truncate"></span>
-                                    <span x-show="!selectedLabel" class="text-slate-400">{{ __('Leave Unassigned') }}</span>
-                                    <span class="flex items-center gap-1">
-                                        <span x-show="selectedLabel" @click.stop="clear()" class="text-slate-400 hover:text-red-500 px-1">✕</span>
-                                        <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                                    </span>
-                                </button>
-
-                                <div x-show="open" x-cloak x-transition
-                                     class="absolute z-30 mt-1 w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg max-h-72 flex flex-col">
-                                    <div class="p-2 border-b border-slate-100 dark:border-slate-700">
-                                        <input type="text" x-model="query" x-ref="searchInput"
-                                               @keydown.enter.prevent="if (filtered.length) pick(filtered[0])"
-                                               placeholder="{{ __('Search by name, team, role…') }}"
-                                               class="w-full px-2.5 py-1.5 text-sm border border-slate-200 dark:border-slate-700 rounded-md bg-slate-50 dark:bg-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500">
-                                    </div>
-                                    <div class="overflow-y-auto flex-1">
-                                        <template x-for="u in filtered" :key="u.id">
-                                            <button type="button" @click="pick(u)"
-                                                    class="w-full text-left px-3 py-2 text-sm hover:bg-indigo-50 dark:hover:bg-indigo-950/40 flex items-center justify-between gap-2">
-                                                <span class="flex items-center gap-2 min-w-0">
-                                                    <span x-text="u.on_duty ? '🟢' : '⚪'"></span>
-                                                    <span class="truncate">
-                                                        <span x-text="u.name" class="font-medium text-slate-900 dark:text-white"></span>
-                                                        <span x-show="u.team" class="text-slate-500 text-xs">· <span x-text="u.team"></span></span>
-                                                    </span>
-                                                </span>
-                                                <span x-text="u.role.replaceAll('_',' ').toUpperCase()" class="text-[10px] text-slate-400 shrink-0"></span>
-                                            </button>
-                                        </template>
-                                        <div x-show="filtered.length === 0" class="p-3 text-center text-xs text-slate-400">{{ __('No matches') }}</div>
-                                    </div>
-                                </div>
-                            </div>
+                        <div>
+                            <label for="assigned_to" class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                                {{ __('Assign To') }}
+                            </label>
+                            <select name="assigned_to" id="assigned_to"
+                                    class="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 text-sm text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 bg-slate-50 dark:bg-slate-800 @error('assigned_to') border-red-400 @enderror">
+                                <option value="">— {{ __('Leave Unassigned') }} —</option>
+                                @foreach($nocUsers as $user)
+                                    <option value="{{ $user->id }}" {{ (string)old('assigned_to') === (string)$user->id ? 'selected' : '' }}>
+                                        {{ $user->isOnDuty() ? '🟢' : '⚪' }} {{ $user->name }} {{ $user->team ? '· ' . $user->team : '' }} ({{ ucfirst(str_replace('_', ' ', $user->role)) }})
+                                    </option>
+                                @endforeach
+                            </select>
                             <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1.5">{{ $nocUsers->count() }} {{ __('assignable staff') }}</p>
+                            @error('assigned_to')<p class="text-red-500 text-xs mt-1.5">{{ $message }}</p>@enderror
                         </div>
                         @endif
                     </div>

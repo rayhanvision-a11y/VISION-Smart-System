@@ -78,6 +78,9 @@ Aggregated stat queries are written with `selectRaw`. The **web** `/dashboard` c
 ### Firebase (push + realtime)
 `FirebaseService` handles both FCM push and Realtime Database ticket sync, and `TicketObserver` / `TicketMessageObserver` call it. Everything is gated on `FIREBASE_ENABLED` plus `config/firebase.php` credentials, so the service no-ops when unconfigured — keep that guard, since tests and most dev setups run without Firebase. Devices register their token via `POST /api/user/fcm-token`; the Flutter side is `lib/services/push_service.dart` and `lib/services/firebase_realtime_service.dart`.
 
+### Google Sheet sync
+`GoogleSheetSyncService` posts ticket create/update events to a Google Apps Script webhook, gated on the `google_sheet_sync_enabled` and `google_sheet_webhook_url` settings (both stored in the `Setting` model, edited from `/settings`). It is integrated into `TicketObserver` (guarded from unit tests) and called from `TicketController`, `BoardController` (drag & drop), and mobile `ApiTicketController`. Column F is mapped to the website ticket key (e.g. `260927009`), and Column O is mapped to Current Status (`Assigned`, `Pending`, `Processing`, `Solved`). Errors are logged and swallowed — never let sync failures block ticket writes.
+
 ### Live location tracking
 `UserLocation` stores each user's latest position (plus accuracy, battery, speed and an `is_sharing` flag), with a history table pruned by `app:prune-location-history`. Web side: `LocationMapController` at `/live-map` (Leaflet). Mobile side: `lib/services/location_service.dart` posting to `/api/user/location`. Sharing is opt-in per user — respect `is_sharing` in any new query.
 

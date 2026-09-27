@@ -405,21 +405,21 @@
                         <button type="button" @click="noticeChannel = 'global'"
                                 :class="noticeChannel === 'global' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs font-bold' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 font-semibold'"
                                 class="px-3 py-1.5 rounded-lg text-xs transition-all cursor-pointer flex items-center gap-1.5">
-                            <span>🌐 {{ __('Global') }}</span>
+                            <span>🌐 {{ __('Global Notice (For Everyone)') }}</span>
                             <span class="w-2 h-2 rounded-full" :class="globalActive ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300 dark:bg-slate-600'"></span>
                         </button>
 
                         <button type="button" @click="noticeChannel = 'reseller'"
                                 :class="noticeChannel === 'reseller' ? 'bg-amber-500 text-white shadow-xs font-bold' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 font-semibold'"
                                 class="px-3 py-1.5 rounded-lg text-xs transition-all cursor-pointer flex items-center gap-1.5">
-                            <span>🤝 {{ __('Resellers') }}</span>
+                            <span>🤝 {{ __('Reseller Notice (For Resellers Only)') }}</span>
                             <span class="w-2 h-2 rounded-full" :class="resellerActive ? 'bg-amber-300 animate-pulse' : 'bg-slate-300 dark:bg-slate-600'"></span>
                         </button>
 
                         <button type="button" @click="noticeChannel = 'noc'"
                                 :class="noticeChannel === 'noc' ? 'bg-indigo-600 text-white shadow-xs font-bold' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 font-semibold'"
                                 class="px-3 py-1.5 rounded-lg text-xs transition-all cursor-pointer flex items-center gap-1.5">
-                            <span>🛠️ {{ __('NOC Team') }}</span>
+                            <span>🛠️ {{ __('NOC Notice (For NOC Team Only)') }}</span>
                             <span class="w-2 h-2 rounded-full" :class="nocActive ? 'bg-indigo-300 animate-pulse' : 'bg-slate-300 dark:bg-slate-600'"></span>
                         </button>
                     </div>
@@ -1358,7 +1358,7 @@
                     <h3 class="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider flex items-center gap-2">
                         <span>📋</span> {{ __('Sheet Column Mapping (Complaint Tracking Sheet)') }}
                     </h3>
-                    <span class="text-[10px] text-slate-400">{{ __('Columns A to P (16 Columns)') }}</span>
+                    <span class="text-[10px] text-slate-400">{{ __('Columns A to Q (17 Columns)') }}</span>
                 </div>
                 <div class="p-4 overflow-x-auto">
                     <table class="w-full text-left text-xs border-collapse">
@@ -1371,22 +1371,23 @@
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-[11px]">
-                            <tr><td class="p-2 font-mono font-bold text-indigo-600">A</td><td class="p-2 font-semibold">Master SL</td><td class="p-2 text-slate-500">Auto calculated increment (+1)</td><td class="p-2 font-mono text-slate-600 dark:text-slate-300">54</td></tr>
-                            <tr><td class="p-2 font-mono font-bold text-indigo-600">B</td><td class="p-2 font-semibold">Daily SL</td><td class="p-2 text-slate-500">Daily ticket serial number (+1)</td><td class="p-2 font-mono text-slate-600 dark:text-slate-300">3</td></tr>
+                            <tr><td class="p-2 font-mono font-bold text-indigo-600">A</td><td class="p-2 font-semibold">Master SL</td><td class="p-2 text-slate-500">Auto calculated increment (+1)</td><td class="p-2 font-mono text-slate-600 dark:text-slate-300">76</td></tr>
+                            <tr><td class="p-2 font-mono font-bold text-indigo-600">B</td><td class="p-2 font-semibold">Daily SL</td><td class="p-2 text-slate-500">Daily ticket serial number (+1)</td><td class="p-2 font-mono text-slate-600 dark:text-slate-300">1</td></tr>
                             <tr><td class="p-2 font-mono font-bold text-indigo-600">C</td><td class="p-2 font-semibold">Date</td><td class="p-2 text-slate-500">Ticket creation date</td><td class="p-2 font-mono text-slate-600 dark:text-slate-300">27 Sep, 26</td></tr>
                             <tr><td class="p-2 font-mono font-bold text-indigo-600">D</td><td class="p-2 font-semibold">User Entry Time</td><td class="p-2 text-slate-500">Entry time (12-hour format)</td><td class="p-2 font-mono text-slate-600 dark:text-slate-300">01:08 PM</td></tr>
                             <tr><td class="p-2 font-mono font-bold text-indigo-600">E</td><td class="p-2 font-semibold">Complaint Source</td><td class="p-2 text-slate-500">Source: Phone, Office, Online, WhatsApp</td><td class="p-2 font-mono text-slate-600 dark:text-slate-300">Phone</td></tr>
-                            <tr><td class="p-2 font-mono font-bold text-indigo-600">F</td><td class="p-2 font-semibold">ID</td><td class="p-2 text-slate-500">Client ID (or Ticket Key fallback)</td><td class="p-2 font-mono text-slate-600 dark:text-slate-300">15642</td></tr>
-                            <tr><td class="p-2 font-mono font-bold text-indigo-600">G</td><td class="p-2 font-semibold">Name</td><td class="p-2 text-slate-500">Client Name (or Ticket Title)</td><td class="p-2 font-mono text-slate-600 dark:text-slate-300">Md. Mikdad Hossain</td></tr>
-                            <tr><td class="p-2 font-mono font-bold text-indigo-600">H</td><td class="p-2 font-semibold">Address</td><td class="p-2 text-slate-500">Ticket Area</td><td class="p-2 font-mono text-slate-600 dark:text-slate-300">Rampura</td></tr>
-                            <tr><td class="p-2 font-mono font-bold text-indigo-600">I</td><td class="p-2 font-semibold">Type</td><td class="p-2 text-slate-500">Ticket Category Name</td><td class="p-2 font-mono text-slate-600 dark:text-slate-300">Net Off (ONU Optical Power Los)</td></tr>
-                            <tr><td class="p-2 font-mono font-bold text-indigo-600">J</td><td class="p-2 font-semibold">Received By</td><td class="p-2 text-slate-500">Name of person who created ticket</td><td class="p-2 font-mono text-slate-600 dark:text-slate-300">Rayhan</td></tr>
-                            <tr><td class="p-2 font-mono font-bold text-indigo-600">K</td><td class="p-2 font-semibold">Forwarded To</td><td class="p-2 text-slate-500">Forwarded department or team</td><td class="p-2 font-mono text-slate-600 dark:text-slate-300">NOC Team</td></tr>
-                            <tr><td class="p-2 font-mono font-bold text-indigo-600">L</td><td class="p-2 font-semibold">ONU Power Check IT Team</td><td class="p-2 text-slate-500">ONU Optical Power dBm</td><td class="p-2 font-mono text-slate-600 dark:text-slate-300">-23.56</td></tr>
-                            <tr><td class="p-2 font-mono font-bold text-indigo-600">M</td><td class="p-2 font-semibold">Assigned To (Technician)</td><td class="p-2 text-slate-500">Assigned technician name</td><td class="p-2 font-mono text-slate-600 dark:text-slate-300">Hazrot</td></tr>
-                            <tr><td class="p-2 font-mono font-bold text-indigo-600">N</td><td class="p-2 font-semibold">Current Status</td><td class="p-2 text-slate-500">Status (Assigned / Pending / Solved)</td><td class="p-2 font-mono text-slate-600 dark:text-slate-300">Solved</td></tr>
-                            <tr><td class="p-2 font-mono font-bold text-indigo-600">O</td><td class="p-2 font-semibold">Feedback Received</td><td class="p-2 text-slate-500">Customer feedback if received</td><td class="p-2 font-mono text-slate-600 dark:text-slate-300">Good</td></tr>
-                            <tr><td class="p-2 font-mono font-bold text-indigo-600">P</td><td class="p-2 font-semibold">Remarks</td><td class="p-2 text-slate-500">Ticket description or update remarks</td><td class="p-2 font-mono text-slate-600 dark:text-slate-300">Resolved fiber cut</td></tr>
+                            <tr class="bg-indigo-50/70 dark:bg-indigo-950/40"><td class="p-2 font-mono font-bold text-indigo-600">F</td><td class="p-2 font-bold text-indigo-700 dark:text-indigo-300">ID (Website Ticket ID)</td><td class="p-2 text-indigo-600 dark:text-indigo-400 font-medium">Website Ticket Key / ID (Matches Column F)</td><td class="p-2 font-mono font-bold text-indigo-700 dark:text-indigo-300">260927009</td></tr>
+                            <tr><td class="p-2 font-mono font-bold text-indigo-600">G</td><td class="p-2 font-semibold">Client ID</td><td class="p-2 text-slate-500">Customer's Account / Client ID</td><td class="p-2 font-mono text-slate-600 dark:text-slate-300">154662</td></tr>
+                            <tr><td class="p-2 font-mono font-bold text-indigo-600">H</td><td class="p-2 font-semibold">Name</td><td class="p-2 text-slate-500">Client Name</td><td class="p-2 font-mono text-slate-600 dark:text-slate-300">Md. Rabby</td></tr>
+                            <tr><td class="p-2 font-mono font-bold text-indigo-600">I</td><td class="p-2 font-semibold">Address</td><td class="p-2 text-slate-500">Area / Address</td><td class="p-2 font-mono text-slate-600 dark:text-slate-300">Shadhupara</td></tr>
+                            <tr><td class="p-2 font-mono font-bold text-indigo-600">J</td><td class="p-2 font-semibold">Type</td><td class="p-2 text-slate-500">Ticket Category Name (Dropdown)</td><td class="p-2 font-mono text-slate-600 dark:text-slate-300">Router re-configure</td></tr>
+                            <tr><td class="p-2 font-mono font-bold text-indigo-600">K</td><td class="p-2 font-semibold">Received By</td><td class="p-2 text-slate-500">Creator / Received By</td><td class="p-2 font-mono text-slate-600 dark:text-slate-300">Rayhan</td></tr>
+                            <tr><td class="p-2 font-mono font-bold text-indigo-600">L</td><td class="p-2 font-semibold">Forwarded To</td><td class="p-2 text-slate-500">Forwarded department or team</td><td class="p-2 font-mono text-slate-600 dark:text-slate-300">NOC Team</td></tr>
+                            <tr><td class="p-2 font-mono font-bold text-indigo-600">M</td><td class="p-2 font-semibold">ONU Power Check IT Team</td><td class="p-2 text-slate-500">ONU Optical Power dBm</td><td class="p-2 font-mono text-slate-600 dark:text-slate-300">-23.56</td></tr>
+                            <tr><td class="p-2 font-mono font-bold text-indigo-600">N</td><td class="p-2 font-semibold">Assigned To (Technician)</td><td class="p-2 text-slate-500">Assigned technician name</td><td class="p-2 font-mono text-slate-600 dark:text-slate-300">Rayhan Rabby</td></tr>
+                            <tr class="bg-emerald-50/70 dark:bg-emerald-950/40"><td class="p-2 font-mono font-bold text-emerald-600">O</td><td class="p-2 font-bold text-emerald-700 dark:text-emerald-300">Current Status</td><td class="p-2 text-emerald-600 dark:text-emerald-400 font-medium">Live Status (Assigned / Pending / Processing / Solved)</td><td class="p-2 font-mono font-bold text-emerald-700 dark:text-emerald-300">Solved</td></tr>
+                            <tr><td class="p-2 font-mono font-bold text-indigo-600">P</td><td class="p-2 font-semibold">Feedback Received!</td><td class="p-2 text-slate-500">Feedback status or solver info</td><td class="p-2 font-mono text-slate-600 dark:text-slate-300">Not Yet</td></tr>
+                            <tr><td class="p-2 font-mono font-bold text-indigo-600">Q</td><td class="p-2 font-semibold">Remarks</td><td class="p-2 text-slate-500">Ticket description or resolution remarks</td><td class="p-2 font-mono text-slate-600 dark:text-slate-300">Resolved fiber cut</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -1410,10 +1411,9 @@
                         <p class="font-bold text-slate-800 dark:text-white mb-1">🚀 4-Step Setup Guide:</p>
                         <p>1. Open your <strong>Complaint Tracking Sheet (2026)</strong> in Google Sheets.</p>
                         <p>2. In the top menu, click <strong>Extensions</strong> &rarr; <strong>Apps Script</strong>.</p>
-                        <p>3. Delete any default code inside <code class="font-mono bg-white dark:bg-slate-900 px-1 py-0.5 rounded border border-slate-200 dark:border-slate-700">Code.gs</code>, paste the script below, and click <strong>Save 💾</strong>.</p>
-                        <p>4. Click <strong>Deploy</strong> &rarr; <strong>New deployment</strong>:
+                        <p>3. Delete any previous code inside <code class="font-mono bg-white dark:bg-slate-900 px-1 py-0.5 rounded border border-slate-200 dark:border-slate-700">Code.gs</code>, paste the complete script below, and click <strong>Save 💾</strong>.</p>
+                        <p>4. Click <strong>Deploy</strong> &rarr; <strong>Manage deployments</strong> &rarr; <strong>Edit</strong> &rarr; <strong>New version</strong> (or <strong>New deployment</strong> > Web app):
                             <br>&bull; Select type: <strong>Web app</strong>
-                            <br>&bull; Description: <code>Ticket Sync Webhook</code>
                             <br>&bull; Execute as: <strong>Me</strong>
                             <br>&bull; Who has access: <strong>Anyone</strong>
                             <br>&bull; Click <strong>Deploy</strong>, copy the <strong>Web App URL</strong>, and paste it into the Webhook URL field above!
@@ -1421,242 +1421,1468 @@
                     </div>
 
                     <pre id="gas-script-box" class="p-3.5 bg-slate-900 text-slate-100 rounded-lg text-[11px] font-mono leading-relaxed overflow-x-auto max-h-96 selection:bg-indigo-500">/**
- * ISP Ticket System — Google Sheet Auto Sync Webhook (v2.0 Bulletproof)
- * Sheet: Complaint Tracking Sheet (2026)
- * Supports monthly tabs, pre-formatted template rows, and strict data validations.
+ * COMPLAINT TRACKER 2026 - PRODUCTION VERSION 5.0 (WITH REALTIME WEB & APP SYNC)
+ *
+ * Structure:
+ *   Dashboard
+ *   Template
+ *   January ... December (created only when needed)
+ *
+ * Column Layout (17 Columns):
+ *   A: Master SL | B: Daily SL | C: Date | D: Time | E: Source
+ *   F: ID (Website Ticket ID: 260927009)
+ *   G: Name | H: Address | I: Contact / Phone | J: Type (Complaint Type)
+ *   K: Received By | L: Forwarded To | M: ONU Power Check IT Team
+ *   N: Assigned To (Technician) | O: Current Status (Assigned / Pending / Processing / Solved)
+ *   P: Feedback Received | Q: Remarks
  */
 
+const CT = Object.freeze({
+  VERSION: '5.0.0',
+
+  DASHBOARD_SHEET: 'Dashboard',
+  TEMPLATE_SHEET: 'Template',
+
+  HEADER_ROWS: 2,
+  DATA_START_ROW: 3,
+  DATA_COLUMNS: 17,       // A:Q (17 Columns)
+  ROWS_PER_DAY: 100,      // Daily prepared fresh rows block
+
+  MASTER_SERIAL_COLUMN: 1, // A: Master SL
+  DAILY_SERIAL_COLUMN: 2,  // B: Daily SL
+  DATE_COLUMN: 3,          // C: Date
+  TIME_COLUMN: 4,          // D: Time
+  SOURCE_COLUMN: 5,        // E: Source
+  TICKET_KEY_COLUMN: 6,    // F: Website Ticket ID (e.g. 260927009)
+  CLIENT_ID_COLUMN: 7,     // G: Client ID (Customer ID e.g. 154662)
+  NAME_COLUMN: 8,          // H: Name (Client Name)
+  ADDRESS_COLUMN: 9,       // I: Address (Area / Address)
+  TYPE_COLUMN: 10,         // J: Type (Complaint Type)
+  CREATOR_COLUMN: 11,      // K: Received By
+  FORWARDED_COLUMN: 12,    // L: Forwarded To
+  ONU_POWER_COLUMN: 13,    // M: ONU Power Check IT Team
+  ASSIGNED_COLUMN: 14,     // N: Assigned To (Technician)
+  STATUS_COLUMN: 15,       // O: Current Status (Assigned / Pending / Processing / Solved)
+  FEEDBACK_COLUMN: 16,     // P: Feedback Received (Not Yet)
+  SOLVED_TIME_COLUMN: 16,  // P
+  REMARKS_COLUMN: 17,      // Q: Remarks
+
+  SOLVED_STATUS: 'solved',
+  DATE_FORMAT: 'd mmm, yy',
+  TIME_FORMAT: 'hh:mm AM/PM',
+
+  PROP_SPREADSHEET_ID: 'CT_V3_SPREADSHEET_ID',
+  PROP_LAST_PREPARED_DATE: 'CT_V3_LAST_PREPARED_DATE',
+  PROP_PREPARED_SHEET_ID: 'CT_V3_PREPARED_SHEET_ID',
+  PROP_PREPARED_ROW_COUNT: 'CT_V3_PREPARED_ROW_COUNT'
+});
+
+const CT_MONTHS = Object.freeze([
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December'
+]);
+
+const CT_ROW_COLORS = Object.freeze([
+  '#FFE5CC', // Light Orange
+  '#E2EFDA', // Light Green
+  '#FFF2CC', // Light Yellow
+  '#DDEBF7', // Light Blue
+  '#FCE4D6'  // Light Peach
+]);
+
+/**
+ * WEBHOOK ENDPOINTS (doGet & doPost)
+ */
+function doGet(e) {
+  return ContentService.createTextOutput(JSON.stringify({
+    status: 'success',
+    message: 'Complaint Tracker Webhook is online and active! (v' + CT.VERSION + ')'
+  })).setMimeType(ContentService.MimeType.JSON);
+}
+
 function doPost(e) {
-  var lock = LockService.getScriptLock();
-  lock.tryLock(15000);
-  
+  var lock = LockService.getDocumentLock();
+  lock.waitLock(30000);
+
   try {
-    var rawData = e.postData ? e.postData.contents : null;
-    if (!rawData) {
-      return ContentService.createTextOutput(JSON.stringify({ status: 'error', message: 'No payload received' }))
-        .setMimeType(ContentService.MimeType.JSON);
-    }
-    
-    var data = JSON.parse(rawData);
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
-    
-    // Connection test action
-    if (data.action === 'test') {
+    if (!e || !e.postData || !e.postData.contents) {
       return ContentService.createTextOutput(JSON.stringify({
-        status: 'success',
-        message: 'Connected to spreadsheet &quot;' + ss.getName() + '&quot; successfully!'
+        status: 'error',
+        message: 'No POST data received.'
       })).setMimeType(ContentService.MimeType.JSON);
     }
-    
-    // Determine Sheet Tab (e.g. September, October, or provided sheet_name)
-    var sheetName = data.sheet_name;
-    var sheet = null;
-    if (sheetName) {
-      sheet = ss.getSheetByName(sheetName);
-    }
-    if (!sheet) {
-      var monthNames = [&quot;January&quot;, &quot;February&quot;, &quot;March&quot;, &quot;April&quot;, &quot;May&quot;, &quot;June&quot;, &quot;July&quot;, &quot;August&quot;, &quot;September&quot;, &quot;October&quot;, &quot;November&quot;, &quot;December&quot;];
-      var currentMonth = monthNames[new Date().getMonth()];
-      sheet = ss.getSheetByName(currentMonth);
-    }
-    if (!sheet) {
-      sheet = ss.getSheets()[0];
-    }
-    
-    // HELPER: Write value safely ignoring data validation rules
-    function safeSetValue(targetSheet, row, col, val) {
-      if (val === undefined || val === null) return;
-      var cell = targetSheet.getRange(row, col);
-      try {
-        cell.setValue(val);
-      } catch (err) {
-        try {
-          cell.clearDataValidations();
-          cell.setValue(val);
-        } catch (e2) {}
-      }
-    }
-    
-    // UPDATE TICKET ACTION
-    if (data.action === 'update') {
-      var ticketId = String(data.id || data.client_id || data.ticket_key || '').trim();
-      var foundRow = -1;
-      var targetSheet = sheet;
-      
-      // If row_id was supplied, verify it first
-      if (data.row_id && Number(data.row_id) > 1) {
-        var testRow = Number(data.row_id);
-        var curVal = String(sheet.getRange(testRow, 6).getValue()).trim();
-        if (curVal === ticketId || curVal === String(data.ticket_key || '').trim() || !curVal) {
-          foundRow = testRow;
-        }
-      }
-      
-      // If not found by row_id, search Column F (ID) across sheets
-      if (foundRow < 0) {
-        var sheetsToSearch = [sheet];
-        var allSheets = ss.getSheets();
-        for (var s = 0; s &lt; allSheets.length; s++) {
-          if (allSheets[s].getName() !== sheet.getName()) {
-            sheetsToSearch.push(allSheets[s]);
-          }
-        }
-        
-        for (var i = 0; i &lt; sheetsToSearch.length; i++) {
-          var curSheet = sheetsToSearch[i];
-          var lastR = Math.max(curSheet.getLastRow(), 100);
-          var idValues = curSheet.getRange(1, 6, lastR, 1).getValues(); // Column F is ID
-          for (var r = idValues.length - 1; r &gt;= 1; r--) {
-            var cellVal = String(idValues[r][0]).trim();
-            if (cellVal &amp;&amp; (cellVal === ticketId || cellVal === String(data.ticket_key || '').trim())) {
-              foundRow = r + 1;
-              targetSheet = curSheet;
-              break;
-            }
-          }
-          if (foundRow &gt; 0) break;
-        }
-      }
-      
-      if (foundRow &gt; 0) {
-        // 1. Current Status (Col N = 14) — ALWAYS UPDATE FIRST
-        var statusVal = data.status || data.current_status;
-        if (statusVal) {
-          safeSetValue(targetSheet, foundRow, 14, statusVal);
-        }
-        
-        // 2. Assigned To (Col M = 13)
-        if (data.assigned_to) {
-          safeSetValue(targetSheet, foundRow, 13, data.assigned_to);
-        }
-        
-        // 3. ONU Power (Col L = 12)
-        if (data.onu_power) {
-          safeSetValue(targetSheet, foundRow, 12, data.onu_power);
-        }
-        
-        // 4. Forwarded To (Col K = 11)
-        if (data.forwarded_to) {
-          safeSetValue(targetSheet, foundRow, 11, data.forwarded_to);
-        }
-        
-        // 5. Remarks (Col P = 16)
-        if (data.remarks) {
-          var currentRemarks = String(targetSheet.getRange(foundRow, 16).getValue() || '');
-          var newRemark = String(data.remarks).trim();
-          if (newRemark &amp;&amp; !currentRemarks.includes(newRemark)) {
-            var combined = currentRemarks ? newRemark + ' | ' + currentRemarks : newRemark;
-            safeSetValue(targetSheet, foundRow, 16, combined);
-          }
-        }
-        
-        return ContentService.createTextOutput(JSON.stringify({
-          status: 'success',
-          message: 'Row ' + foundRow + ' updated in ' + targetSheet.getName(),
-          sheet: targetSheet.getName(),
-          row: foundRow
-        })).setMimeType(ContentService.MimeType.JSON);
-      } else {
-        return ContentService.createTextOutput(JSON.stringify({
-          status: 'error',
-          message: 'Ticket not found with ID: ' + ticketId
-        })).setMimeType(ContentService.MimeType.JSON);
-      }
-    }
-    
-    // CREATE TICKET ACTION
-    // Find the REAL next empty row (checking where Date Col C or ID Col F is empty)
-    var targetRow = -1;
-    var scanLimit = Math.max(sheet.getLastRow() + 10, 100);
-    var dateValues = sheet.getRange(1, 3, scanLimit, 1).getValues(); // Column C is Date
-    var idValues = sheet.getRange(1, 6, scanLimit, 1).getValues();   // Column F is ID
-    
-    for (var r = 2; r &lt; scanLimit; r++) { // Row 3 is index 2
-      var dVal = String(dateValues[r] ? dateValues[r][0] : '').trim();
-      var fVal = String(idValues[r] ? idValues[r][0] : '').trim();
-      if (!dVal &amp;&amp; !fVal) {
-        targetRow = r + 1; // 1-indexed row number
-        break;
-      }
-    }
-    if (targetRow &lt; 3) {
-      targetRow = sheet.getLastRow() + 1;
-    }
-    
-    // Calculate Master SL and Daily SL from previous row
-    var masterSl = 1;
-    var dailySl = 1;
-    var prevRow = targetRow - 1;
-    var targetDate = data.date || Utilities.formatDate(new Date(), &quot;Asia/Dhaka&quot;, &quot;dd MMM, yy&quot;);
-    var targetTime = data.time || Utilities.formatDate(new Date(), &quot;Asia/Dhaka&quot;, &quot;hh:mm a&quot;);
-    
-    if (prevRow &gt;= 2) {
-      var prevMaster = sheet.getRange(prevRow, 1).getValue();
-      if (!isNaN(parseInt(prevMaster))) {
-        masterSl = parseInt(prevMaster) + 1;
-      } else {
-        masterSl = targetRow - 2;
-      }
-      
-      var prevDate = String(sheet.getRange(prevRow, 3).getValue()).trim();
-      var prevDaily = sheet.getRange(prevRow, 2).getValue();
-      if (prevDate === targetDate &amp;&amp; !isNaN(parseInt(prevDaily))) {
-        dailySl = parseInt(prevDaily) + 1;
-      } else {
-        dailySl = 1;
-      }
-    }
-    
-    var rowValues = [
-      masterSl,                                           // Col A (1): Master SL
-      dailySl,                                            // Col B (2): Daily SL
-      targetDate,                                         // Col C (3): Date
-      targetTime,                                         // Col D (4): User Entry Time
-      data.complaint_source || 'Phone',                   // Col E (5): Complaint Source
-      data.id || data.client_id || data.ticket_key || '', // Col F (6): ID
-      data.name || data.client_name || data.title || '',   // Col G (7): Name
-      data.address || data.area || 'N/A',                 // Col H (8): Address
-      data.type || data.category || '',                   // Col I (9): Type
-      data.received_by || '',                             // Col J (10): Received By
-      data.forwarded_to || '',                            // Col K (11): Forwarded To
-      data.onu_power || '',                               // Col L (12): ONU Power Check IT Team
-      data.assigned_to || '',                             // Col M (13): Assigned To (Technician)
-      data.status || data.current_status || 'Pending',    // Col N (14): Current Status
-      data.feedback || '',                                // Col O (15): Feedback Received
-      data.remarks || ''                                  // Col P (16): Remarks
-    ];
-    
-    // 1. Clear any strict dropdown validation rules on this row so Google Sheet will never reject input
+
+    var payload;
     try {
-      sheet.getRange(targetRow, 1, 1, 16).clearDataValidations();
-    } catch (eValid) {}
-    
-    // 2. Write values safely into the target row
-    for (var c = 0; c &lt; rowValues.length; c++) {
-      safeSetValue(sheet, targetRow, c + 1, rowValues[c]);
+      payload = JSON.parse(e.postData.contents);
+    } catch (parseErr) {
+      return ContentService.createTextOutput(JSON.stringify({
+        status: 'error',
+        message: 'Invalid JSON payload: ' + parseErr.message
+      })).setMimeType(ContentService.MimeType.JSON);
     }
-    
-    return ContentService.createTextOutput(JSON.stringify({
-      status: 'success',
-      message: 'Ticket recorded successfully',
-      sheet: sheet.getName(),
-      row: targetRow,
-      master_sl: masterSl,
-      daily_sl: dailySl
-    })).setMimeType(ContentService.MimeType.JSON);
-    
-  } catch (error) {
+
+    var action = String(payload.action || 'create').toLowerCase();
+    var ss = getSpreadsheet_();
+    var timezone = ss.getSpreadsheetTimeZone();
+    var now = new Date();
+
+    if (action === 'test') {
+      return ContentService.createTextOutput(JSON.stringify({
+        status: 'success',
+        message: 'Connected to spreadsheet "' + ss.getName() + '" successfully!',
+        version: CT.VERSION,
+        spreadsheet: ss.getName()
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    if (action === 'create') {
+      return handleWebhookCreate_(ss, payload, now, timezone);
+    }
+
+    if (action === 'update' || action === 'status_change') {
+      return handleWebhookUpdate_(ss, payload, now, timezone);
+    }
+
     return ContentService.createTextOutput(JSON.stringify({
       status: 'error',
-      message: error.toString()
+      message: 'Unknown action: ' + action
+    })).setMimeType(ContentService.MimeType.JSON);
+
+  } catch (err) {
+    return ContentService.createTextOutput(JSON.stringify({
+      status: 'error',
+      message: err.toString(),
+      stack: err.stack
     })).setMimeType(ContentService.MimeType.JSON);
   } finally {
     lock.releaseLock();
   }
 }
 
-function doGet(e) {
-  return ContentService.createTextOutput(&quot;ISP Ticket Google Sheet Sync Webhook is running active!&quot;);
+/**
+ * Safely set value on cell, clearing validations if value is rejected.
+ */
+function safeSetCellValue_(sheet, row, col, val) {
+  if (val === undefined || val === null) return;
+  var cell = sheet.getRange(row, col);
+  try {
+    cell.setValue(val);
+  } catch (err) {
+    try {
+      cell.clearDataValidations();
+      cell.setValue(val);
+    } catch (e2) {}
+  }
+}
+
+/**
+ * Webhook handler to insert a new ticket record into the month sheet.
+ */
+function handleWebhookCreate_(ss, payload, now, timezone) {
+  var monthName = payload.sheet_name || getCurrentMonthName_(ss);
+  var monthSheet = getOrCreateMonthSheet_(ss, monthName);
+  var templateSheet = ss.getSheetByName(CT.TEMPLATE_SHEET);
+
+  // Find first blank row among prepared rows
+  var targetRow = -1;
+  var lastRow = monthSheet.getLastRow();
+
+  if (lastRow >= CT.DATA_START_ROW) {
+    var checkCount = lastRow - CT.DATA_START_ROW + 1;
+    var currentValues = monthSheet.getRange(CT.DATA_START_ROW, 1, checkCount, CT.DATA_COLUMNS).getValues();
+
+    for (var i = 0; i < currentValues.length; i++) {
+      if (!hasMeaningfulRecordData_(currentValues[i])) {
+        targetRow = CT.DATA_START_ROW + i;
+        break;
+      }
+    }
+  }
+
+  // If all rows have data or none prepared, insert a new row
+  if (targetRow === -1) {
+    targetRow = Math.max(CT.DATA_START_ROW, lastRow + 1);
+    monthSheet.insertRowBefore(targetRow);
+    if (templateSheet) {
+      applyTemplateRowToRange_(templateSheet, monthSheet, targetRow, 1);
+    }
+  }
+
+  // Clear data validations so custom technician names / categories don't fail
+  try {
+    monthSheet.getRange(targetRow, 1, 1, CT.DATA_COLUMNS).clearDataValidations();
+  } catch (eValid) {}
+
+  var ticketKey = String(payload.ticket_key || payload.ticket_id || payload.id || '').trim();
+  var customerClientId = String(payload.client_id || payload.customer_id || payload.contact || '').trim();
+  var clientName = String(payload.client_name || payload.name || '').trim();
+  var complaintSource = String(payload.complaint_source || 'Phone').trim();
+  var address = String(payload.address || payload.area || '').trim();
+  var complaintType = String(payload.type || payload.category || '').trim();
+  var createdBy = String(payload.received_by || payload.created_by || 'Rayhan').trim();
+  var forwardedTo = String(payload.forwarded_to || '').trim();
+  var onuPower = String(payload.onu_power || '').trim();
+  var assignedTo = String(payload.assigned_to || '').trim();
+  var status = String(payload.status || payload.current_status || 'Assigned').trim();
+  var feedback = String(payload.feedback || 'Not Yet').trim();
+  var remarks = String(payload.remarks || payload.description || '').trim();
+
+  // Write 17 columns: A to Q (Col F = Ticket ID, Col O = Current Status)
+  var rowValues = [
+    '',             // Col A (1): Master SL (computed by updateSerialsAndColors)
+    '',             // Col B (2): Daily SL (computed by updateSerialsAndColors)
+    now,            // Col C (3): Date
+    now,            // Col D (4): User Entry Time
+    complaintSource,// Col E (5): Complaint Source (Phone)
+    ticketKey,      // Col F (6): Website Ticket ID (e.g. 260927009)
+    customerClientId, // Col G (7): Client ID (e.g. 154662)
+    clientName,     // Col H (8): Name (e.g. Md. Rabby)
+    address,        // Col I (9): Address (e.g. Shadhupara)
+    complaintType,  // Col J (10): Type (e.g. Router re-configure)
+    createdBy,      // Col K (11): Received By (e.g. Rayhan)
+    forwardedTo,    // Col L (12): Forwarded To
+    onuPower,       // Col M (13): ONU Power Check IT Team
+    assignedTo,     // Col N (14): Assigned To (Technician) (e.g. Rayhan Rabby)
+    status,         // Col O (15): Current Status (Assigned / Pending / Processing / Solved)
+    feedback,       // Col P (16): Feedback Received! (Not Yet)
+    remarks         // Col Q (17): Remarks
+  ];
+
+  for (var c = 0; c < rowValues.length; c++) {
+    safeSetCellValue_(monthSheet, targetRow, c + 1, rowValues[c]);
+  }
+
+  monthSheet.getRange(targetRow, CT.DATE_COLUMN).setNumberFormat(CT.DATE_FORMAT);
+  monthSheet.getRange(targetRow, CT.TIME_COLUMN).setNumberFormat(CT.TIME_FORMAT);
+
+  // Recalculate serials, date grouping colors, and graying out of solved rows
+  try {
+    updateSerialsAndColors(monthSheet);
+    refreshDashboardData_(ss);
+  } catch (eRef) {}
+
+  return ContentService.createTextOutput(JSON.stringify({
+    status: 'success',
+    message: 'Ticket #' + ticketKey + ' synced to ' + monthName + ' at Row ' + targetRow,
+    sheet: monthName,
+    row: targetRow,
+    ticket_key: ticketKey
+  })).setMimeType(ContentService.MimeType.JSON);
+}
+
+/**
+ * Webhook handler to update an existing ticket (Status, Assignee, Remarks, Power).
+ */
+function handleWebhookUpdate_(ss, payload, now, timezone) {
+  var ticketKey = String(payload.ticket_key || payload.ticket_id || payload.id || payload.client_id || '').trim();
+  var newStatus = payload.status ? String(payload.status).trim() : (payload.current_status ? String(payload.current_status).trim() : null);
+  var newAssigned = payload.assigned_to ? String(payload.assigned_to).trim() : null;
+  var newRemarks = payload.remarks ? String(payload.remarks).trim() : null;
+  var newPower = payload.onu_power ? String(payload.onu_power).trim() : null;
+  var newForwarded = payload.forwarded_to ? String(payload.forwarded_to).trim() : null;
+
+  var monthSheets = getMonthSheets_(ss);
+
+  for (var s = 0; s < monthSheets.length; s++) {
+    var sheet = monthSheets[s];
+    var lastRow = sheet.getLastRow();
+    if (lastRow < CT.DATA_START_ROW) continue;
+
+    var rowCount = lastRow - CT.DATA_START_ROW + 1;
+    var values = sheet.getRange(CT.DATA_START_ROW, 1, rowCount, CT.DATA_COLUMNS).getValues();
+
+    // Dynamically identify column indices from header row if available
+    var idCol = CT.TICKET_KEY_COLUMN;       // default Col F (6)
+    var statusCol = CT.STATUS_COLUMN;       // default Col O (15)
+    var assignedCol = CT.ASSIGNED_COLUMN;   // default Col N (14)
+    var powerCol = CT.ONU_POWER_COLUMN;     // default Col M (13)
+    var forwardedCol = CT.FORWARDED_COLUMN; // default Col L (12)
+    var remarksCol = CT.REMARKS_COLUMN;     // default Col Q (17)
+
+    try {
+      var headerRowVals = sheet.getRange(CT.HEADER_ROWS, 1, 1, Math.min(sheet.getLastColumn(), 20)).getDisplayValues()[0];
+      for (var h = 0; h < headerRowVals.length; h++) {
+        var hTitle = String(headerRowVals[h] || '').toLowerCase();
+        if (hTitle.includes('status')) statusCol = h + 1;
+        else if (hTitle.includes('assigned') || hTitle.includes('technician')) assignedCol = h + 1;
+        else if (hTitle.includes('power') || hTitle.includes('onu')) powerCol = h + 1;
+        else if (hTitle.includes('forwarded')) forwardedCol = h + 1;
+        else if (hTitle.includes('remarks')) remarksCol = h + 1;
+        else if (hTitle === 'id' || hTitle.includes('ticket')) idCol = h + 1;
+      }
+    } catch (eH) {}
+
+    for (var i = 0; i < values.length; i++) {
+      var rowNumber = CT.DATA_START_ROW + i;
+      var rowTicketKey = String(values[i][idCol - 1] || values[i][CT.TICKET_KEY_COLUMN - 1] || '').trim(); // Col F (6)
+      var fallbackKey = String(values[i][16] || '').trim(); // Fallback Col Q (17)
+
+      // Match by Ticket Key in Col F (e.g. 260927009) or Col Q
+      var isMatch = ticketKey && (rowTicketKey === ticketKey || fallbackKey === ticketKey);
+
+      if (isMatch) {
+        try {
+          sheet.getRange(rowNumber, 1, 1, CT.DATA_COLUMNS).clearDataValidations();
+        } catch (eValid) {}
+
+        if (newStatus) {
+          safeSetCellValue_(sheet, rowNumber, statusCol, newStatus);
+        }
+
+        if (newAssigned !== null && newAssigned !== '') {
+          safeSetCellValue_(sheet, rowNumber, assignedCol, newAssigned);
+        }
+
+        if (newRemarks !== null && newRemarks !== '') {
+          var curRemarks = String(sheet.getRange(rowNumber, remarksCol).getValue() || '');
+          if (!curRemarks.includes(newRemarks)) {
+            var combined = curRemarks ? curRemarks + ' | ' + newRemarks : newRemarks;
+            safeSetCellValue_(sheet, rowNumber, remarksCol, combined);
+          }
+        }
+
+        if (newPower !== null && newPower !== '') {
+          safeSetCellValue_(sheet, rowNumber, powerCol, newPower);
+        }
+
+        if (newForwarded !== null && newForwarded !== '') {
+          safeSetCellValue_(sheet, rowNumber, forwardedCol, newForwarded);
+        }
+
+        // Re-apply serials and colors
+        try {
+          updateSerialsAndColors(sheet);
+          refreshDashboardData_(ss);
+        } catch (eRef) {}
+
+        return ContentService.createTextOutput(JSON.stringify({
+          status: 'success',
+          message: 'Ticket #' + ticketKey + ' updated in ' + sheet.getName() + ' at row ' + rowNumber,
+          sheet: sheet.getName(),
+          row: rowNumber,
+          ticket_key: ticketKey,
+          status: newStatus
+        })).setMimeType(ContentService.MimeType.JSON);
+      }
+    }
+  }
+
+  return ContentService.createTextOutput(JSON.stringify({
+    status: 'not_found',
+    message: 'Ticket #' + ticketKey + ' not found in any monthly sheet tab.'
+  })).setMimeType(ContentService.MimeType.JSON);
+}
+
+/**
+ * ONE-TIME SETUP
+ */
+function setupComplaintTracker() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  if (!ss) throw new Error('Open the spreadsheet and run setupComplaintTracker() again.');
+
+  const props = PropertiesService.getDocumentProperties();
+  props.setProperty(CT.PROP_SPREADSHEET_ID, ss.getId());
+
+  const currentMonthName = getCurrentMonthName_(ss);
+  const legacySheet = findLegacyComplaintSheet_(ss);
+  let currentMonthSheet = ss.getSheetByName(currentMonthName);
+
+  if (
+    currentMonthSheet &amp;&amp;
+    legacySheet &amp;&amp;
+    !sheetHasMeaningfulRecords_(currentMonthSheet) &amp;&amp;
+    sheetHasMeaningfulRecords_(legacySheet)
+  ) {
+    ss.deleteSheet(currentMonthSheet);
+    legacySheet.setName(currentMonthName);
+    currentMonthSheet = legacySheet;
+  }
+
+  if (!currentMonthSheet &amp;&amp; legacySheet) {
+    legacySheet.setName(currentMonthName);
+    currentMonthSheet = legacySheet;
+  }
+
+  ensureDashboardSheet_(ss);
+  ensureTemplateSheet_(ss, currentMonthSheet || legacySheet);
+
+  if (!currentMonthSheet) {
+    currentMonthSheet = getOrCreateMonthSheet_(ss, currentMonthName);
+  }
+
+  currentMonthSheet.setFrozenRows(CT.HEADER_ROWS);
+
+  removeLegacyPlaceholderRows_(currentMonthSheet);
+
+  clearPreparedState_();
+  setupDailyTrigger();
+  prepareNewDayRows_(true);
+  refreshAllMonthlySheets();
+  generateDashboard();
+
+  ss.setActiveSheet(currentMonthSheet);
+  ss.toast(
+    'Setup complete. Current month: ' + currentMonthName +
+    '. Fresh rows are ready at Row 3.',
+    'Complaint Tracker',
+    8
+  );
+}
+
+/** Spreadsheet menu. */
+function onOpen() {
+  SpreadsheetApp.getUi()
+    .createMenu('Sheet Settings')
+    .addItem('Run / Repair Setup', 'setupComplaintTracker')
+    .addSeparator()
+    .addItem(&quot;Prepare Today's Rows&quot;, 'createNewDayRows')
+    .addItem(&quot;Recreate Today's Fresh Rows&quot;, 'recreateTodayBlankRows')
+    .addItem('Refresh Monthly Sheets', 'refreshAllMonthlySheets')
+    .addItem('Refresh Dashboard', 'generateDashboard')
+    .addItem('Sync Template from Current Sheet', 'syncTemplateFromCurrentSheet')
+    .addSeparator()
+    .addItem('Install Daily Trigger', 'setupDailyTrigger')
+    .addItem('Health Check', 'runTrackerHealthCheck')
+    .addToUi();
+}
+
+/**
+ * Installs one daily trigger around 12:05 AM in the spreadsheet timezone.
+ */
+function setupDailyTrigger() {
+  const ss = getSpreadsheet_();
+  const timezone = ss.getSpreadsheetTimeZone();
+
+  ScriptApp.getProjectTriggers().forEach(function(trigger) {
+    const handler = trigger.getHandlerFunction();
+    if (handler === 'createNewDayRows' || handler === 'handleComplaintEdit') {
+      ScriptApp.deleteTrigger(trigger);
+    }
+  });
+
+  ScriptApp.newTrigger('createNewDayRows')
+    .timeBased()
+    .atHour(0)
+    .nearMinute(5)
+    .everyDays(1)
+    .inTimezone(timezone)
+    .create();
+}
+
+/** Daily trigger entry point. */
+function createNewDayRows() {
+  prepareNewDayRows_(false);
+}
+
+/** Manual force refresh for today's fresh block. */
+function recreateTodayBlankRows() {
+  prepareNewDayRows_(true);
+}
+
+/**
+ * Inserts actual whole rows at Row 3.
+ */
+function prepareNewDayRows_(force) {
+  const lock = LockService.getDocumentLock();
+  lock.waitLock(30000);
+
+  try {
+    const ss = getSpreadsheet_();
+    const props = PropertiesService.getDocumentProperties();
+    const timezone = ss.getSpreadsheetTimeZone();
+    const now = new Date();
+    const todayKey = Utilities.formatDate(now, timezone, 'yyyy-MM-dd');
+
+    if (!force &amp;&amp; props.getProperty(CT.PROP_LAST_PREPARED_DATE) === todayKey) {
+      return;
+    }
+
+    removeUnusedRowsFromPreviousPreparedBlock_(ss);
+
+    const monthName = getMonthNameInTimezone_(now, timezone);
+    const monthSheet = getOrCreateMonthSheet_(ss, monthName);
+    const templateSheet = ss.getSheetByName(CT.TEMPLATE_SHEET);
+
+    insertActualFreshRows_(monthSheet, templateSheet);
+
+    props.setProperties({
+      [CT.PROP_LAST_PREPARED_DATE]: todayKey,
+      [CT.PROP_PREPARED_SHEET_ID]: String(monthSheet.getSheetId()),
+      [CT.PROP_PREPARED_ROW_COUNT]: String(CT.ROWS_PER_DAY)
+    }, false);
+
+    updateSerialsAndColors(monthSheet);
+    initializeDashboardDates_(ss);
+    refreshDashboardData_(ss);
+
+    ss.toast(
+      CT.ROWS_PER_DAY + ' fresh rows created in ' + monthName + ' at Row 3.',
+      'Complaint Tracker',
+      6
+    );
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+/**
+ * Migration cleanup for placeholder rows.
+ */
+function removeLegacyPlaceholderRows_(sheet) {
+  const lastRow = sheet.getLastRow();
+  if (lastRow &lt; CT.DATA_START_ROW) return;
+
+  const rowCount = lastRow - CT.DATA_START_ROW + 1;
+  const values = sheet
+    .getRange(CT.DATA_START_ROW, 1, rowCount, CT.DATA_COLUMNS)
+    .getValues();
+
+  for (let i = values.length - 1; i &gt;= 0; i--) {
+    if (!hasMeaningfulRecordData_(values[i])) {
+      sheet.deleteRow(CT.DATA_START_ROW + i);
+    }
+  }
+}
+
+/**
+ * Removes only unused rows from the exact block prepared by the previous run.
+ */
+function removeUnusedRowsFromPreviousPreparedBlock_(ss) {
+  const props = PropertiesService.getDocumentProperties();
+  const preparedSheetId = Number(props.getProperty(CT.PROP_PREPARED_SHEET_ID));
+  const preparedRowCount = Number(props.getProperty(CT.PROP_PREPARED_ROW_COUNT));
+
+  if (!preparedSheetId || !preparedRowCount) return;
+
+  const sheet = ss.getSheets().find(function(item) {
+    return item.getSheetId() === preparedSheetId;
+  });
+
+  if (!sheet || sheet.getMaxRows() &lt; CT.DATA_START_ROW) {
+    clearPreparedState_();
+    return;
+  }
+
+  const availableRows = sheet.getMaxRows() - CT.DATA_START_ROW + 1;
+  const rowsToInspect = Math.min(preparedRowCount, availableRows);
+  if (rowsToInspect &lt;= 0) {
+    clearPreparedState_();
+    return;
+  }
+
+  const values = sheet
+    .getRange(CT.DATA_START_ROW, 1, rowsToInspect, CT.DATA_COLUMNS)
+    .getValues();
+
+  for (let i = values.length - 1; i &gt;= 0; i--) {
+    if (!hasMeaningfulRecordData_(values[i])) {
+      sheet.deleteRow(CT.DATA_START_ROW + i);
+    }
+  }
+
+  clearPreparedState_();
+}
+
+/**
+ * Inserts actual sheet rows.
+ */
+function insertActualFreshRows_(sheet, templateSheet) {
+  if (!templateSheet) {
+    throw new Error('Template sheet is missing. Run setupComplaintTracker().');
+  }
+
+  if (sheet.getMaxRows() &lt; CT.DATA_START_ROW) {
+    sheet.insertRowsAfter(CT.HEADER_ROWS, CT.ROWS_PER_DAY);
+  } else {
+    sheet.insertRowsBefore(CT.DATA_START_ROW, CT.ROWS_PER_DAY);
+  }
+
+  applyTemplateRowToRange_(
+    templateSheet,
+    sheet,
+    CT.DATA_START_ROW,
+    CT.ROWS_PER_DAY
+  );
+
+  sheet
+    .getRange(CT.DATA_START_ROW, CT.DATE_COLUMN, CT.ROWS_PER_DAY, 1)
+    .setNumberFormat(CT.DATE_FORMAT);
+
+  sheet
+    .getRange(CT.DATA_START_ROW, CT.TIME_COLUMN, CT.ROWS_PER_DAY, 1)
+    .setNumberFormat(CT.TIME_FORMAT);
+}
+
+/**
+ * Applies the Template sample row to one or more target rows.
+ */
+function applyTemplateRowToRange_(templateSheet, targetSheet, startRow, rowCount) {
+  const source = templateSheet.getRange(
+    CT.DATA_START_ROW,
+    1,
+    1,
+    CT.DATA_COLUMNS
+  );
+
+  const target = targetSheet.getRange(
+    startRow,
+    1,
+    rowCount,
+    CT.DATA_COLUMNS
+  );
+
+  source.copyTo(target, SpreadsheetApp.CopyPasteType.PASTE_FORMAT, false);
+
+  const validationRow = source.getDataValidations()[0];
+  target.setDataValidations(repeatTemplateRow_(validationRow, rowCount));
+
+  target.setFontFamilies(
+    repeatTemplateRow_(source.getFontFamilies()[0], rowCount)
+  );
+  target.setFontSizes(
+    repeatTemplateRow_(source.getFontSizes()[0], rowCount)
+  );
+  target.setFontWeights(
+    repeatTemplateRow_(source.getFontWeights()[0], rowCount)
+  );
+  target.setFontStyles(
+    repeatTemplateRow_(source.getFontStyles()[0], rowCount)
+  );
+
+  const sourceRowHeight = templateSheet.getRowHeight(CT.DATA_START_ROW);
+  targetSheet.setRowHeights(startRow, rowCount, sourceRowHeight);
+
+  target.clearContent();
+  target.clearNote();
+}
+
+function repeatTemplateRow_(rowValues, rowCount) {
+  return Array.from({ length: rowCount }, function() {
+    return rowValues.slice();
+  });
+}
+
+/**
+ * SIMPLE ON-EDIT TRIGGER
+ */
+function onEdit(e) {
+  if (!e || !e.range) return;
+
+  const ss = e.source;
+  const sheet = e.range.getSheet();
+  const sheetName = sheet.getName();
+
+  if (sheetName === CT.DASHBOARD_SHEET) {
+    if (rangeContainsCell_(e.range, 2, 4) || rangeContainsCell_(e.range, 2, 6)) {
+      refreshDashboardData_(ss);
+    }
+    return;
+  }
+
+  if (!isMonthSheetName_(sheetName)) return;
+  if (e.range.getLastRow() &lt; CT.DATA_START_ROW) return;
+  if (e.range.getColumn() &gt; CT.DATA_COLUMNS) return;
+
+  const lock = LockService.getDocumentLock();
+  if (!lock.tryLock(5000)) return;
+
+  try {
+    processEditedRows_(ss, sheet, e.range);
+
+    if (
+      e.range.getNumRows() === 1 &amp;&amp;
+      e.range.getNumColumns() === 1 &amp;&amp;
+      e.range.getColumn() === CT.CLIENT_ID_COLUMN &amp;&amp;
+      e.value
+    ) {
+      warnAboutDuplicateComplaint_(ss, sheet, e.range.getRow(), e.value);
+    }
+
+    updateSerialsAndColors(sheet);
+    refreshDashboardData_(ss);
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+/**
+ * Fills Date and Entry Time when a user starts entering data in E:Q.
+ */
+function processEditedRows_(ss, sheet, editedRange) {
+  const firstRow = Math.max(CT.DATA_START_ROW, editedRange.getRow());
+  const lastRow = editedRange.getLastRow();
+  const rowCount = lastRow - firstRow + 1;
+  if (rowCount &lt;= 0) return;
+
+  const recordValues = sheet
+    .getRange(firstRow, 5, rowCount, CT.DATA_COLUMNS - 4) // E:Q
+    .getValues();
+
+  const metaRange = sheet.getRange(firstRow, 1, rowCount, 4); // A:D
+  const metaValues = metaRange.getValues();
+
+  const now = new Date();
+  const currentMonthName = getCurrentMonthName_(ss);
+  const isCurrentMonth = sheet.getName() === currentMonthName;
+  const template = ss.getSheetByName(CT.TEMPLATE_SHEET);
+  const rowsResetToBlank = [];
+
+  for (let i = 0; i &lt; rowCount; i++) {
+    const hasData = recordValues[i].some(function(value) {
+      return !isBlankValue_(value);
+    });
+
+    if (!hasData) {
+      metaValues[i] = ['', '', '', ''];
+      rowsResetToBlank.push(firstRow + i);
+      continue;
+    }
+
+    if (isCurrentMonth) {
+      if (isBlankValue_(metaValues[i][2])) metaValues[i][2] = now;
+      if (isBlankValue_(metaValues[i][3])) metaValues[i][3] = now;
+    }
+  }
+
+  metaRange.setValues(metaValues);
+
+  sheet
+    .getRange(firstRow, CT.DATE_COLUMN, rowCount, 1)
+    .setNumberFormat(CT.DATE_FORMAT);
+
+  sheet
+    .getRange(firstRow, CT.TIME_COLUMN, rowCount, 1)
+    .setNumberFormat(CT.TIME_FORMAT);
+
+  if (template) {
+    rowsResetToBlank.forEach(function(rowNumber) {
+      applyTemplateRowToRange_(template, sheet, rowNumber, 1);
+    });
+  }
+}
+
+/**
+ * Serial and color rules:
+ * - Only rows containing data in E:Q receive serials and date colors.
+ * - Solved rows become gray.
+ */
+function updateSerialsAndColors(optionalSheet) {
+  const ss = getSpreadsheet_();
+  let sheet = optionalSheet;
+
+  if (!sheet) {
+    sheet = ss.getActiveSheet();
+    if (!isMonthSheetName_(sheet.getName())) return;
+  }
+
+  const lastRow = sheet.getLastRow();
+  if (lastRow &lt; CT.DATA_START_ROW) return;
+
+  const rowCount = lastRow - CT.DATA_START_ROW + 1;
+  const dataRange = sheet.getRange(
+    CT.DATA_START_ROW,
+    1,
+    rowCount,
+    CT.DATA_COLUMNS
+  );
+
+  const values = dataRange.getValues();
+  const displayDates = sheet
+    .getRange(CT.DATA_START_ROW, CT.DATE_COLUMN, rowCount, 1)
+    .getDisplayValues();
+
+  const serials = Array.from({ length: rowCount }, function() {
+    return ['', ''];
+  });
+
+  const backgrounds = dataRange.getBackgrounds();
+  const fontColors = dataRange.getFontColors();
+  const fontLines = dataRange.getFontLines();
+  const timezone = ss.getSpreadsheetTimeZone();
+
+  let masterSerial = 1;
+  let dailySerial = 1;
+  let previousDateKey = '';
+  let colorIndex = -1;
+
+  for (let i = 0; i &lt; values.length; i++) {
+    if (!hasMeaningfulRecordData_(values[i])) continue;
+
+    const date = parseSheetDate_(values[i][CT.DATE_COLUMN - 1], displayDates[i][0]);
+    if (!date) continue;
+
+    const dateKey = Utilities.formatDate(date, timezone, 'yyyy-MM-dd');
+
+    if (dateKey !== previousDateKey) {
+      dailySerial = 1;
+      colorIndex = (colorIndex + 1) % CT_ROW_COLORS.length;
+      previousDateKey = dateKey;
+    }
+
+    serials[i] = [masterSerial, dailySerial];
+
+    const status = String(values[i][CT.STATUS_COLUMN - 1] || '')
+      .trim()
+      .toLowerCase();
+
+    const solved = status === CT.SOLVED_STATUS || status === 'closed';
+    const rowBackground = solved ? '#DDDDDD' : CT_ROW_COLORS[colorIndex];
+    const rowFontColor = solved ? '#999999' : '#000000';
+
+    backgrounds[i] = Array(CT.DATA_COLUMNS).fill(rowBackground);
+    fontColors[i] = Array(CT.DATA_COLUMNS).fill(rowFontColor);
+    fontLines[i] = Array(CT.DATA_COLUMNS).fill('none');
+
+    masterSerial++;
+    dailySerial++;
+  }
+
+  sheet
+    .getRange(CT.DATA_START_ROW, 1, rowCount, 2)
+    .setValues(serials);
+
+  dataRange.setBackgrounds(backgrounds);
+  dataRange.setFontColors(fontColors);
+  dataRange.setFontLines(fontLines);
+}
+
+/** Refreshes serials/colors for every month and updates Dashboard. */
+function refreshAllMonthlySheets() {
+  const ss = getSpreadsheet_();
+  getMonthSheets_(ss).forEach(function(sheet) {
+    updateSerialsAndColors(sheet);
+  });
+  refreshDashboardData_(ss);
+}
+
+/** Duplicate Client ID check across all month tabs. */
+function warnAboutDuplicateComplaint_(ss, currentSheet, currentRow, clientId) {
+  const normalizedId = String(clientId || '').trim();
+  if (!normalizedId) return;
+
+  const monthSheets = getMonthSheets_(ss);
+
+  for (let s = 0; s &lt; monthSheets.length; s++) {
+    const sheet = monthSheets[s];
+    const lastRow = sheet.getLastRow();
+    if (lastRow &lt; CT.DATA_START_ROW) continue;
+
+    const rowCount = lastRow - CT.DATA_START_ROW + 1;
+    const values = sheet
+      .getRange(CT.DATA_START_ROW, 1, rowCount, CT.DATA_COLUMNS)
+      .getValues();
+
+    for (let i = 0; i &lt; values.length; i++) {
+      const rowNumber = CT.DATA_START_ROW + i;
+
+      if (
+        sheet.getSheetId() === currentSheet.getSheetId() &amp;&amp;
+        rowNumber === currentRow
+      ) {
+        continue;
+      }
+
+      if (!hasMeaningfulRecordData_(values[i])) continue;
+
+      const existingId = String(values[i][CT.CLIENT_ID_COLUMN - 1] || '').trim();
+      if (existingId !== normalizedId) continue;
+
+      const status = String(values[i][CT.STATUS_COLUMN - 1] || '').trim();
+      if (status.toLowerCase() === CT.SOLVED_STATUS || status.toLowerCase() === 'closed') continue;
+
+      const foundRange = sheet.getRange(rowNumber, 1, 1, CT.DATA_COLUMNS);
+      foundRange.setBackground('#ff9999');
+      foundRange.setNote(
+        'Duplicate open complaint detected for Client ID ' + normalizedId +
+        '. Existing record: ' + sheet.getName() + ', Row ' + rowNumber + '.'
+      );
+
+      ss.toast(
+        'Duplicate open complaint found in ' + sheet.getName() +
+        ', Row ' + rowNumber + '. Status: ' + (status || 'Blank'),
+        'Duplicate Complaint',
+        10
+      );
+      return;
+    }
+  }
+}
+
+/** Full manual Dashboard refresh, including chart rebuild. */
+function generateDashboard() {
+  const ss = getSpreadsheet_();
+  initializeDashboardDates_(ss);
+  refreshDashboardData_(ss);
+  rebuildDashboardCharts_(ss);
+  ss.toast('Dashboard refreshed.', 'Complaint Tracker', 4);
+}
+
+/** Reads the selected date range and rebuilds Dashboard numbers. */
+function refreshDashboardData_(ss) {
+  const dashboard = ss.getSheetByName(CT.DASHBOARD_SHEET);
+  if (!dashboard) return;
+
+  const startCell = dashboard.getRange('D2');
+  const endCell = dashboard.getRange('F2');
+  const startValue = startCell.getValue();
+  const endValue = endCell.getValue();
+
+  if (!(startValue instanceof Date) || isNaN(startValue.getTime())) return;
+  if (!(endValue instanceof Date) || isNaN(endValue.getTime())) return;
+
+  let rangeStart = new Date(startValue);
+  rangeStart.setHours(0, 0, 0, 0);
+
+  let rangeEnd = new Date(endValue);
+  rangeEnd.setHours(23, 59, 59, 999);
+
+  if (rangeStart.getTime() &gt; rangeEnd.getTime()) {
+    const swap = rangeStart;
+    rangeStart = rangeEnd;
+    rangeEnd = swap;
+  }
+
+  const typeSummary = {};
+  const statusSummary = {};
+  let totalComplaints = 0;
+  let statusCount = 0;
+
+  const relevantMonths = getRelevantMonthNames_(rangeStart, rangeEnd);
+
+  relevantMonths.forEach(function(monthName) {
+    const sheet = ss.getSheetByName(monthName);
+    if (!sheet) return;
+
+    const lastRow = sheet.getLastRow();
+    if (lastRow &lt; CT.DATA_START_ROW) return;
+
+    const rowCount = lastRow - CT.DATA_START_ROW + 1;
+    const values = sheet
+      .getRange(CT.DATA_START_ROW, 1, rowCount, CT.DATA_COLUMNS)
+      .getValues();
+    const displayDates = sheet
+      .getRange(CT.DATA_START_ROW, CT.DATE_COLUMN, rowCount, 1)
+      .getDisplayValues();
+
+    for (let i = 0; i &lt; values.length; i++) {
+      if (!hasMeaningfulRecordData_(values[i])) continue;
+
+      const rowDate = parseSheetDate_(values[i][CT.DATE_COLUMN - 1], displayDates[i][0]);
+      if (!rowDate) continue;
+      if (rowDate.getTime() &lt; rangeStart.getTime()) continue;
+      if (rowDate.getTime() &gt; rangeEnd.getTime()) continue;
+
+      totalComplaints++;
+
+      const type = String(values[i][CT.TYPE_COLUMN - 1] || '').trim();
+      const status = String(values[i][CT.STATUS_COLUMN - 1] || '').trim();
+
+      if (type) typeSummary[type] = (typeSummary[type] || 0) + 1;
+
+      if (status) {
+        statusSummary[status] = (statusSummary[status] || 0) + 1;
+        statusCount++;
+      }
+    }
+  });
+
+  if (totalComplaints &gt; statusCount) {
+    statusSummary.Blank = totalComplaints - statusCount;
+  }
+
+  const sortedTypes = Object.keys(typeSummary)
+    .map(function(name) {
+      return { name: name, count: typeSummary[name] };
+    })
+    .sort(function(a, b) {
+      return b.count - a.count || a.name.localeCompare(b.name);
+    });
+
+  const sortedStatuses = Object.keys(statusSummary)
+    .map(function(name) {
+      return { name: name, count: statusSummary[name] };
+    })
+    .sort(function(a, b) {
+      return b.count - a.count || a.name.localeCompare(b.name);
+    });
+
+  dashboard.getRange('R1:W200').clearContent().clearFormat();
+  dashboard.getRange('A5:D50').clearContent();
+
+  dashboard.getRange('C2').setValue('From');
+  dashboard.getRange('E2').setValue('To');
+  startCell.setNumberFormat('dd mmm, yy');
+  endCell.setNumberFormat('dd mmm, yy');
+
+  dashboard.getRange('A5').setValue('Total Complaints');
+  dashboard.getRange('B5').setValue(totalComplaints).setNumberFormat('0');
+
+  dashboard.getRange('A7:B7').setValues([['Complaint Type', 'Count']]);
+  dashboard.getRange('C7:D7').setValues([['Status', 'Count']]);
+
+  if (sortedTypes.length) {
+    dashboard
+      .getRange(8, 1, sortedTypes.length, 2)
+      .setValues(sortedTypes.map(function(item) {
+        return [item.name, item.count];
+      }));
+    dashboard.getRange(8, 2, sortedTypes.length, 1).setNumberFormat('0');
+  }
+
+  if (sortedStatuses.length) {
+    dashboard
+      .getRange(8, 3, sortedStatuses.length, 2)
+      .setValues(sortedStatuses.map(function(item) {
+        return [item.name, item.count];
+      }));
+    dashboard.getRange(8, 4, sortedStatuses.length, 1).setNumberFormat('0');
+  }
+}
+
+/** Creates two charts on the Dashboard using stable ranges. */
+function rebuildDashboardCharts_(ss) {
+  const dashboard = ss.getSheetByName(CT.DASHBOARD_SHEET);
+  if (!dashboard) return;
+
+  dashboard.getCharts().forEach(function(chart) {
+    dashboard.removeChart(chart);
+  });
+
+  const typeChart = dashboard.newChart()
+    .setChartType(Charts.ChartType.PIE)
+    .addRange(dashboard.getRange('A7:B50'))
+    .setPosition(4, 6, 0, 0)
+    .setOption('title', 'Complaint Type Breakdown')
+    .build();
+
+  const statusChart = dashboard.newChart()
+    .setChartType(Charts.ChartType.PIE)
+    .addRange(dashboard.getRange('C7:D50'))
+    .setPosition(20, 6, 0, 0)
+    .setOption('title', 'Status Breakdown')
+    .build();
+
+  dashboard.insertChart(typeChart);
+  dashboard.insertChart(statusChart);
+}
+
+/** Creates Dashboard automatically when it does not exist. */
+function ensureDashboardSheet_(ss) {
+  let dashboard = ss.getSheetByName(CT.DASHBOARD_SHEET);
+  if (!dashboard) {
+    dashboard = ss.insertSheet(CT.DASHBOARD_SHEET);
+  }
+
+  initializeDashboardDates_(ss);
+  return dashboard;
+}
+
+/**
+ * Creates or rebuilds Template from the current complaint sheet.
+ */
+function ensureTemplateSheet_(ss, sourceSheet) {
+  if (!sourceSheet) {
+    sourceSheet = ss.getSheetByName(getCurrentMonthName_(ss));
+  }
+
+  if (!sourceSheet) {
+    sourceSheet = findLegacyComplaintSheet_(ss);
+  }
+
+  if (!sourceSheet) {
+    const existingTemplate = ss.getSheetByName(CT.TEMPLATE_SHEET);
+    if (existingTemplate) {
+      ensureTemplateHasSampleRow_(existingTemplate);
+      return existingTemplate;
+    }
+
+    throw new Error(
+      'No complaint sheet was detected. Open the complaint-data tab and run setupComplaintTracker() again.'
+    );
+  }
+
+  return rebuildTemplateSheet_(ss, sourceSheet);
+}
+
+/** Manual menu action after changing dropdowns, fonts or row styling. */
+function syncTemplateFromCurrentSheet() {
+  const ss = getSpreadsheet_();
+  let sourceSheet = ss.getActiveSheet();
+
+  if (!isMonthSheetName_(sourceSheet.getName())) {
+    sourceSheet = ss.getSheetByName(getCurrentMonthName_(ss));
+  }
+
+  if (!sourceSheet) {
+    const monthSheets = getMonthSheets_(ss);
+    sourceSheet = monthSheets.length ? monthSheets[0] : null;
+  }
+
+  if (!sourceSheet) {
+    throw new Error('Open a monthly complaint tab, then run this action again.');
+  }
+
+  rebuildTemplateSheet_(ss, sourceSheet);
+  ss.toast(
+    'Template synced from ' + sourceSheet.getName() +
+    '. New rows will keep its dropdowns, font and row style.',
+    'Complaint Tracker',
+    7
+  );
+}
+
+function rebuildTemplateSheet_(ss, sourceSheet) {
+  const sampleSourceRow = findBestTemplateSourceRow_(sourceSheet);
+  let oldTemplate = ss.getSheetByName(CT.TEMPLATE_SHEET);
+
+  if (oldTemplate) {
+    oldTemplate.showSheet();
+    ss.deleteSheet(oldTemplate);
+  }
+
+  const template = sourceSheet.copyTo(ss).setName(CT.TEMPLATE_SHEET);
+
+  template.getCharts().forEach(function(chart) {
+    template.removeChart(chart);
+  });
+
+  if (template.getMaxRows() &lt; CT.DATA_START_ROW) {
+    template.insertRowsAfter(
+      template.getMaxRows(),
+      CT.DATA_START_ROW - template.getMaxRows()
+    );
+  }
+
+  if (template.getMaxColumns() &lt; CT.DATA_COLUMNS) {
+    template.insertColumnsAfter(
+      template.getMaxColumns(),
+      CT.DATA_COLUMNS - template.getMaxColumns()
+    );
+  }
+
+  // Ensure Column Q has a header label in row 2
+  var colQHeader = template.getRange(CT.HEADER_ROWS, CT.TICKET_KEY_COLUMN).getValue();
+  if (!colQHeader) {
+    template.getRange(CT.HEADER_ROWS, CT.TICKET_KEY_COLUMN).setValue('Ticket ID / Key');
+  }
+
+  sourceSheet
+    .getRange(sampleSourceRow, 1, 1, CT.DATA_COLUMNS)
+    .copyTo(
+      template.getRange(CT.DATA_START_ROW, 1, 1, CT.DATA_COLUMNS),
+      SpreadsheetApp.CopyPasteType.PASTE_NORMAL,
+      false
+    );
+
+  ensureTemplateHasSampleRow_(template);
+  template.hideSheet();
+  return template;
+}
+
+function findBestTemplateSourceRow_(sheet) {
+  const availableRows = sheet.getMaxRows() - CT.DATA_START_ROW + 1;
+  if (availableRows &lt;= 0) return CT.DATA_START_ROW;
+
+  const rowsToInspect = Math.min(availableRows, 250);
+  const validations = sheet
+    .getRange(CT.DATA_START_ROW, 1, rowsToInspect, CT.DATA_COLUMNS)
+    .getDataValidations();
+
+  let bestRow = CT.DATA_START_ROW;
+  let highestValidationCount = -1;
+
+  for (let i = 0; i &lt; validations.length; i++) {
+    const count = validations[i].reduce(function(total, rule) {
+      return total + (rule ? 1 : 0);
+    }, 0);
+
+    if (count &gt; highestValidationCount) {
+      highestValidationCount = count;
+      bestRow = CT.DATA_START_ROW + i;
+    }
+  }
+
+  return bestRow;
+}
+
+function ensureTemplateHasSampleRow_(template) {
+  if (template.getMaxRows() &lt; CT.DATA_START_ROW) {
+    template.insertRowsAfter(
+      template.getMaxRows(),
+      CT.DATA_START_ROW - template.getMaxRows()
+    );
+  }
+
+  if (template.getMaxRows() &gt; CT.DATA_START_ROW) {
+    template.deleteRows(
+      CT.DATA_START_ROW + 1,
+      template.getMaxRows() - CT.DATA_START_ROW
+    );
+  }
+
+  const sample = template.getRange(
+    CT.DATA_START_ROW,
+    1,
+    1,
+    CT.DATA_COLUMNS
+  );
+
+  sample.clearContent();
+  sample.clearNote();
+  template.setFrozenRows(CT.HEADER_ROWS);
+}
+
+/** Creates a missing month sheet from Template. */
+function getOrCreateMonthSheet_(ss, monthName) {
+  let sheet = ss.getSheetByName(monthName);
+  if (sheet) {
+    if (sheet.getMaxColumns() &lt; CT.DATA_COLUMNS) {
+      sheet.insertColumnsAfter(sheet.getMaxColumns(), CT.DATA_COLUMNS - sheet.getMaxColumns());
+      sheet.getRange(CT.HEADER_ROWS, CT.TICKET_KEY_COLUMN).setValue('Ticket ID / Key');
+    }
+    return sheet;
+  }
+
+  const template = ss.getSheetByName(CT.TEMPLATE_SHEET);
+  if (!template) throw new Error('Template sheet is missing. Run setupComplaintTracker().');
+
+  sheet = template.copyTo(ss).setName(monthName);
+  sheet.showSheet();
+  sheet.setFrozenRows(CT.HEADER_ROWS);
+
+  if (sheet.getMaxColumns() &lt; CT.DATA_COLUMNS) {
+    sheet.insertColumnsAfter(sheet.getMaxColumns(), CT.DATA_COLUMNS - sheet.getMaxColumns());
+  }
+  sheet.getRange(CT.HEADER_ROWS, CT.TICKET_KEY_COLUMN).setValue('Ticket ID / Key');
+
+  if (sheet.getMaxRows() &gt;= CT.DATA_START_ROW) {
+    sheet.deleteRows(
+      CT.DATA_START_ROW,
+      sheet.getMaxRows() - CT.HEADER_ROWS
+    );
+  }
+
+  return sheet;
+}
+
+function findLegacyComplaintSheet_(ss) {
+  const active = ss.getActiveSheet();
+
+  if (
+    active &amp;&amp;
+    !isReservedSheetName_(active.getName()) &amp;&amp;
+    !isMonthSheetName_(active.getName()) &amp;&amp;
+    looksLikeComplaintSheet_(active)
+  ) {
+    return active;
+  }
+
+  const candidates = ss.getSheets().filter(function(sheet) {
+    return (
+      !isReservedSheetName_(sheet.getName()) &amp;&amp;
+      !isMonthSheetName_(sheet.getName()) &amp;&amp;
+      looksLikeComplaintSheet_(sheet)
+    );
+  });
+
+  return candidates.length ? candidates[0] : null;
+}
+
+function looksLikeComplaintSheet_(sheet) {
+  if (sheet.getMaxRows() &lt; CT.HEADER_ROWS) return false;
+  if (sheet.getMaxColumns() &lt; 16) return false;
+
+  const headers = sheet
+    .getRange(CT.HEADER_ROWS, 1, 1, Math.min(sheet.getMaxColumns(), CT.DATA_COLUMNS))
+    .getDisplayValues()[0]
+    .map(function(value) {
+      return String(value || '').toLowerCase().replace(/\s+/g, ' ').trim();
+    });
+
+  let score = 0;
+  if (headers[CT.DATE_COLUMN - 1] &amp;&amp; headers[CT.DATE_COLUMN - 1].includes('date')) score++;
+  if (headers[CT.TIME_COLUMN - 1] &amp;&amp; headers[CT.TIME_COLUMN - 1].includes('time')) score++;
+  if (headers[CT.CLIENT_ID_COLUMN - 1] &amp;&amp; (headers[CT.CLIENT_ID_COLUMN - 1] === 'id' || headers[CT.CLIENT_ID_COLUMN - 1].includes('client'))) score++;
+  if (headers[CT.NAME_COLUMN - 1] &amp;&amp; headers[CT.NAME_COLUMN - 1].includes('name')) score++;
+  if (headers[CT.TYPE_COLUMN - 1] &amp;&amp; headers[CT.TYPE_COLUMN - 1].includes('type')) score++;
+  if (headers[CT.STATUS_COLUMN - 1] &amp;&amp; headers[CT.STATUS_COLUMN - 1].includes('status')) score++;
+
+  return score &gt;= 3;
+}
+
+function sheetHasMeaningfulRecords_(sheet) {
+  const lastRow = sheet.getLastRow();
+  if (lastRow &lt; CT.DATA_START_ROW) return false;
+
+  const rowCount = lastRow - CT.DATA_START_ROW + 1;
+  const values = sheet
+    .getRange(CT.DATA_START_ROW, 1, rowCount, CT.DATA_COLUMNS)
+    .getValues();
+
+  return values.some(function(row) {
+    return hasMeaningfulRecordData_(row);
+  });
+}
+
+function initializeDashboardDates_(ss) {
+  const dashboard = ss.getSheetByName(CT.DASHBOARD_SHEET);
+  if (!dashboard) return;
+
+  const now = new Date();
+  const startCell = dashboard.getRange('D2');
+  const endCell = dashboard.getRange('F2');
+
+  if (!(startCell.getValue() instanceof Date)) {
+    startCell.setValue(new Date(now.getFullYear(), now.getMonth(), 1));
+  }
+
+  if (!(endCell.getValue() instanceof Date)) {
+    endCell.setValue(now);
+  }
+
+  dashboard.getRange('C2').setValue('From');
+  dashboard.getRange('E2').setValue('To');
+  startCell.setNumberFormat('dd mmm, yy');
+  endCell.setNumberFormat('dd mmm, yy');
+}
+
+function runTrackerHealthCheck() {
+  const ss = getSpreadsheet_();
+  const props = PropertiesService.getDocumentProperties();
+  const currentMonth = getCurrentMonthName_(ss);
+  const triggerCount = ScriptApp.getProjectTriggers().filter(function(trigger) {
+    return trigger.getHandlerFunction() === 'createNewDayRows';
+  }).length;
+
+  const report = [
+    'Version: ' + CT.VERSION,
+    'Spreadsheet: ' + ss.getName(),
+    'Current month tab: ' + (ss.getSheetByName(currentMonth) ? 'OK' : 'MISSING'),
+    'Template tab: ' + (ss.getSheetByName(CT.TEMPLATE_SHEET) ? 'OK' : 'MISSING'),
+    'Dashboard tab: ' + (ss.getSheetByName(CT.DASHBOARD_SHEET) ? 'OK' : 'MISSING'),
+    'Daily trigger: ' + (triggerCount === 1 ? 'OK' : 'CHECK (' + triggerCount + ')'),
+    'Last prepared date: ' + (props.getProperty(CT.PROP_LAST_PREPARED_DATE) || 'Not prepared')
+  ].join('\n');
+
+  SpreadsheetApp.getUi().alert('Complaint Tracker Health Check', report, SpreadsheetApp.getUi().ButtonSet.OK);
+}
+
+function getSpreadsheet_() {
+  const active = SpreadsheetApp.getActiveSpreadsheet();
+  if (active) return active;
+
+  const id = PropertiesService
+    .getDocumentProperties()
+    .getProperty(CT.PROP_SPREADSHEET_ID);
+
+  if (!id) {
+    throw new Error('Spreadsheet ID is not saved. Run setupComplaintTracker() once manually.');
+  }
+
+  return SpreadsheetApp.openById(id);
+}
+
+function getCurrentMonthName_(ss) {
+  return getMonthNameInTimezone_(new Date(), ss.getSpreadsheetTimeZone());
+}
+
+function getMonthNameInTimezone_(date, timezone) {
+  const monthNumber = Number(Utilities.formatDate(date, timezone, 'M'));
+  return CT_MONTHS[monthNumber - 1];
+}
+
+function getMonthSheets_(ss) {
+  return ss.getSheets().filter(function(sheet) {
+    return isMonthSheetName_(sheet.getName());
+  });
+}
+
+function isMonthSheetName_(name) {
+  return CT_MONTHS.includes(name);
+}
+
+function isReservedSheetName_(name) {
+  return name === CT.DASHBOARD_SHEET || name === CT.TEMPLATE_SHEET;
+}
+
+function getRelevantMonthNames_(startDate, endDate) {
+  const result = [];
+  const seen = {};
+  const cursor = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+  const finalMonth = new Date(endDate.getFullYear(), endDate.getMonth(), 1);
+
+  let guard = 0;
+  while (cursor.getTime() &lt;= finalMonth.getTime() &amp;&amp; guard &lt; 24) {
+    const monthName = CT_MONTHS[cursor.getMonth()];
+    if (!seen[monthName]) {
+      result.push(monthName);
+      seen[monthName] = true;
+    }
+    cursor.setMonth(cursor.getMonth() + 1);
+    guard++;
+  }
+
+  return result;
+}
+
+/**
+ * A row is a complaint record only when E:Q contains at least one value.
+ */
+function hasMeaningfulRecordData_(rowValues) {
+  return rowValues.slice(4, CT.DATA_COLUMNS).some(function(value) {
+    return !isBlankValue_(value);
+  });
+}
+
+function isBlankValue_(value) {
+  return value === '' || value === null || typeof value === 'undefined';
+}
+
+function parseSheetDate_(rawValue, displayValue) {
+  if (rawValue instanceof Date &amp;&amp; !isNaN(rawValue.getTime())) {
+    return new Date(rawValue);
+  }
+
+  const text = String(rawValue || displayValue || '').trim();
+  if (!text) return null;
+
+  const direct = new Date(text);
+  if (!isNaN(direct.getTime())) return direct;
+
+  const match = text.match(/^(\d{1,2})\s+([A-Za-z]{3,9}),?\s+(\d{2}|\d{4})$/);
+  if (!match) return null;
+
+  const shortMonths = [
+    'jan', 'feb', 'mar', 'apr', 'may', 'jun',
+    'jul', 'aug', 'sep', 'oct', 'nov', 'dec'
+  ];
+
+  const day = Number(match[1]);
+  const monthIndex = shortMonths.indexOf(match[2].slice(0, 3).toLowerCase());
+  const suppliedYear = Number(match[3]);
+  const year = suppliedYear &lt; 100 ? 2000 + suppliedYear : suppliedYear;
+
+  if (monthIndex &lt; 0) return null;
+
+  const parsed = new Date(year, monthIndex, day);
+  return isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function rangeContainsCell_(range, row, column) {
+  return (
+    row &gt;= range.getRow() &amp;&amp;
+    row &lt;= range.getLastRow() &amp;&amp;
+    column &gt;= range.getColumn() &amp;&amp;
+    column &lt;= range.getLastColumn()
+  );
+}
+
+function clearPreparedState_() {
+  const props = PropertiesService.getDocumentProperties();
+  props.deleteProperty(CT.PROP_LAST_PREPARED_DATE);
+  props.deleteProperty(CT.PROP_PREPARED_SHEET_ID);
+  props.deleteProperty(CT.PROP_PREPARED_ROW_COUNT);
 }</pre>
                 </div>
             </div>

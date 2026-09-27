@@ -152,8 +152,10 @@ class TicketController extends Controller
             'changed_by' => auth()->id(),
         ]);
 
-        // Sync to Google Sheet
-        GoogleSheetSyncService::syncTicketCreated($ticket);
+        // Sync to Google Sheet (if checked by user)
+        if ($request->boolean('sync_to_google_sheet', true)) {
+            GoogleSheetSyncService::syncTicketCreated($ticket);
+        }
 
         // Notify team members who have permission to view this ticket
         $recipientUsers = User::where('id', '!=', auth()->id())
