@@ -184,25 +184,26 @@
                 margin-bottom: 24px;
             }
             .brand-logo-box {
-                background: #ffffff;
-                border-radius: 16px;
-                padding: 10px 22px;
+                background: transparent !important;
+                border-radius: 0 !important;
+                padding: 0 !important;
                 display: inline-flex;
                 align-items: center;
                 justify-content: center;
-                box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+                box-shadow: none !important;
                 transition: transform 0.2s ease;
                 text-decoration: none;
             }
             .brand-logo-box:hover {
-                transform: scale(1.02);
+                transform: scale(1.03);
             }
             .brand-logo-box img {
-                height: 44px !important;
-                max-width: 200px !important;
+                height: 52px !important;
+                max-width: 260px !important;
                 width: auto !important;
                 object-fit: contain !important;
                 display: block !important;
+                filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.45));
             }
 
             /* Typography */
@@ -486,11 +487,11 @@
 
             <!-- Right: Support Helpline -->
             <div>
-                <a href="tel:09613828828" class="support-link">
+                <a href="tel:09610969594" class="support-link">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #3b82f6;">
                         <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
                     </svg>
-                    <span>Helpline: <strong style="color: #cbd5e1;">09613828828</strong></span>
+                    <span>Helpline: <strong style="color: #cbd5e1;">09610-969594</strong></span>
                 </a>
             </div>
         </header>
