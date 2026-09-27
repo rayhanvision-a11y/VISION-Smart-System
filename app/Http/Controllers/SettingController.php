@@ -285,11 +285,18 @@ class SettingController extends Controller
             'google_sheet_webhook_url' => 'nullable|url|max:500',
         ]);
 
+        $webhookUrl = trim($validated['google_sheet_webhook_url'] ?? '');
+        $isSpreadsheetUrl = str_contains($webhookUrl, 'docs.google.com/spreadsheets');
+
         $enabled = $request->has('google_sheet_sync_enabled') && $request->input('google_sheet_sync_enabled') == '1' ? '1' : '0';
         Setting::set('google_sheet_sync_enabled', $enabled);
-        Setting::set('google_sheet_webhook_url', $validated['google_sheet_webhook_url'] ?? '');
+        Setting::set('google_sheet_webhook_url', $webhookUrl);
 
         ActivityLog::record('setting_changed', 'Google Sheet synchronization settings updated');
+
+        if ($isSpreadsheetUrl) {
+            return redirect()->route('settings.edit', ['tab' => 'googlesheet'])->with('error', __('⚠️ আপনি Google Spreadsheet এর ব্রাউজার ভিউ লিঙ্ক দিয়েছেন। গুগল শিট সরাসরি ব্রাউজার লিঙ্কে কোনো ডাটা গ্রহণ করে না। শিটের ভেতর Extensions > Apps Script থেকে Web App ডিপ্লয় করে প্রাপ্ত https://script.google.com/macros/s/.../exec লিঙ্কটি দিন।'));
+        }
 
         return redirect()->route('settings.edit', ['tab' => 'googlesheet'])->with('status', __('Google Sheet sync settings saved successfully!'));
     }
@@ -305,8 +312,12 @@ class SettingController extends Controller
             return redirect()->route('settings.edit', ['tab' => 'googlesheet'])->with('error', __('Please enter and save a Google Apps Script Webhook URL first.'));
         }
 
+        if (str_contains($webhookUrl, 'docs.google.com/spreadsheets')) {
+            return redirect()->route('settings.edit', ['tab' => 'googlesheet'])->with('error', __('⚠️ এটি Google Sheet এর ভিউ লিঙ্ক। ওয়েবপেইজ লিঙ্ক কোনো Webhook রিকোয়েস্ট গ্রহণ করে না। নিচের স্ক্রিপ্টটি শিটের Extensions > Apps Script-এ পেস্ট করে Deploy > New deployment > Web app থেকে প্রাপ্ত https://script.google.com/macros/s/.../exec লিঙ্কটি দিন।'));
+        }
+
         try {
-            $response = \Illuminate\Support\Facades\Http::timeout(10)->post($webhookUrl, [
+            $response = \Illuminate\Support\Facades\Http::withoutVerifying()->timeout(15)->post($webhookUrl, [
                 'action' => 'test',
                 'timestamp' => now()->toIso8601String(),
                 'message' => 'Connection test from ISP Ticket System',

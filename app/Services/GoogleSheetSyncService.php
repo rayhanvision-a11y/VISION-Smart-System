@@ -68,7 +68,7 @@ class GoogleSheetSyncService
                 'remarks'          => $ticket->description ?: '',
             ];
 
-            $response = Http::timeout(6)->asJson()->post($webhookUrl, $payload);
+            $response = Http::withoutVerifying()->timeout(10)->asJson()->post($webhookUrl, $payload);
 
             if ($response->successful()) {
                 $resData = $response->json();
@@ -111,7 +111,7 @@ class GoogleSheetSyncService
                 'remarks'        => $remarks ?: '',
             ];
 
-            Http::timeout(6)->asJson()->post($webhookUrl, $payload);
+            Http::withoutVerifying()->timeout(10)->asJson()->post($webhookUrl, $payload);
         } catch (\Throwable $e) {
             Log::error('Google Sheet Sync Error on ticket update: '.$e->getMessage());
         }

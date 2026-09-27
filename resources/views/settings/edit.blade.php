@@ -1303,8 +1303,21 @@
                             <input type="url" name="google_sheet_webhook_url" value="{{ old('google_sheet_webhook_url', $googleSheetWebhookUrl ?? '') }}"
                                    placeholder="https://script.google.com/macros/s/AKfycbx.../exec"
                                    class="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3.5 py-2 text-xs font-mono text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500 bg-white dark:bg-slate-800">
+                            
+                            @if(!empty($googleSheetWebhookUrl) && str_contains($googleSheetWebhookUrl, 'docs.google.com/spreadsheets'))
+                            <div class="mt-2.5 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 text-xs flex items-start gap-2.5">
+                                <span class="text-base shrink-0">⚠️</span>
+                                <div class="space-y-1">
+                                    <p class="font-bold text-amber-700 dark:text-amber-300">{{ __('ভুল লিঙ্ক পেস্ট করা হয়েছে (এটি ভিউ লিঙ্ক)!') }}</p>
+                                    <p class="text-[11px] leading-relaxed text-slate-600 dark:text-slate-300">
+                                        {{ __('আপনি সরাসরি Google Spreadsheet এর ব্রাউজার লিঙ্ক দিয়েছেন। গুগল শিট সরাসরি ব্রাউজার লিঙ্কে ডাটা রিসিভ করতে পারে না। এর জন্য আপনার শিটের Extensions > Apps Script এ গিয়ে নিচের কোডটি পেস্ট করে Deploy > New deployment > Web app থেকে প্রাপ্ত Web App URL-টি (https://script.google.com/macros/s/.../exec) এখানে দিন।') }}
+                                    </p>
+                                </div>
+                            </div>
+                            @endif
+
                             <p class="text-[11px] text-slate-400 mt-1">
-                                {{ __('Deploy your Google Apps Script as a Web App (Access: Anyone) and paste the deployed URL here.') }}
+                                {{ __('Deploy your Google Apps Script as a Web App (Access: Anyone) and paste the deployed URL here (Must start with https://script.google.com/macros/s/...).') }}
                             </p>
                         </div>
 
