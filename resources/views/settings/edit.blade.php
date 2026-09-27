@@ -1279,20 +1279,26 @@
                         @csrf
 
                         {{-- Toggle Enable/Disable --}}
-                        <div class="flex items-center justify-between p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20">
+                        <div class="flex items-center justify-between p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20"
+                             x-data="{ enabled: {{ ($googleSheetSyncEnabled ?? '0') === '1' ? 'true' : 'false' }} }">
                             <div>
-                                <label for="sheet-sync-toggle" class="text-xs font-bold text-slate-800 dark:text-slate-200 cursor-pointer">
+                                <label @click="enabled = !enabled" class="text-xs font-bold text-slate-800 dark:text-slate-200 cursor-pointer">
                                     {{ __('Enable Google Sheet Sync') }}
                                 </label>
                                 <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
                                     {{ __('When enabled, all newly created tickets and status updates will automatically sync to your Google Sheet.') }}
                                 </p>
                             </div>
-                            <label class="relative inline-flex items-center cursor-pointer">
-                                <input type="checkbox" id="sheet-sync-toggle" name="google_sheet_sync_enabled" value="1"
-                                       class="sr-only peer" {{ ($googleSheetSyncEnabled ?? '0') === '1' ? 'checked' : '' }}>
-                                <div class="w-11 h-6 bg-slate-300 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:width-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
-                            </label>
+                            <div class="flex items-center gap-2">
+                                <input type="hidden" name="google_sheet_sync_enabled" :value="enabled ? '1' : '0'">
+                                <button type="button" @click="enabled = !enabled"
+                                        class="w-11 h-6 rounded-full transition-colors relative cursor-pointer focus:outline-none shrink-0"
+                                        :class="enabled ? 'bg-emerald-600' : 'bg-slate-300 dark:bg-slate-700'"
+                                        role="switch" :aria-checked="enabled ? 'true' : 'false'">
+                                    <span class="inline-block w-5 h-5 rounded-full bg-white shadow-sm transform transition-transform duration-200 absolute top-0.5 left-0.5"
+                                          :class="enabled ? 'translate-x-5' : 'translate-x-0'"></span>
+                                </button>
+                            </div>
                         </div>
 
                         {{-- Webhook URL Input --}}
