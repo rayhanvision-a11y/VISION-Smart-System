@@ -111,6 +111,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', function (Request $request) {
         $user = auth()->user();
 
+        if ($user && $user->isAdmin()) {
+            app(\App\Services\DatabaseBackupService::class)->ensureDailyBackup();
+        }
+
         // Base query (admin/noc views only)
         $base = fn () => Ticket::query();
 

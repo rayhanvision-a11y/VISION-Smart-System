@@ -22,6 +22,30 @@ class DatabaseBackupService
     }
 
     /**
+     * Check if an automatic backup has been generated today. If not, create one.
+     */
+    public function ensureDailyBackup(): ?array
+    {
+        $dir = self::getBackupDir();
+        $todayPrefix = 'backup_auto_' . now()->format('Y-m-d');
+
+        if (File::exists($dir)) {
+            foreach (File::files($dir) as $file) {
+                if (str_starts_with($file->getFilename(), $todayPrefix)) {
+                    return null; // Already backed up today
+                }
+            }
+        }
+
+        try {
+            return $this->createBackup('auto');
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Automatic daily backup failed: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
      * Create a new database backup SQL file and prune old backups.
      */
     public function createBackup(string $type = 'manual'): array

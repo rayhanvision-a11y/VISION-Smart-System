@@ -18,6 +18,8 @@ class SettingController extends Controller
             abort(403);
         }
 
+        $backupService->ensureDailyBackup();
+
         return view('settings.edit', [
             'logoPath' => Setting::get('logo_path'),
             'faviconPath' => Setting::get('favicon_path'),
