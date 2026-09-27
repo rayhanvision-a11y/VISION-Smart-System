@@ -1626,7 +1626,12 @@ function doPost(e) {
       data.remarks || ''                                  // Col P (16): Remarks
     ];
     
-    // Write values safely into the target row
+    // 1. Clear any strict dropdown validation rules on this row so Google Sheet will never reject input
+    try {
+      sheet.getRange(targetRow, 1, 1, 16).clearDataValidations();
+    } catch (eValid) {}
+    
+    // 2. Write values safely into the target row
     for (var c = 0; c &lt; rowValues.length; c++) {
       safeSetValue(sheet, targetRow, c + 1, rowValues[c]);
     }

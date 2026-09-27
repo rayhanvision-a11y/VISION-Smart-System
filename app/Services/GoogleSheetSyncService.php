@@ -65,7 +65,7 @@ class GoogleSheetSyncService
                 'assigned_to'      => $ticket->assignee ? $ticket->assignee->name : '',
                 'status'           => $statusLabel,
                 'current_status'   => $statusLabel,
-                'remarks'          => $ticket->description ?: '',
+                'remarks'          => trim(html_entity_decode(strip_tags((string) ($ticket->description ?: '')), ENT_QUOTES, 'UTF-8')),
             ];
 
             $response = Http::withoutVerifying()->timeout(10)->asJson()->post($webhookUrl, $payload);
@@ -108,7 +108,7 @@ class GoogleSheetSyncService
                 'current_status' => static::formatStatus($ticket->status),
                 'onu_power'      => $ticket->onu_power ?: '',
                 'forwarded_to'   => $ticket->forwarded_to ?: '',
-                'remarks'        => $remarks ?: '',
+                'remarks'        => trim(html_entity_decode(strip_tags((string) ($remarks ?: '')), ENT_QUOTES, 'UTF-8')),
             ];
 
             Http::withoutVerifying()->timeout(10)->asJson()->post($webhookUrl, $payload);
