@@ -1,7 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:local_auth/local_auth.dart';
-import 'storage_service.dart';
 
 class BiometricService {
   static final BiometricService instance = BiometricService._();
@@ -9,22 +8,17 @@ class BiometricService {
 
   final LocalAuthentication _auth = LocalAuthentication();
 
-  /// Authenticates using device biometrics (fingerprint / Face ID).
-  /// Returns true ONLY if the device hardware fingerprint sensor successfully matches.
-  Future<bool> authenticate({required BuildContext context}) async {
-    final enabled = await StorageService.isBiometricEnabled();
-    if (!enabled) return false;
-
-    final creds = await StorageService.getSavedCredentials();
-    if (creds['email'].toString().isEmpty || creds['password'].toString().isEmpty) {
-      return false;
-    }
-
+  /// Prompts device hardware fingerprint / Face ID sensor.
+  /// Returns true ONLY if physical fingerprint matches.
+  Future<bool> authenticate({
+    required BuildContext context,
+    String reason = 'Scan your fingerprint or Face ID to verify',
+  }) async {
     try {
       final canCheck = await _auth.canCheckBiometrics || await _auth.isDeviceSupported();
       if (canCheck) {
         final didAuthenticate = await _auth.authenticate(
-          localizedReason: 'Scan your fingerprint or Face ID to log into VISION Smart System',
+          localizedReason: reason,
           options: const AuthenticationOptions(
             stickyAuth: true,
             biometricOnly: true,
@@ -37,7 +31,7 @@ class BiometricService {
       debugPrint('Native local_auth error: $e');
     }
 
-    // Web fallback only
+    // Web Fallback dialog
     if (kIsWeb) {
       final result = await showDialog<bool>(
         context: context,
@@ -55,10 +49,10 @@ class BiometricService {
               ),
             ],
           ),
-          content: const Text(
-            'Scan fingerprint or Face ID to verify your identity',
+          content: Text(
+            reason,
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.white70, fontSize: 13),
+            style: const TextStyle(color: Colors.white70, fontSize: 13),
           ),
           actionsAlignment: MainAxisAlignment.center,
           actions: [
@@ -73,7 +67,7 @@ class BiometricService {
               ),
               onPressed: () => Navigator.pop(ctx, true),
               icon: const Icon(Icons.check_rounded, color: Colors.white),
-              label: const Text('Verify & Login', style: TextStyle(color: Colors.white)),
+              label: const Text('Verify & Confirm', style: TextStyle(color: Colors.white)),
             ),
           ],
         ),

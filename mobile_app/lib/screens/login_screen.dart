@@ -23,6 +23,7 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _obscurePassword = true;
   bool _rememberMe = true;
   bool _hasSavedCreds = false;
+  bool _isBiometricEnabled = false;
   String? _errorMessage;
 
   @override
@@ -33,6 +34,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _loadSaved() async {
     final creds = await StorageService.getSavedCredentials();
+    final bioEnabled = await StorageService.isBiometricEnabled();
     if (!mounted) return;
     setState(() {
       _rememberMe = creds['remember'] as bool? ?? true;
@@ -43,6 +45,7 @@ class _LoginScreenState extends State<LoginScreen> {
         _passwordController.text = savedPass;
         _hasSavedCreds = true;
       }
+      _isBiometricEnabled = bioEnabled && _hasSavedCreds;
     });
   }
 
@@ -71,9 +74,6 @@ class _LoginScreenState extends State<LoginScreen> {
         _passwordController.text,
         _rememberMe,
       );
-      if (_rememberMe) {
-        await StorageService.setBiometricEnabled(true);
-      }
       if (!mounted) return;
       Navigator.pushReplacement(
         context,
@@ -112,7 +112,10 @@ class _LoginScreenState extends State<LoginScreen> {
     _emailController.text = savedEmail;
     _passwordController.text = savedPass;
 
-    final ok = await BiometricService.instance.authenticate(context: context);
+    final ok = await BiometricService.instance.authenticate(
+      context: context,
+      reason: AppState.instance.t('Log in using fingerprint', 'ফিঙ্গারপ্রিন্ট দিয়ে লগইন করুন'),
+    );
     if (ok && mounted) {
       _submit();
     }
@@ -308,54 +311,58 @@ class _LoginScreenState extends State<LoginScreen> {
                                   onPressed: _submit,
                                 ),
                               ),
-                              const SizedBox(width: 10),
-                              Tooltip(
-                                message: AppState.instance.t('Biometric / Fingerprint Login', 'ফিঙ্গারপ্রিন্ট লগইন'),
-                                child: Material(
-                                  color: AppColors.primary.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(AppRadius.lg),
-                                  child: InkWell(
-                                    onTap: _biometricLogin,
+                              if (_isBiometricEnabled) ...[
+                                const SizedBox(width: 10),
+                                Tooltip(
+                                  message: AppState.instance.t('Biometric / Fingerprint Login', 'ফিঙ্গারপ্রিন্ট লগইন'),
+                                  child: Material(
+                                    color: AppColors.primary.withOpacity(0.1),
                                     borderRadius: BorderRadius.circular(AppRadius.lg),
-                                    child: Container(
-                                      width: 52,
-                                      height: 52,
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(AppRadius.lg),
-                                        border: Border.all(color: AppColors.primary, width: 1.5),
-                                      ),
-                                      child: const Icon(
-                                        Icons.fingerprint_rounded,
-                                        color: AppColors.primary,
-                                        size: 32,
+                                    child: InkWell(
+                                      onTap: _biometricLogin,
+                                      borderRadius: BorderRadius.circular(AppRadius.lg),
+                                      child: Container(
+                                        width: 52,
+                                        height: 52,
+                                        decoration: BoxDecoration(
+                                          borderRadius: BorderRadius.circular(AppRadius.lg),
+                                          border: Border.all(color: AppColors.primary, width: 1.5),
+                                        ),
+                                        child: const Icon(
+                                          Icons.fingerprint_rounded,
+                                          color: AppColors.primary,
+                                          size: 32,
+                                        ),
                                       ),
                                     ),
                                   ),
                                 ),
-                              ),
+                              ],
                             ],
                           ),
-                          const SizedBox(height: AppSpacing.md),
-                          Center(
-                            child: InkWell(
-                              onTap: _biometricLogin,
-                              borderRadius: BorderRadius.circular(AppRadius.md),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Icon(Icons.fingerprint_rounded, size: 20, color: AppColors.primary),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      AppState.instance.t('Quick Biometric / Fingerprint Login', 'ফিঙ্গারপ্রিন্ট দিয়ে দ্রুত লগইন করুন'),
-                                      style: AppText.bodySm.copyWith(color: AppColors.primary, fontWeight: FontWeight.w600),
-                                    ),
-                                  ],
+                          if (_isBiometricEnabled) ...[
+                            const SizedBox(height: AppSpacing.md),
+                            Center(
+                              child: InkWell(
+                                onTap: _biometricLogin,
+                                borderRadius: BorderRadius.circular(AppRadius.md),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(Icons.fingerprint_rounded, size: 20, color: AppColors.primary),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        AppState.instance.t('Quick Biometric / Fingerprint Login', 'ফিঙ্গারপ্রিন্ট দিয়ে দ্রুত লগইন করুন'),
+                                        style: AppText.bodySm.copyWith(color: AppColors.primary, fontWeight: FontWeight.w600),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
+                          ],
                         ],
                       ),
                     ),

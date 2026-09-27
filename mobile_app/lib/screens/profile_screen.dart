@@ -11,6 +11,7 @@ import 'login_screen.dart';
 import 'notifications_screen.dart';
 import 'edit_profile_screen.dart';
 import 'change_password_screen.dart';
+import '../services/biometric_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({Key? key}) : super(key: key);
@@ -48,6 +49,64 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _isBiometricEnabled = bioEnabled;
         _isLoading = false;
       });
+    }
+  }
+
+  Future<void> _toggleBiometric(bool value) async {
+    if (value) {
+      final ok = await BiometricService.instance.authenticate(
+        context: context,
+        reason: AppState.instance.t(
+          'Scan your fingerprint to enable biometric login',
+          'বায়োমেট্রিক লগইন সক্রিয় করতে ফিঙ্গারপ্রিন্ট ভেরিফাই করুন',
+        ),
+      );
+
+      if (ok) {
+        await StorageService.setBiometricEnabled(true);
+        if (mounted) {
+          setState(() => _isBiometricEnabled = true);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(AppState.instance.t(
+                'Biometric login enabled successfully!',
+                'বায়োমেট্রিক লগইন সফলভাবে সক্রিয় করা হয়েছে!',
+              )),
+              backgroundColor: AppColors.success,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      } else {
+        if (mounted) {
+          setState(() => _isBiometricEnabled = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(AppState.instance.t(
+                'Biometric authentication failed or cancelled.',
+                'বায়োমেট্রিক যাচাইকরণ ব্যর্থ বা বাতিল হয়েছে।',
+              )),
+              backgroundColor: AppColors.danger,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
+    } else {
+      await StorageService.setBiometricEnabled(false);
+      if (mounted) {
+        setState(() => _isBiometricEnabled = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppState.instance.t(
+              'Biometric login disabled.',
+              'বায়োমেট্রিক লগইন নিষ্ক্রিয় করা হয়েছে।',
+            )),
+            backgroundColor: AppColors.info,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     }
   }
 
@@ -247,18 +306,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           Icons.fingerprint_rounded,
                           AppState.instance.t('Biometric / Fingerprint Login', 'বায়োমেট্রিক ও ফিঙ্গারপ্রিন্ট লগইন'),
                           AppColors.primary,
-                          () async {
-                            final newState = !_isBiometricEnabled;
-                            await StorageService.setBiometricEnabled(newState);
-                            if (mounted) setState(() => _isBiometricEnabled = newState);
-                          },
+                          () => _toggleBiometric(!_isBiometricEnabled),
                           trailing: Switch(
                             value: _isBiometricEnabled,
                             activeColor: AppColors.primary,
-                            onChanged: (v) async {
-                              await StorageService.setBiometricEnabled(v);
-                              if (mounted) setState(() => _isBiometricEnabled = v);
-                            },
+                            onChanged: (v) => _toggleBiometric(v),
                           ),
                         ),
                       ]),
