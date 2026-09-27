@@ -4,6 +4,7 @@ import '../services/storage_service.dart';
 import '../services/app_state.dart';
 import '../services/location_service.dart';
 import '../services/offline_service.dart';
+import '../services/push_service.dart';
 import '../theme/app_theme.dart';
 import 'dashboard_screen.dart';
 import 'ticket_list_screen.dart';
@@ -40,6 +41,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
   Future<void> _loadUser() async {
     final user = await StorageService.getUser();
+    PushService.instance.sendTokenToServer();
     if (mounted) {
       setState(() {
         _currentUser = user;

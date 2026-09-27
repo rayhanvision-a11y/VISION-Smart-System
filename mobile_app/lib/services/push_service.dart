@@ -83,12 +83,25 @@ class PushService {
         if (initialMsg != null) _handleFcmOpen(initialMsg);
 
         // Send / refresh token
-        final token = await messaging.getToken();
-        if (token != null) await ApiService.updateFcmToken(token);
-        messaging.onTokenRefresh.listen((t) => ApiService.updateFcmToken(t));
+        await sendTokenToServer();
+        FirebaseMessaging.instance.onTokenRefresh.listen((t) => ApiService.updateFcmToken(t));
       }
     } catch (e) {
       debugPrint('FCM init safe note: $e');
+    }
+  }
+
+  Future<void> sendTokenToServer() async {
+    try {
+      if (Firebase.apps.isNotEmpty) {
+        final token = await FirebaseMessaging.instance.getToken();
+        if (token != null && token.isNotEmpty) {
+          await ApiService.updateFcmToken(token);
+          debugPrint('FCM Token synced to server: ${token.substring(0, 10)}...');
+        }
+      }
+    } catch (e) {
+      debugPrint('sendTokenToServer error: $e');
     }
   }
 
