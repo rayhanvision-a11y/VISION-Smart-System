@@ -1421,14 +1421,14 @@
                     </div>
 
                     <pre id="gas-script-box" class="p-3.5 bg-slate-900 text-slate-100 rounded-lg text-[11px] font-mono leading-relaxed overflow-x-auto max-h-96 selection:bg-indigo-500">/**
- * ISP Ticket System — Google Sheet Auto Sync Webhook
+ * ISP Ticket System — Google Sheet Auto Sync Webhook (v2.0 Bulletproof)
  * Sheet: Complaint Tracking Sheet (2026)
- * Supports monthly tabs (e.g. September, August) and columns A to P.
+ * Supports monthly tabs, pre-formatted template rows, and strict data validations.
  */
 
 function doPost(e) {
   var lock = LockService.getScriptLock();
-  lock.tryLock(10000);
+  lock.tryLock(15000);
   
   try {
     var rawData = e.postData ? e.postData.contents : null;
@@ -1448,7 +1448,7 @@ function doPost(e) {
       })).setMimeType(ContentService.MimeType.JSON);
     }
     
-    // Determine Sheet Tab (e.g., &quot;September&quot;, &quot;October&quot;, or provided sheet_name)
+    // Determine Sheet Tab (e.g. September, October, or provided sheet_name)
     var sheetName = data.sheet_name;
     var sheet = null;
     if (sheetName) {
@@ -1460,110 +1460,182 @@ function doPost(e) {
       sheet = ss.getSheetByName(currentMonth);
     }
     if (!sheet) {
-      sheet = ss.getSheets()[0]; // Fallback to first sheet
+      sheet = ss.getSheets()[0];
     }
     
-    // UPDATE TICKET ACTION (When status, assignee, or remarks change)
+    // HELPER: Write value safely ignoring data validation rules
+    function safeSetValue(targetSheet, row, col, val) {
+      if (val === undefined || val === null) return;
+      var cell = targetSheet.getRange(row, col);
+      try {
+        cell.setValue(val);
+      } catch (err) {
+        try {
+          cell.clearDataValidations();
+          cell.setValue(val);
+        } catch (e2) {}
+      }
+    }
+    
+    // UPDATE TICKET ACTION
     if (data.action === 'update') {
       var ticketId = String(data.id || data.client_id || data.ticket_key || '').trim();
       var foundRow = -1;
-      var sheetsToSearch = [sheet];
+      var targetSheet = sheet;
       
-      var allSheets = ss.getSheets();
-      for (var s = 0; s &lt; allSheets.length; s++) {
-        if (allSheets[s].getName() !== sheet.getName()) {
-          sheetsToSearch.push(allSheets[s]);
+      // If row_id was supplied, verify it first
+      if (data.row_id && Number(data.row_id) > 1) {
+        var testRow = Number(data.row_id);
+        var curVal = String(sheet.getRange(testRow, 6).getValue()).trim();
+        if (curVal === ticketId || curVal === String(data.ticket_key || '').trim() || !curVal) {
+          foundRow = testRow;
         }
       }
       
-      for (var i = 0; i &lt; sheetsToSearch.length; i++) {
-        var curSheet = sheetsToSearch[i];
-        var lastR = curSheet.getLastRow();
-        if (lastR &lt; 2) continue;
-        
-        var idValues = curSheet.getRange(2, 6, lastR - 1, 1).getValues(); // Column F is ID
-        for (var r = idValues.length - 1; r &gt;= 0; r--) {
-          var cellVal = String(idValues[r][0]).trim();
-          if (cellVal &amp;&amp; (cellVal === ticketId || cellVal === String(data.ticket_key || '').trim())) {
-            foundRow = r + 2;
-            sheet = curSheet;
-            break;
+      // If not found by row_id, search Column F (ID) across sheets
+      if (foundRow < 0) {
+        var sheetsToSearch = [sheet];
+        var allSheets = ss.getSheets();
+        for (var s = 0; s &lt; allSheets.length; s++) {
+          if (allSheets[s].getName() !== sheet.getName()) {
+            sheetsToSearch.push(allSheets[s]);
           }
         }
-        if (foundRow &gt; 0) break;
+        
+        for (var i = 0; i &lt; sheetsToSearch.length; i++) {
+          var curSheet = sheetsToSearch[i];
+          var lastR = Math.max(curSheet.getLastRow(), 100);
+          var idValues = curSheet.getRange(1, 6, lastR, 1).getValues(); // Column F is ID
+          for (var r = idValues.length - 1; r &gt;= 1; r--) {
+            var cellVal = String(idValues[r][0]).trim();
+            if (cellVal &amp;&amp; (cellVal === ticketId || cellVal === String(data.ticket_key || '').trim())) {
+              foundRow = r + 1;
+              targetSheet = curSheet;
+              break;
+            }
+          }
+          if (foundRow &gt; 0) break;
+        }
       }
       
       if (foundRow &gt; 0) {
+        // 1. Current Status (Col N = 14) — ALWAYS UPDATE FIRST
+        var statusVal = data.status || data.current_status;
+        if (statusVal) {
+          safeSetValue(targetSheet, foundRow, 14, statusVal);
+        }
+        
+        // 2. Assigned To (Col M = 13)
         if (data.assigned_to) {
-          sheet.getRange(foundRow, 13).setValue(data.assigned_to); // Col M: Assigned To (Technician)
+          safeSetValue(targetSheet, foundRow, 13, data.assigned_to);
         }
-        if (data.status || data.current_status) {
-          sheet.getRange(foundRow, 14).setValue(data.status || data.current_status); // Col N: Current Status
+        
+        // 3. ONU Power (Col L = 12)
+        if (data.onu_power) {
+          safeSetValue(targetSheet, foundRow, 12, data.onu_power);
         }
+        
+        // 4. Forwarded To (Col K = 11)
+        if (data.forwarded_to) {
+          safeSetValue(targetSheet, foundRow, 11, data.forwarded_to);
+        }
+        
+        // 5. Remarks (Col P = 16)
         if (data.remarks) {
-          var currentRemarks = sheet.getRange(foundRow, 16).getValue();
-          sheet.getRange(foundRow, 16).setValue(data.remarks + (currentRemarks ? ' | ' + currentRemarks : '')); // Col P: Remarks
+          var currentRemarks = String(targetSheet.getRange(foundRow, 16).getValue() || '');
+          var newRemark = String(data.remarks).trim();
+          if (newRemark &amp;&amp; !currentRemarks.includes(newRemark)) {
+            var combined = currentRemarks ? newRemark + ' | ' + currentRemarks : newRemark;
+            safeSetValue(targetSheet, foundRow, 16, combined);
+          }
         }
+        
         return ContentService.createTextOutput(JSON.stringify({
           status: 'success',
-          message: 'Row ' + foundRow + ' updated in ' + sheet.getName(),
+          message: 'Row ' + foundRow + ' updated in ' + targetSheet.getName(),
+          sheet: targetSheet.getName(),
           row: foundRow
+        })).setMimeType(ContentService.MimeType.JSON);
+      } else {
+        return ContentService.createTextOutput(JSON.stringify({
+          status: 'error',
+          message: 'Ticket not found with ID: ' + ticketId
         })).setMimeType(ContentService.MimeType.JSON);
       }
     }
     
     // CREATE TICKET ACTION
-    var lastRow = sheet.getLastRow();
+    // Find the REAL next empty row (checking where Date Col C or ID Col F is empty)
+    var targetRow = -1;
+    var scanLimit = Math.max(sheet.getLastRow() + 10, 100);
+    var dateValues = sheet.getRange(1, 3, scanLimit, 1).getValues(); // Column C is Date
+    var idValues = sheet.getRange(1, 6, scanLimit, 1).getValues();   // Column F is ID
+    
+    for (var r = 2; r &lt; scanLimit; r++) { // Row 3 is index 2
+      var dVal = String(dateValues[r] ? dateValues[r][0] : '').trim();
+      var fVal = String(idValues[r] ? idValues[r][0] : '').trim();
+      if (!dVal &amp;&amp; !fVal) {
+        targetRow = r + 1; // 1-indexed row number
+        break;
+      }
+    }
+    if (targetRow &lt; 3) {
+      targetRow = sheet.getLastRow() + 1;
+    }
+    
+    // Calculate Master SL and Daily SL from previous row
     var masterSl = 1;
     var dailySl = 1;
+    var prevRow = targetRow - 1;
     var targetDate = data.date || Utilities.formatDate(new Date(), &quot;Asia/Dhaka&quot;, &quot;dd MMM, yy&quot;);
     var targetTime = data.time || Utilities.formatDate(new Date(), &quot;Asia/Dhaka&quot;, &quot;hh:mm a&quot;);
     
-    if (lastRow &gt;= 2) {
-      // Find last Master SL from Col A
-      var lastMasterVal = sheet.getRange(lastRow, 1).getValue();
-      if (!isNaN(parseInt(lastMasterVal))) {
-        masterSl = parseInt(lastMasterVal) + 1;
+    if (prevRow &gt;= 2) {
+      var prevMaster = sheet.getRange(prevRow, 1).getValue();
+      if (!isNaN(parseInt(prevMaster))) {
+        masterSl = parseInt(prevMaster) + 1;
       } else {
-        masterSl = lastRow;
+        masterSl = targetRow - 2;
       }
       
-      // Calculate Daily SL from Col B &amp; Date from Col C
-      var lastDateVal = String(sheet.getRange(lastRow, 3).getValue()).trim();
-      var lastDailyVal = sheet.getRange(lastRow, 2).getValue();
-      if (lastDateVal === targetDate &amp;&amp; !isNaN(parseInt(lastDailyVal))) {
-        dailySl = parseInt(lastDailyVal) + 1;
+      var prevDate = String(sheet.getRange(prevRow, 3).getValue()).trim();
+      var prevDaily = sheet.getRange(prevRow, 2).getValue();
+      if (prevDate === targetDate &amp;&amp; !isNaN(parseInt(prevDaily))) {
+        dailySl = parseInt(prevDaily) + 1;
       } else {
         dailySl = 1;
       }
     }
     
-    var newRow = [
-      masterSl,                                        // Col A (1): Master SL
-      dailySl,                                         // Col B (2): Daily SL
-      targetDate,                                      // Col C (3): Date
-      targetTime,                                      // Col D (4): User Entry Time
-      data.complaint_source || 'Phone',                // Col E (5): Complaint Source
+    var rowValues = [
+      masterSl,                                           // Col A (1): Master SL
+      dailySl,                                            // Col B (2): Daily SL
+      targetDate,                                         // Col C (3): Date
+      targetTime,                                         // Col D (4): User Entry Time
+      data.complaint_source || 'Phone',                   // Col E (5): Complaint Source
       data.id || data.client_id || data.ticket_key || '', // Col F (6): ID
-      data.name || data.client_name || data.title || '', // Col G (7): Name
-      data.address || data.area || 'N/A',              // Col H (8): Address
-      data.type || data.category || '',                // Col I (9): Type
-      data.received_by || '',                          // Col J (10): Received By
-      data.forwarded_to || '',                         // Col K (11): Forwarded To
-      data.onu_power || '',                            // Col L (12): ONU Power Check IT Team
-      data.assigned_to || 'Unassigned',                // Col M (13): Assigned To (Technician)
-      data.status || data.current_status || 'Pending', // Col N (14): Current Status
-      data.feedback || '',                             // Col O (15): Feedback Received
-      data.remarks || ''                               // Col P (16): Remarks
+      data.name || data.client_name || data.title || '',   // Col G (7): Name
+      data.address || data.area || 'N/A',                 // Col H (8): Address
+      data.type || data.category || '',                   // Col I (9): Type
+      data.received_by || '',                             // Col J (10): Received By
+      data.forwarded_to || '',                            // Col K (11): Forwarded To
+      data.onu_power || '',                               // Col L (12): ONU Power Check IT Team
+      data.assigned_to || '',                             // Col M (13): Assigned To (Technician)
+      data.status || data.current_status || 'Pending',    // Col N (14): Current Status
+      data.feedback || '',                                // Col O (15): Feedback Received
+      data.remarks || ''                                  // Col P (16): Remarks
     ];
     
-    sheet.appendRow(newRow);
+    // Write values safely into the target row
+    for (var c = 0; c &lt; rowValues.length; c++) {
+      safeSetValue(sheet, targetRow, c + 1, rowValues[c]);
+    }
     
     return ContentService.createTextOutput(JSON.stringify({
       status: 'success',
       message: 'Ticket recorded successfully',
       sheet: sheet.getName(),
-      row: sheet.getLastRow(),
+      row: targetRow,
       master_sl: masterSl,
       daily_sl: dailySl
     })).setMimeType(ContentService.MimeType.JSON);
