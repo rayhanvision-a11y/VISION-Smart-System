@@ -1,28 +1,29 @@
 <x-guest-layout>
-    <div class="text-center mb-6">
-        <h1 class="text-xl font-bold tracking-tight text-white">
+    <div>
+        <h1 class="auth-heading">
             {{ __('Two-Factor Authentication') }}
         </h1>
-        <p class="text-xs sm:text-sm text-slate-300 mt-1.5">
+        <p class="auth-subheading">
             {{ __('Enter the 6-digit code from your authenticator app or one of your recovery codes.') }}
         </p>
     </div>
 
     @if(isset($errors) && $errors->any())
-    <div class="mb-4 p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs sm:text-sm">
+    <div style="margin-bottom: 20px; padding: 12px 14px; border-radius: 12px; background: rgba(244, 63, 94, 0.15); border: 1px solid rgba(244, 63, 94, 0.3); color: #fca5a5; font-size: 13px;">
         {{ $errors->first() }}
     </div>
     @endif
 
-    <form method="POST" action="{{ route('two-factor.challenge.verify') }}" class="space-y-4">
+    <form method="POST" action="{{ route('two-factor.challenge.verify') }}">
         @csrf
-        <div>
-            <label for="code" class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2 text-center">
+        <div class="form-field">
+            <label for="code" class="field-label" style="text-align: center;">
                 {{ __('Authentication Code') }}
             </label>
             <input 
                 id="code" 
-                class="login-input w-full px-4 py-3 rounded-xl text-center tracking-[0.4em] font-mono text-lg font-bold" 
+                class="input-control" 
+                style="text-align: center; letter-spacing: 0.4em; font-family: monospace; font-size: 18px; font-weight: 700; padding: 0 16px !important;"
                 type="text" 
                 name="code" 
                 inputmode="numeric" 
@@ -33,15 +34,15 @@
             />
         </div>
 
-        <div class="pt-2">
-            <button type="submit" class="login-btn w-full rounded-xl text-white font-semibold py-3.5 px-5 text-sm cursor-pointer shadow-lg">
+        <div style="margin-top: 24px;">
+            <button type="submit" class="btn-primary-action">
                 {{ __('Verify Identity') }}
             </button>
         </div>
     </form>
 
-    <div class="text-center pt-3">
-        <a href="{{ route('login') }}" class="text-xs text-blue-400 hover:text-blue-300 transition-colors">
+    <div style="text-align: center; margin-top: 20px;">
+        <a href="{{ route('login') }}" class="field-link">
             ← {{ __('Back to login') }}
         </a>
     </div>
