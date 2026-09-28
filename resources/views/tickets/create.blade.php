@@ -14,262 +14,273 @@
         $oldType = old('ticket_type', 'external');
     @endphp
 
-    <div class="mb-6 flex items-center gap-3">
-        <a href="{{ route('tickets.index') }}" class="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-            </svg>
-        </a>
-        <div>
-            <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100">{{ __('Create New Ticket') }}</h1>
-            <p class="text-sm text-slate-500 dark:text-slate-400 mt-0.5">{{ __('Choose the ticket type below and fill in the required fields.') }}</p>
+    {{-- Header --}}
+    <div class="mb-6 flex items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+            <a href="{{ route('tickets.index') }}"
+               class="w-9 h-9 flex items-center justify-center rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 hover:text-indigo-600 hover:border-indigo-300 dark:hover:border-indigo-500 transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/>
+                </svg>
+            </a>
+            <div>
+                <h1 class="text-xl sm:text-2xl font-bold text-slate-800 dark:text-slate-100 leading-tight">{{ __('Create New Ticket') }}</h1>
+                <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400">{{ __('Pick a ticket type below and complete the required fields.') }}</p>
+            </div>
         </div>
     </div>
 
     <div x-data="{ type: '{{ $oldType }}' }" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-        {{-- Left: Form --}}
+        {{-- ==== MAIN CARD ==== --}}
         <div class="lg:col-span-2">
             <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden">
 
-                {{-- Tab Switcher --}}
-                <div class="grid grid-cols-2 border-b border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-950/40">
-                    <button type="button" @click="type = 'internal'"
-                            :class="type === 'internal'
-                                ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-500'
-                                : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 border-b-2 border-transparent'"
-                            class="flex items-center justify-center gap-2 px-4 py-3.5 text-sm font-semibold transition-all">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"/>
-                        </svg>
-                        {{ __('Internal Ticket') }}
-                        <span x-show="type === 'internal'" class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300">{{ __('Team') }}</span>
-                    </button>
-                    <button type="button" @click="type = 'external'"
-                            :class="type === 'external'
-                                ? 'bg-white dark:bg-slate-900 text-emerald-600 dark:text-emerald-400 border-b-2 border-emerald-500'
-                                : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 border-b-2 border-transparent'"
-                            class="flex items-center justify-center gap-2 px-4 py-3.5 text-sm font-semibold transition-all">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
-                        </svg>
-                        {{ __('External Ticket') }}
-                        <span x-show="type === 'external'" class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300">{{ __('Client') }}</span>
-                    </button>
+                {{-- Pill-style tab switcher --}}
+                <div class="p-4 border-b border-slate-100 dark:border-slate-800 bg-gradient-to-br from-slate-50 to-white dark:from-slate-950/60 dark:to-slate-900">
+                    <div class="grid grid-cols-2 gap-2 p-1.5 bg-slate-100/80 dark:bg-slate-800/60 rounded-xl">
+                        <button type="button" @click="type = 'internal'"
+                                :class="type === 'internal'
+                                    ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm ring-1 ring-indigo-200 dark:ring-indigo-800'
+                                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'"
+                                class="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            </svg>
+                            {{ __('Internal') }}
+                        </button>
+                        <button type="button" @click="type = 'external'"
+                                :class="type === 'external'
+                                    ? 'bg-white dark:bg-slate-900 text-emerald-600 dark:text-emerald-400 shadow-sm ring-1 ring-emerald-200 dark:ring-emerald-800'
+                                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'"
+                                class="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                            </svg>
+                            {{ __('External') }}
+                        </button>
+                    </div>
+
+                    {{-- Info hint below tabs --}}
+                    <p x-show="type === 'internal'" x-cloak class="text-[11px] text-slate-500 dark:text-slate-400 mt-2.5 text-center leading-relaxed">
+                        <svg class="w-3 h-3 inline text-indigo-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/></svg>
+                        {{ __('Team-only issue — will not sync to Google Sheet') }}
+                    </p>
+                    <p x-show="type === 'external'" x-cloak class="text-[11px] text-slate-500 dark:text-slate-400 mt-2.5 text-center leading-relaxed">
+                        <svg class="w-3 h-3 inline text-emerald-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                        {{ __('Customer complaint — client info auto-synced to Google Sheet') }}
+                    </p>
                 </div>
 
-                <div class="p-6">
-                    {{-- Info banner --}}
-                    <div x-show="type === 'internal'" x-cloak
-                         class="mb-5 flex items-start gap-3 p-3.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800/60">
-                        <svg class="w-5 h-5 text-indigo-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                        <div class="text-xs text-indigo-800 dark:text-indigo-200 leading-relaxed">
-                            <strong>{{ __('Internal Ticket') }}</strong> — {{ __('For team-only issues (staff, office, internal tasks). This ticket will NOT be synced to the Google Sheet.') }}
-                        </div>
-                    </div>
-                    <div x-show="type === 'external'" x-cloak
-                         class="mb-5 flex items-start gap-3 p-3.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/60">
-                        <svg class="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                        </svg>
-                        <div class="text-xs text-emerald-800 dark:text-emerald-200 leading-relaxed">
-                            <strong>{{ __('External Ticket') }}</strong> — {{ __('For customer complaints. Client info fills automatically into the Google Sheet.') }}
-                        </div>
-                    </div>
-
-                    <form method="POST" action="{{ route('tickets.store') }}">
+                <div class="p-5 sm:p-6">
+                    <form method="POST" action="{{ route('tickets.store') }}" class="space-y-5">
                         @csrf
                         <input type="hidden" name="ticket_type" :value="type">
 
-                        {{-- Title (both types) --}}
-                        <div class="mb-5">
-                            <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                                {{ __('Title') }} <span class="text-red-500">*</span>
-                            </label>
-                            <input type="text" name="title" value="{{ old('title') }}"
-                                   placeholder="{{ __('Brief summary of the issue…') }}"
-                                   class="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3.5 py-2.5 text-sm text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 bg-slate-50 dark:bg-slate-800 @error('title') border-red-400 bg-red-50 dark:bg-red-950/30 @enderror">
-                            @error('title')<p class="text-red-500 text-xs mt-1.5">{{ $message }}</p>@enderror
-                        </div>
-
-                        {{-- Description (both types) --}}
-                        <div class="mb-5">
-                            <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                                {{ __('Description') }} <span class="text-red-500">*</span>
-                            </label>
-                            <div id="desc-editor" class="@error('description') border border-red-400 @else border border-slate-200 dark:border-slate-700 @enderror rounded-xl bg-white dark:bg-slate-800"></div>
-                            <input type="hidden" name="description" id="desc-hidden">
-                            @error('description')<p class="text-red-500 text-xs mt-1.5">{{ $message }}</p>@enderror
-                        </div>
-
-                        {{-- Category + Priority (both types) --}}
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+                        {{-- SECTION 1: Core fields --}}
+                        <div class="space-y-5">
+                            {{-- Title --}}
                             <div>
-                                <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                                    {{ __('Category') }} <span x-show="type === 'external'" class="text-red-500">*</span>
-                                    <span x-show="type === 'internal'" class="text-[10px] font-normal text-slate-400">({{ __('Optional') }})</span>
+                                <label class="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">
+                                    {{ __('Title') }}
+                                    <span class="text-red-500">*</span>
                                 </label>
-                                <select name="category"
-                                        class="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3.5 py-2.5 text-sm text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 bg-slate-50 dark:bg-slate-800 @error('category') border-red-400 @enderror">
-                                    <option value="">{{ __('Select category…') }}</option>
-                                    @if(isset($categories) && $categories->count() > 0)
-                                        @foreach($categories as $cat)
-                                            <option value="{{ $cat->slug }}" {{ old('category') === $cat->slug ? 'selected' : '' }}>{{ $cat->name }}</option>
-                                        @endforeach
-                                    @else
-                                        <option value="line_fault"     {{ old('category') === 'line_fault'     ? 'selected' : '' }}>{{ __('Line Fault') }}</option>
-                                        <option value="router_issue"   {{ old('category') === 'router_issue'   ? 'selected' : '' }}>{{ __('Router Issue') }}</option>
-                                        <option value="new_connection" {{ old('category') === 'new_connection' ? 'selected' : '' }}>{{ __('New Connection') }}</option>
-                                        <option value="billing"        {{ old('category') === 'billing'        ? 'selected' : '' }}>{{ __('Billing') }}</option>
-                                        <option value="other"          {{ old('category') === 'other'          ? 'selected' : '' }}>{{ __('Other') }}</option>
-                                    @endif
-                                </select>
-                                @error('category')<p class="text-red-500 text-xs mt-1.5">{{ $message }}</p>@enderror
+                                <input type="text" name="title" value="{{ old('title') }}"
+                                       placeholder="{{ __('Brief summary of the issue…') }}"
+                                       class="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-2.5 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition @error('title') border-red-400 ring-2 ring-red-100 @enderror">
+                                @error('title')<p class="text-red-500 text-xs mt-1.5 flex items-center gap-1">⚠ {{ $message }}</p>@enderror
                             </div>
 
+                            {{-- Description --}}
                             <div>
-                                <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                                    {{ __('Priority') }} <span class="text-red-500">*</span>
+                                <label class="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">
+                                    {{ __('Description') }}
+                                    <span class="text-red-500">*</span>
                                 </label>
-                                <select name="priority"
-                                        class="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3.5 py-2.5 text-sm text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 bg-slate-50 dark:bg-slate-800 @error('priority') border-red-400 @enderror">
-                                    <option value="low"      {{ old('priority') === 'low'                ? 'selected' : '' }}>{{ __('Low') }}</option>
-                                    <option value="medium"   {{ old('priority', 'medium') === 'medium'   ? 'selected' : '' }}>{{ __('Medium') }}</option>
-                                    <option value="high"     {{ old('priority') === 'high'               ? 'selected' : '' }}>{{ __('High') }}</option>
-                                    <option value="critical" {{ old('priority') === 'critical'           ? 'selected' : '' }}>{{ __('Critical') }}</option>
-                                </select>
-                                @error('priority')<p class="text-red-500 text-xs mt-1.5">{{ $message }}</p>@enderror
+                                <div id="desc-editor" class="rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus-within:ring-2 focus-within:ring-indigo-500 focus-within:border-transparent transition @error('description') border-red-400 @enderror"></div>
+                                <input type="hidden" name="description" id="desc-hidden">
+                                @error('description')<p class="text-red-500 text-xs mt-1.5">⚠ {{ $message }}</p>@enderror
                             </div>
-                        </div>
 
-                        {{-- Assign To (both types) --}}
-                        @if(!auth()->user()->isReseller())
-                        <div class="mb-5">
-                            <label for="assigned_to" class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                                {{ __('Assign To') }}
-                            </label>
-                            <select name="assigned_to" id="assigned_to"
-                                    class="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3.5 py-2.5 text-sm text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 bg-slate-50 dark:bg-slate-800 @error('assigned_to') border-red-400 @enderror">
-                                <option value="">— {{ __('Leave Unassigned') }} —</option>
-                                @foreach($nocUsers as $user)
-                                    <option value="{{ $user->id }}" {{ (string)old('assigned_to') === (string)$user->id ? 'selected' : '' }}>
-                                        {{ $user->isOnDuty() ? '🟢' : '⚪' }} {{ $user->name }} {{ $user->team ? '· ' . $user->team : '' }} ({{ ucfirst(str_replace('_', ' ', $user->role)) }})
-                                    </option>
-                                @endforeach
-                            </select>
-                            <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1.5">{{ $nocUsers->count() }} {{ __('assignable staff') }}</p>
-                            @error('assigned_to')<p class="text-red-500 text-xs mt-1.5">{{ $message }}</p>@enderror
-                        </div>
-                        @endif
-
-                        {{-- ========== EXTERNAL-ONLY SECTION ========== --}}
-                        <div x-show="type === 'external'" x-cloak x-transition.opacity>
-
-                            {{-- Client & Tracking Info --}}
-                            <div class="mb-5 p-4 rounded-xl bg-gradient-to-br from-emerald-50/60 via-white to-white dark:from-emerald-950/20 dark:via-slate-900 dark:to-slate-900 border border-emerald-200/70 dark:border-emerald-900/40">
-                                <div class="flex flex-wrap items-center justify-between gap-2 mb-3.5 pb-2.5 border-b border-emerald-200/50 dark:border-emerald-900/40">
-                                    <h4 class="text-xs font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                                        </svg>
-                                        {{ __('Client & Tracking Info') }}
-                                    </h4>
-                                    <label class="inline-flex items-center gap-2 cursor-pointer select-none bg-white dark:bg-slate-800 border border-emerald-300/80 dark:border-emerald-800/80 px-3 py-1.5 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition">
-                                        <input type="checkbox" name="sync_to_google_sheet" value="1" {{ old('sync_to_google_sheet', '1') == '1' ? 'checked' : '' }}
-                                               class="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300 cursor-pointer">
-                                        <span class="text-xs font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-1">
-                                            📊 {{ __('Sync to Google Sheet') }}
-                                        </span>
+                            {{-- Category + Priority side by side --}}
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">
+                                        {{ __('Category') }}
+                                        <span x-show="type === 'external'" class="text-red-500">*</span>
                                     </label>
-                                </div>
-
-                                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-                                    <div>
-                                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">{{ __('Client ID') }}</label>
-                                        <input type="text" name="client_id" value="{{ old('client_id') }}" placeholder="15642"
-                                               class="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500 bg-white dark:bg-slate-800">
-                                    </div>
-                                    <div>
-                                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">{{ __('Client Name') }}</label>
-                                        <input type="text" name="client_name" value="{{ old('client_name') }}" placeholder="Md. Mikdad Hossain"
-                                               class="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500 bg-white dark:bg-slate-800">
-                                    </div>
-                                    <div>
-                                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">{{ __('Complaint Source') }}</label>
-                                        <select name="complaint_source"
-                                                class="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500 bg-white dark:bg-slate-800">
-                                            <option value="">— {{ __('Select') }} —</option>
-                                            @foreach(['Phone','Office','Online','WhatsApp','Reseller'] as $src)
-                                                <option value="{{ $src }}" {{ old('complaint_source') === $src ? 'selected' : '' }}>{{ $src }}</option>
+                                    <select name="category"
+                                            class="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition @error('category') border-red-400 @enderror">
+                                        <option value="">{{ __('Select category…') }}</option>
+                                        @if(isset($categories) && $categories->count() > 0)
+                                            @foreach($categories as $cat)
+                                                <option value="{{ $cat->slug }}" {{ old('category') === $cat->slug ? 'selected' : '' }}>{{ $cat->name }}</option>
                                             @endforeach
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">{{ __('ONU Power') }}</label>
-                                        <input type="text" name="onu_power" value="{{ old('onu_power') }}" placeholder="-23.56 dBm"
-                                               class="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500 bg-white dark:bg-slate-800">
-                                    </div>
-                                </div>
-                            </div>
-
-                            {{-- Area (external only) --}}
-                            <div class="mb-5" x-data="{ mode: '{{ $isCustomArea ? 'custom' : 'select' }}', value: @js($oldArea) }">
-                                <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                                    <span class="inline-flex items-center gap-1">📍 {{ __('Area') }}</span>
-                                </label>
-                                <div class="flex gap-2">
-                                    <select x-show="mode === 'select'" x-model="value" name="area"
-                                            class="flex-1 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 text-sm text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500 bg-slate-50 dark:bg-slate-800 @error('area') border-red-400 @enderror">
-                                        <option value="">— {{ __('Select area') }} —</option>
-                                        @if(!empty($areaMasterList))
-                                        <optgroup label="{{ __('Managed Areas') }}">
-                                            @foreach($areaMasterList as $areaOption)
-                                                <option value="{{ $areaOption }}" {{ $oldArea === $areaOption ? 'selected' : '' }}>{{ $areaOption }}</option>
-                                            @endforeach
-                                        </optgroup>
-                                        @endif
-                                        @if(!empty($areaLegacyList))
-                                        <optgroup label="{{ __('Legacy Areas') }}">
-                                            @foreach($areaLegacyList as $legacyArea)
-                                                <option value="{{ $legacyArea }}" {{ $oldArea === $legacyArea ? 'selected' : '' }}>{{ $legacyArea }}</option>
-                                            @endforeach
-                                        </optgroup>
+                                        @else
+                                            <option value="line_fault"     {{ old('category') === 'line_fault'     ? 'selected' : '' }}>{{ __('Line Fault') }}</option>
+                                            <option value="router_issue"   {{ old('category') === 'router_issue'   ? 'selected' : '' }}>{{ __('Router Issue') }}</option>
+                                            <option value="new_connection" {{ old('category') === 'new_connection' ? 'selected' : '' }}>{{ __('New Connection') }}</option>
+                                            <option value="billing"        {{ old('category') === 'billing'        ? 'selected' : '' }}>{{ __('Billing') }}</option>
+                                            <option value="other"          {{ old('category') === 'other'          ? 'selected' : '' }}>{{ __('Other') }}</option>
                                         @endif
                                     </select>
-                                    <input x-show="mode === 'custom'" x-model="value" name="area" type="text"
-                                           placeholder="{{ __('Type new area…') }}"
-                                           class="flex-1 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 text-sm text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500 bg-slate-50 dark:bg-slate-800">
-                                    <button type="button" @click="mode = mode === 'select' ? 'custom' : 'select'; value = ''"
-                                            class="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 whitespace-nowrap">
-                                        <span x-show="mode === 'select'">+ {{ __('New') }}</span>
-                                        <span x-show="mode === 'custom'">← {{ __('List') }}</span>
-                                    </button>
+                                    @error('category')<p class="text-red-500 text-xs mt-1.5">⚠ {{ $message }}</p>@enderror
                                 </div>
-                                <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1.5">
-                                    {{ count($allAreas) }} {{ __('areas') }}
-                                    @if(auth()->user()->isAdmin() || auth()->user()->isNoc() || auth()->user()->isSupervisorLevel())
-                                        · <a href="{{ route('areas.index') }}" class="text-emerald-600 hover:underline">{{ __('Manage') }}</a>
-                                    @endif
-                                </p>
-                                @error('area')<p class="text-red-500 text-xs mt-1.5">{{ $message }}</p>@enderror
+
+                                <div>
+                                    <label class="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">
+                                        {{ __('Priority') }}
+                                        <span class="text-red-500">*</span>
+                                    </label>
+                                    <select name="priority"
+                                            class="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition @error('priority') border-red-400 @enderror">
+                                        <option value="low"      {{ old('priority') === 'low'                ? 'selected' : '' }}>🟢 {{ __('Low') }}</option>
+                                        <option value="medium"   {{ old('priority', 'medium') === 'medium'   ? 'selected' : '' }}>🟡 {{ __('Medium') }}</option>
+                                        <option value="high"     {{ old('priority') === 'high'               ? 'selected' : '' }}>🟠 {{ __('High') }}</option>
+                                        <option value="critical" {{ old('priority') === 'critical'           ? 'selected' : '' }}>🔴 {{ __('Critical') }}</option>
+                                    </select>
+                                    @error('priority')<p class="text-red-500 text-xs mt-1.5">⚠ {{ $message }}</p>@enderror
+                                </div>
+                            </div>
+
+                            {{-- Assign To --}}
+                            @if(!auth()->user()->isReseller())
+                            <div>
+                                <label class="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">
+                                    {{ __('Assign To') }}
+                                    <span class="text-[10px] font-medium text-slate-400 normal-case">({{ __('Optional') }})</span>
+                                </label>
+                                <select name="assigned_to" id="assigned_to"
+                                        class="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition @error('assigned_to') border-red-400 @enderror">
+                                    <option value="">— {{ __('Leave Unassigned') }} —</option>
+                                    @foreach($nocUsers as $user)
+                                        <option value="{{ $user->id }}" {{ (string)old('assigned_to') === (string)$user->id ? 'selected' : '' }}>
+                                            {{ $user->isOnDuty() ? '🟢' : '⚪' }} {{ $user->name }}{{ $user->team ? ' · ' . $user->team : '' }} ({{ ucfirst(str_replace('_', ' ', $user->role)) }})
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1.5">{{ $nocUsers->count() }} {{ __('assignable staff · 🟢 on-duty') }}</p>
+                                @error('assigned_to')<p class="text-red-500 text-xs mt-1.5">⚠ {{ $message }}</p>@enderror
+                            </div>
+                            @endif
+                        </div>
+
+                        {{-- ==== EXTERNAL-ONLY SECTION ==== --}}
+                        <div x-show="type === 'external'" x-cloak x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" class="space-y-5">
+
+                            {{-- Divider --}}
+                            <div class="flex items-center gap-3 pt-2">
+                                <div class="flex-1 h-px bg-gradient-to-r from-transparent via-emerald-300/50 dark:via-emerald-700/50 to-transparent"></div>
+                                <span class="text-[11px] font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                                    </svg>
+                                    {{ __('Client Details') }}
+                                </span>
+                                <div class="flex-1 h-px bg-gradient-to-r from-transparent via-emerald-300/50 dark:via-emerald-700/50 to-transparent"></div>
+                            </div>
+
+                            {{-- Sync toggle --}}
+                            <label class="flex items-center justify-between gap-3 p-3 rounded-xl bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/50 cursor-pointer hover:bg-emerald-50 transition">
+                                <div class="flex items-center gap-2.5">
+                                    <span class="text-lg">📊</span>
+                                    <div>
+                                        <div class="text-sm font-semibold text-emerald-800 dark:text-emerald-200">{{ __('Sync to Google Sheet') }}</div>
+                                        <div class="text-[11px] text-emerald-700/80 dark:text-emerald-400/80">{{ __('Ticket will appear in the master tracking sheet') }}</div>
+                                    </div>
+                                </div>
+                                <input type="checkbox" name="sync_to_google_sheet" value="1" {{ old('sync_to_google_sheet', '1') == '1' ? 'checked' : '' }}
+                                       class="w-5 h-5 rounded text-emerald-600 focus:ring-emerald-500 border-emerald-300">
+                            </label>
+
+                            {{-- Client ID + Client Name --}}
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">{{ __('Client ID') }}</label>
+                                    <input type="text" name="client_id" value="{{ old('client_id') }}" placeholder="e.g. 15642"
+                                           class="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition">
+                                </div>
+                                <div>
+                                    <label class="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">{{ __('Client Name') }}</label>
+                                    <input type="text" name="client_name" value="{{ old('client_name') }}" placeholder="e.g. Md. Mikdad Hossain"
+                                           class="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition">
+                                </div>
+                            </div>
+
+                            {{-- Area (with add-new toggle) + Address --}}
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div x-data="{ mode: '{{ $isCustomArea ? 'custom' : 'select' }}', value: @js($oldArea) }">
+                                    <label class="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">📍 {{ __('Area') }}</label>
+                                    <div class="flex gap-2">
+                                        <select x-show="mode === 'select'" x-model="value" name="area"
+                                                class="flex-1 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition">
+                                            <option value="">— {{ __('Select area') }} —</option>
+                                            @if(!empty($areaMasterList))
+                                            <optgroup label="{{ __('Managed Areas') }}">
+                                                @foreach($areaMasterList as $areaOption)
+                                                    <option value="{{ $areaOption }}" {{ $oldArea === $areaOption ? 'selected' : '' }}>{{ $areaOption }}</option>
+                                                @endforeach
+                                            </optgroup>
+                                            @endif
+                                            @if(!empty($areaLegacyList))
+                                            <optgroup label="{{ __('Legacy Areas') }}">
+                                                @foreach($areaLegacyList as $legacyArea)
+                                                    <option value="{{ $legacyArea }}" {{ $oldArea === $legacyArea ? 'selected' : '' }}>{{ $legacyArea }}</option>
+                                                @endforeach
+                                            </optgroup>
+                                            @endif
+                                        </select>
+                                        <input x-show="mode === 'custom'" x-model="value" name="area" type="text"
+                                               placeholder="{{ __('Type new area…') }}"
+                                               class="flex-1 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition">
+                                        <button type="button" @click="mode = mode === 'select' ? 'custom' : 'select'; value = ''"
+                                                class="px-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-emerald-600 hover:bg-emerald-50 whitespace-nowrap transition">
+                                            <span x-show="mode === 'select'">+</span>
+                                            <span x-show="mode === 'custom'">←</span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label class="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">🏠 {{ __('Address') }}</label>
+                                    <input type="text" name="address" value="{{ old('address') }}" placeholder="{{ __('House / road / landmark…') }}"
+                                           class="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition">
+                                </div>
+                            </div>
+
+                            {{-- Source + ONU Power --}}
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">📞 {{ __('Complaint Source') }}</label>
+                                    <select name="complaint_source"
+                                            class="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition">
+                                        <option value="">— {{ __('Select') }} —</option>
+                                        @foreach(['Phone','Office','Online','WhatsApp','Reseller'] as $src)
+                                            <option value="{{ $src }}" {{ old('complaint_source') === $src ? 'selected' : '' }}>{{ $src }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">📡 {{ __('ONU Power') }}</label>
+                                    <input type="text" name="onu_power" value="{{ old('onu_power') }}" placeholder="-23.56 dBm"
+                                           class="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition">
+                                </div>
                             </div>
                         </div>
-                        {{-- ========== END EXTERNAL SECTION ========== --}}
+                        {{-- ==== END EXTERNAL ==== --}}
 
-                        {{-- Labels (both types) --}}
+                        {{-- Labels --}}
                         @if($labels->count() > 0)
-                        <div class="mb-5">
-                            <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">{{ __('Labels') }}</label>
+                        <div>
+                            <label class="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">🏷️ {{ __('Labels') }}</label>
                             <div class="flex flex-wrap gap-2">
                                 @foreach($labels as $label)
-                                <label class="flex items-center gap-1.5 cursor-pointer">
+                                <label class="flex items-center gap-1.5 cursor-pointer group">
                                     <input type="checkbox" name="labels[]" value="{{ $label->id }}"
                                            {{ in_array($label->id, old('labels', [])) ? 'checked' : '' }}
-                                           class="rounded border-slate-300 dark:border-slate-700 dark:bg-slate-800 text-indigo-600 focus:ring-indigo-500">
-                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium text-white shadow-2xs"
-                                          style="background-color: {{ $label->color }}">
+                                           class="peer sr-only">
+                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium text-white opacity-50 peer-checked:opacity-100 peer-checked:ring-2 peer-checked:ring-offset-2 peer-checked:ring-offset-white dark:peer-checked:ring-offset-slate-900 transition"
+                                          style="background-color: {{ $label->color }}; --tw-ring-color: {{ $label->color }};">
                                         {{ $label->name }}
                                     </span>
                                 </label>
@@ -278,64 +289,85 @@
                         </div>
                         @endif
 
-                        <div class="flex items-center gap-3 pt-4 border-t border-slate-100 dark:border-slate-800 mt-6">
-                            <button type="submit"
-                                    :class="type === 'internal' ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-emerald-600 hover:bg-emerald-700'"
-                                    class="inline-flex items-center gap-2 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors shadow-sm">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                                </svg>
-                                <span x-text="type === 'internal' ? '{{ __('Submit Internal Ticket') }}' : '{{ __('Submit External Ticket') }}'"></span>
-                            </button>
+                        {{-- Actions --}}
+                        <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-5 border-t border-slate-100 dark:border-slate-800">
                             <a href="{{ route('tickets.index') }}"
-                               class="px-5 py-2.5 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                               class="order-2 sm:order-1 text-center px-5 py-2.5 rounded-lg text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
                                 {{ __('Cancel') }}
                             </a>
+                            <button type="submit"
+                                    :class="type === 'internal'
+                                        ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 shadow-indigo-500/30'
+                                        : 'bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 shadow-emerald-500/30'"
+                                    class="order-1 sm:order-2 inline-flex items-center justify-center gap-2 text-white px-6 py-2.5 rounded-lg text-sm font-bold shadow-lg transition">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                                </svg>
+                                <span x-text="type === 'internal' ? '{{ __('Create Internal Ticket') }}' : '{{ __('Create External Ticket') }}'"></span>
+                            </button>
                         </div>
                     </form>
                 </div>
             </div>
         </div>
 
-        {{-- Right: Help Card --}}
+        {{-- ==== SIDEBAR ==== --}}
         <div class="space-y-4">
-            {{-- Type explainer --}}
-            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm p-5">
-                <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-3 flex items-center gap-2">
-                    <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                    {{ __('Which type?') }}
-                </h3>
-                <div class="space-y-3 text-xs text-slate-600 dark:text-slate-400">
-                    <div :class="type === 'internal' ? 'ring-2 ring-indigo-500 bg-indigo-50/60 dark:bg-indigo-950/30' : 'bg-slate-50 dark:bg-slate-800/40'"
-                         class="p-3 rounded-lg border border-slate-200/60 dark:border-slate-800 transition-all cursor-pointer"
-                         @click="type = 'internal'">
-                        <div class="font-semibold text-indigo-600 dark:text-indigo-400 mb-1 flex items-center gap-1.5">
-                            <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
-                            {{ __('Internal Ticket') }}
+            {{-- Compare card --}}
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm p-5">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">{{ __('Ticket Types') }}</h3>
+                <div class="space-y-2.5">
+                    <button type="button" @click="type = 'internal'"
+                            :class="type === 'internal' ? 'ring-2 ring-indigo-500 bg-indigo-50/70 dark:bg-indigo-950/40 border-indigo-200 dark:border-indigo-800' : 'border-slate-200 dark:border-slate-700 hover:border-indigo-200 dark:hover:border-indigo-700 hover:bg-slate-50 dark:hover:bg-slate-800/50'"
+                            class="w-full text-left p-3 rounded-xl border transition-all">
+                        <div class="flex items-start gap-2.5">
+                            <div :class="type === 'internal' ? 'bg-indigo-600 text-white' : 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600'"
+                                 class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="font-semibold text-sm text-slate-800 dark:text-slate-100">{{ __('Internal Ticket') }}</div>
+                                <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">{{ __('Staff tasks, internal notes, team issues. Only 5 fields.') }}</div>
+                            </div>
                         </div>
-                        <p class="text-[11px] leading-relaxed">{{ __('Staff, office, or team-only tasks. Minimal fields. Not synced to Google Sheet.') }}</p>
-                    </div>
-                    <div :class="type === 'external' ? 'ring-2 ring-emerald-500 bg-emerald-50/60 dark:bg-emerald-950/30' : 'bg-slate-50 dark:bg-slate-800/40'"
-                         class="p-3 rounded-lg border border-slate-200/60 dark:border-slate-800 transition-all cursor-pointer"
-                         @click="type = 'external'">
-                        <div class="font-semibold text-emerald-600 dark:text-emerald-400 mb-1 flex items-center gap-1.5">
-                            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                            {{ __('External Ticket') }}
+                    </button>
+
+                    <button type="button" @click="type = 'external'"
+                            :class="type === 'external' ? 'ring-2 ring-emerald-500 bg-emerald-50/70 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800' : 'border-slate-200 dark:border-slate-700 hover:border-emerald-200 dark:hover:border-emerald-700 hover:bg-slate-50 dark:hover:bg-slate-800/50'"
+                            class="w-full text-left p-3 rounded-xl border transition-all">
+                        <div class="flex items-start gap-2.5">
+                            <div :class="type === 'external' ? 'bg-emerald-600 text-white' : 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600'"
+                                 class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="font-semibold text-sm text-slate-800 dark:text-slate-100">{{ __('External Ticket') }}</div>
+                                <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">{{ __('Customer complaints. Full client tracking, auto-sync to Google Sheet.') }}</div>
+                            </div>
                         </div>
-                        <p class="text-[11px] leading-relaxed">{{ __('Customer complaints with full client tracking info. Auto-synced to Google Sheet.') }}</p>
-                    </div>
+                    </button>
                 </div>
             </div>
 
-            <div class="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 rounded-xl p-4">
-                <div class="flex gap-2">
-                    <svg class="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                    </svg>
-                    <div class="text-xs text-amber-700 dark:text-amber-300">
-                        <span class="font-semibold">{{ __('Priority tips:') }}</span> {{ __('Use') }} <strong>{{ __('Critical') }}</strong> {{ __('only for complete outages. For most issues,') }} <strong>{{ __('Medium') }}</strong> {{ __('or') }} <strong>{{ __('High') }}</strong> {{ __('is appropriate.') }}
+            {{-- Priority guide --}}
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm p-5">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">{{ __('Priority Guide') }}</h3>
+                <div class="space-y-2 text-xs">
+                    <div class="flex items-start gap-2">
+                        <span class="mt-0.5">🔴</span>
+                        <div><span class="font-semibold text-slate-700 dark:text-slate-200">Critical</span> <span class="text-slate-500 dark:text-slate-400">— Complete outage, multiple users affected</span></div>
+                    </div>
+                    <div class="flex items-start gap-2">
+                        <span class="mt-0.5">🟠</span>
+                        <div><span class="font-semibold text-slate-700 dark:text-slate-200">High</span> <span class="text-slate-500 dark:text-slate-400">— Single-user outage, urgent complaint</span></div>
+                    </div>
+                    <div class="flex items-start gap-2">
+                        <span class="mt-0.5">🟡</span>
+                        <div><span class="font-semibold text-slate-700 dark:text-slate-200">Medium</span> <span class="text-slate-500 dark:text-slate-400">— Normal complaints (default)</span></div>
+                    </div>
+                    <div class="flex items-start gap-2">
+                        <span class="mt-0.5">🟢</span>
+                        <div><span class="font-semibold text-slate-700 dark:text-slate-200">Low</span> <span class="text-slate-500 dark:text-slate-400">— Enquiries, non-urgent requests</span></div>
                     </div>
                 </div>
             </div>
@@ -344,12 +376,12 @@
 
 <style>
     [x-cloak] { display: none !important; }
-    #desc-editor .ql-toolbar { border:none; border-bottom:1px solid #e2e8f0; background:#f8fafc; padding:6px 10px; border-radius:12px 12px 0 0; }
+    #desc-editor .ql-toolbar { border:none; border-bottom:1px solid #e2e8f0; background:#f8fafc; padding:6px 10px; border-radius:8px 8px 0 0; }
     html.dark #desc-editor .ql-toolbar { border-bottom-color:#334155; background:#0f172a; }
     html.dark #desc-editor .ql-toolbar .ql-stroke { stroke: #cbd5e1; }
     html.dark #desc-editor .ql-toolbar .ql-fill { fill: #cbd5e1; }
     html.dark #desc-editor .ql-toolbar .ql-picker { color: #cbd5e1; }
-    #desc-editor .ql-container { border:none; font-family:inherit; border-radius:0 0 12px 12px; }
+    #desc-editor .ql-container { border:none; font-family:inherit; border-radius:0 0 8px 8px; }
     #desc-editor .ql-editor { font-size:14px; min-height:140px; padding:12px 16px; color:#1e293b; }
     html.dark #desc-editor .ql-editor { color:#f1f5f9; }
     #desc-editor .ql-editor.ql-blank::before { color:#94a3b8; font-style:normal; }

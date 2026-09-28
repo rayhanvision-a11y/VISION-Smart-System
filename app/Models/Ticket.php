@@ -23,6 +23,7 @@ class Ticket extends Model
         'assigned_to',
         'pop_office_id',
         'area',
+        'address',
         'client_id',
         'client_name',
         'complaint_source',

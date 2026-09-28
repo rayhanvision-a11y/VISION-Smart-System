@@ -77,7 +77,7 @@ class GoogleSheetSyncService
                 'complaint_source' => $ticket->complaint_source ?: 'Phone',
                 'client_name'      => $ticket->client_name ?: $ticket->title,
                 'name'             => $ticket->client_name ?: $ticket->title,
-                'address'          => $ticket->area ?: '',
+                'address'          => $ticket->address ?: '',
                 'area'             => $ticket->area ?: '',
                 'contact'          => $ticket->client_id ? 'Client ID: '.$ticket->client_id : '',
                 'phone'            => $ticket->client_id ? 'Client ID: '.$ticket->client_id : '',
@@ -183,10 +183,15 @@ class GoogleSheetSyncService
             'other', 'others' => 'Others',
             'router_issue', 'router issue', 'router' => 'Router re-configure',
             'fiber_cut', 'fiber cut', 'net off' => 'Net Off (ONU Optical Power Los)',
+            'line_fault', 'line fault' => 'Line Fault',
             'speed_slow', 'speed problem' => 'Speed Problem (Internet)',
             'new_connection', 'reconnect' => 'Reconnect',
+            'billing' => 'Billing',
             'iptv' => 'SunPlex Video Loading Problem Via Wifi',
-            default => $category ?: 'Others',
+            // Fallback: convert snake_case to Title Case ("line_fault" → "Line Fault")
+            default => $category
+                ? ucwords(str_replace(['_', '-'], ' ', $raw))
+                : 'Others',
         };
     }
 
