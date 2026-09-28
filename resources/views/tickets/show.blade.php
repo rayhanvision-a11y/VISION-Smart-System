@@ -487,9 +487,12 @@
                                     </div>
                                     @endif
 
-                                    {{-- Save / Cancel --}}
+                                    {{-- Send / Cancel --}}
                                     <div id="editor-actions" class="flex items-center gap-2 mt-3">
-                                        <button type="submit" id="chat-submit" class="inline-flex items-center bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors">{{ __('Save') }}</button>
+                                        <button type="submit" id="chat-submit" class="inline-flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+                                            {{ __('Send') }}
+                                        </button>
                                         <button type="button" id="editor-cancel" class="text-sm text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 px-3 py-2">{{ __('Cancel') }}</button>
                                     </div>
                                 </div>
@@ -1708,7 +1711,7 @@
             .finally(() => {
                 if (btn) {
                     btn.disabled = false;
-                    btn.textContent = editingId ? '{{ __("Update") }}' : '{{ __("Save") }}';
+                    btn.textContent = editingId ? '{{ __("Update") }}' : '{{ __("Send") }}';
                 }
             });
         });
@@ -1818,7 +1821,7 @@
         editPreviewEl.classList.add('hidden');
         editPreviewEl.classList.remove('flex');
         const submitBtn = document.getElementById('chat-submit');
-        if (submitBtn) submitBtn.textContent = '{{ __("Save") }}';
+        if (submitBtn) submitBtn.textContent = '{{ __("Send") }}';
         if (quill) quill.setContents([]);
     }
 
