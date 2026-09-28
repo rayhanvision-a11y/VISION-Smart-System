@@ -77,19 +77,8 @@
                         @csrf
                         <input type="hidden" name="ticket_type" :value="type">
 
-                        {{-- ==== EXTERNAL — Client Details ON TOP ==== --}}
+                        {{-- ==== EXTERNAL — Client fields ON TOP ==== --}}
                         <div x-show="type === 'external'" x-cloak x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" class="space-y-5">
-                            <div class="flex items-center gap-3">
-                                <div class="flex-1 h-px bg-gradient-to-r from-transparent via-emerald-300/50 dark:via-emerald-700/50 to-transparent"></div>
-                                <span class="text-[11px] font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                                    </svg>
-                                    {{ __('Client Details') }}
-                                </span>
-                                <div class="flex-1 h-px bg-gradient-to-r from-transparent via-emerald-300/50 dark:via-emerald-700/50 to-transparent"></div>
-                            </div>
-
                             {{-- Client ID + Client Name --}}
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
@@ -281,13 +270,14 @@
                             </a>
                             <button type="submit"
                                     :class="type === 'internal'
-                                        ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 shadow-indigo-500/30'
-                                        : 'bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 shadow-emerald-500/30'"
-                                    class="order-1 sm:order-2 inline-flex items-center justify-center gap-2 text-white px-6 py-2.5 rounded-lg text-sm font-bold shadow-lg transition">
+                                        ? 'bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-500'
+                                        : 'bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500'"
+                                    class="order-1 sm:order-2 inline-flex items-center justify-center gap-2 text-white px-6 py-3 rounded-lg text-sm font-bold shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 transition">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
                                 </svg>
-                                <span x-text="type === 'internal' ? '{{ __('Create Internal Ticket') }}' : '{{ __('Create External Ticket') }}'"></span>
+                                <span x-show="type === 'internal'">{{ __('Create Internal Ticket') }}</span>
+                                <span x-show="type === 'external'">{{ __('Create External Ticket') }}</span>
                             </button>
                         </div>
                     </form>
