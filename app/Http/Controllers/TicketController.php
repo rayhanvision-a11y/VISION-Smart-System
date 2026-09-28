@@ -91,8 +91,8 @@ class TicketController extends Controller
     {
         $validated = $request->validate([
             'ticket_type' => 'nullable|in:internal,external',
-            'title' => 'required|string|max:255',
-            'description' => 'required|string|max:10000',
+            'title' => 'required_if:ticket_type,internal|nullable|string|max:255',
+            'description' => 'required_if:ticket_type,internal|nullable|string|max:10000',
             'category' => 'required|string|max:255',
             'priority' => 'required|in:low,medium,high,critical',
             'pop_office_id' => 'nullable|exists:pop_offices,id',
@@ -118,11 +118,25 @@ class TicketController extends Controller
         $ticketType = $validated['ticket_type'] ?? 'external';
         $isInternal = $ticketType === 'internal';
 
+        // Title: use provided value; if external and blank, auto-generate from client info
+        $autoTitle = ! empty($validated['title'])
+            ? $validated['title']
+            : ($isInternal
+                ? 'Untitled'
+                : (trim(($validated['client_name'] ?? '') . ' — ' . \App\Services\GoogleSheetSyncService::mapCategoryName($validated['category'] ?? ''), ' —') ?: 'External Ticket'));
+
+        // Description: same rule
+        $autoDescription = ! empty($validated['description'])
+            ? $validated['description']
+            : ($isInternal
+                ? ''
+                : ('Client ID: ' . ($validated['client_id'] ?? 'N/A') . ' · Area: ' . ($validated['area'] ?? 'N/A') . ' · Source: ' . ($validated['complaint_source'] ?? 'Phone')));
+
         $ticket = Ticket::create([
             'ticket_key' => Ticket::generateKey(),
             'ticket_type' => $ticketType,
-            'title' => $validated['title'],
-            'description' => $validated['description'],
+            'title' => $autoTitle,
+            'description' => $autoDescription,
             'category' => $validated['category'],
             'priority' => $validated['priority'],
             'status' => 'in_progress',

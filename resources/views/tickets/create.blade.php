@@ -79,8 +79,8 @@
 
                         {{-- SECTION 1: Core fields --}}
                         <div class="space-y-5">
-                            {{-- Title --}}
-                            <div>
+                            {{-- Title (Internal only) --}}
+                            <div x-show="type === 'internal'" x-cloak>
                                 <label class="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">
                                     {{ __('Title') }}
                                     <span class="text-red-500">*</span>
@@ -91,8 +91,8 @@
                                 @error('title')<p class="text-red-500 text-xs mt-1.5 flex items-center gap-1">⚠ {{ $message }}</p>@enderror
                             </div>
 
-                            {{-- Description --}}
-                            <div>
+                            {{-- Description (Internal only) --}}
+                            <div x-show="type === 'internal'" x-cloak>
                                 <label class="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">
                                     {{ __('Description') }}
                                     <span class="text-red-500">*</span>
