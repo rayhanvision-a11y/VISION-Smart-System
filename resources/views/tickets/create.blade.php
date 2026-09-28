@@ -77,7 +77,95 @@
                         @csrf
                         <input type="hidden" name="ticket_type" :value="type">
 
-                        {{-- SECTION 1: Core fields --}}
+                        {{-- ==== EXTERNAL — Client Details ON TOP ==== --}}
+                        <div x-show="type === 'external'" x-cloak x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" class="space-y-5">
+                            <div class="flex items-center gap-3">
+                                <div class="flex-1 h-px bg-gradient-to-r from-transparent via-emerald-300/50 dark:via-emerald-700/50 to-transparent"></div>
+                                <span class="text-[11px] font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                                    </svg>
+                                    {{ __('Client Details') }}
+                                </span>
+                                <div class="flex-1 h-px bg-gradient-to-r from-transparent via-emerald-300/50 dark:via-emerald-700/50 to-transparent"></div>
+                            </div>
+
+                            {{-- Client ID + Client Name --}}
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">{{ __('Client ID') }}</label>
+                                    <input type="text" name="client_id" value="{{ old('client_id') }}" placeholder="e.g. 15642"
+                                           class="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition">
+                                </div>
+                                <div>
+                                    <label class="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">{{ __('Client Name') }}</label>
+                                    <input type="text" name="client_name" value="{{ old('client_name') }}" placeholder="e.g. Md. Mikdad Hossain"
+                                           class="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition">
+                                </div>
+                            </div>
+
+                            {{-- Area + Address --}}
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div x-data="{ mode: '{{ $isCustomArea ? 'custom' : 'select' }}', value: @js($oldArea) }">
+                                    <label class="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">📍 {{ __('Area') }}</label>
+                                    <div class="flex gap-2">
+                                        <select x-show="mode === 'select'" x-model="value" name="area"
+                                                class="flex-1 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition">
+                                            <option value="">— {{ __('Select area') }} —</option>
+                                            @if(!empty($areaMasterList))
+                                            <optgroup label="{{ __('Managed Areas') }}">
+                                                @foreach($areaMasterList as $areaOption)
+                                                    <option value="{{ $areaOption }}" {{ $oldArea === $areaOption ? 'selected' : '' }}>{{ $areaOption }}</option>
+                                                @endforeach
+                                            </optgroup>
+                                            @endif
+                                            @if(!empty($areaLegacyList))
+                                            <optgroup label="{{ __('Legacy Areas') }}">
+                                                @foreach($areaLegacyList as $legacyArea)
+                                                    <option value="{{ $legacyArea }}" {{ $oldArea === $legacyArea ? 'selected' : '' }}>{{ $legacyArea }}</option>
+                                                @endforeach
+                                            </optgroup>
+                                            @endif
+                                        </select>
+                                        <input x-show="mode === 'custom'" x-model="value" name="area" type="text"
+                                               placeholder="{{ __('Type new area…') }}"
+                                               class="flex-1 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition">
+                                        <button type="button" @click="mode = mode === 'select' ? 'custom' : 'select'; value = ''"
+                                                class="px-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-emerald-600 hover:bg-emerald-50 whitespace-nowrap transition">
+                                            <span x-show="mode === 'select'">+</span>
+                                            <span x-show="mode === 'custom'">←</span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label class="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">🏠 {{ __('Address') }}</label>
+                                    <input type="text" name="address" value="{{ old('address') }}" placeholder="{{ __('House / road / landmark…') }}"
+                                           class="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition">
+                                </div>
+                            </div>
+
+                            {{-- Source + ONU Power --}}
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">📞 {{ __('Complaint Source') }}</label>
+                                    <select name="complaint_source"
+                                            class="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition">
+                                        <option value="">— {{ __('Select') }} —</option>
+                                        @foreach(['Phone','Office','Online','WhatsApp','Reseller'] as $src)
+                                            <option value="{{ $src }}" {{ old('complaint_source') === $src ? 'selected' : '' }}>{{ $src }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">📡 {{ __('ONU Power') }}</label>
+                                    <input type="text" name="onu_power" value="{{ old('onu_power') }}" placeholder="-23.56 dBm"
+                                           class="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition">
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- SECTION: Core fields (title/desc for internal, then category/priority/assign for both) --}}
                         <div class="space-y-5">
                             {{-- Title (Internal only) --}}
                             <div x-show="type === 'internal'" x-cloak>
@@ -164,110 +252,6 @@
                             </div>
                             @endif
                         </div>
-
-                        {{-- ==== EXTERNAL-ONLY SECTION ==== --}}
-                        <div x-show="type === 'external'" x-cloak x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" class="space-y-5">
-
-                            {{-- Divider --}}
-                            <div class="flex items-center gap-3 pt-2">
-                                <div class="flex-1 h-px bg-gradient-to-r from-transparent via-emerald-300/50 dark:via-emerald-700/50 to-transparent"></div>
-                                <span class="text-[11px] font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                                    </svg>
-                                    {{ __('Client Details') }}
-                                </span>
-                                <div class="flex-1 h-px bg-gradient-to-r from-transparent via-emerald-300/50 dark:via-emerald-700/50 to-transparent"></div>
-                            </div>
-
-                            {{-- Sync toggle --}}
-                            <label class="flex items-center justify-between gap-3 p-3 rounded-xl bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/50 cursor-pointer hover:bg-emerald-50 transition">
-                                <div class="flex items-center gap-2.5">
-                                    <span class="text-lg">📊</span>
-                                    <div>
-                                        <div class="text-sm font-semibold text-emerald-800 dark:text-emerald-200">{{ __('Sync to Google Sheet') }}</div>
-                                        <div class="text-[11px] text-emerald-700/80 dark:text-emerald-400/80">{{ __('Ticket will appear in the master tracking sheet') }}</div>
-                                    </div>
-                                </div>
-                                <input type="checkbox" name="sync_to_google_sheet" value="1" {{ old('sync_to_google_sheet', '1') == '1' ? 'checked' : '' }}
-                                       class="w-5 h-5 rounded text-emerald-600 focus:ring-emerald-500 border-emerald-300">
-                            </label>
-
-                            {{-- Client ID + Client Name --}}
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div>
-                                    <label class="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">{{ __('Client ID') }}</label>
-                                    <input type="text" name="client_id" value="{{ old('client_id') }}" placeholder="e.g. 15642"
-                                           class="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition">
-                                </div>
-                                <div>
-                                    <label class="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">{{ __('Client Name') }}</label>
-                                    <input type="text" name="client_name" value="{{ old('client_name') }}" placeholder="e.g. Md. Mikdad Hossain"
-                                           class="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition">
-                                </div>
-                            </div>
-
-                            {{-- Area (with add-new toggle) + Address --}}
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div x-data="{ mode: '{{ $isCustomArea ? 'custom' : 'select' }}', value: @js($oldArea) }">
-                                    <label class="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">📍 {{ __('Area') }}</label>
-                                    <div class="flex gap-2">
-                                        <select x-show="mode === 'select'" x-model="value" name="area"
-                                                class="flex-1 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition">
-                                            <option value="">— {{ __('Select area') }} —</option>
-                                            @if(!empty($areaMasterList))
-                                            <optgroup label="{{ __('Managed Areas') }}">
-                                                @foreach($areaMasterList as $areaOption)
-                                                    <option value="{{ $areaOption }}" {{ $oldArea === $areaOption ? 'selected' : '' }}>{{ $areaOption }}</option>
-                                                @endforeach
-                                            </optgroup>
-                                            @endif
-                                            @if(!empty($areaLegacyList))
-                                            <optgroup label="{{ __('Legacy Areas') }}">
-                                                @foreach($areaLegacyList as $legacyArea)
-                                                    <option value="{{ $legacyArea }}" {{ $oldArea === $legacyArea ? 'selected' : '' }}>{{ $legacyArea }}</option>
-                                                @endforeach
-                                            </optgroup>
-                                            @endif
-                                        </select>
-                                        <input x-show="mode === 'custom'" x-model="value" name="area" type="text"
-                                               placeholder="{{ __('Type new area…') }}"
-                                               class="flex-1 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition">
-                                        <button type="button" @click="mode = mode === 'select' ? 'custom' : 'select'; value = ''"
-                                                class="px-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-emerald-600 hover:bg-emerald-50 whitespace-nowrap transition">
-                                            <span x-show="mode === 'select'">+</span>
-                                            <span x-show="mode === 'custom'">←</span>
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label class="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">🏠 {{ __('Address') }}</label>
-                                    <input type="text" name="address" value="{{ old('address') }}" placeholder="{{ __('House / road / landmark…') }}"
-                                           class="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition">
-                                </div>
-                            </div>
-
-                            {{-- Source + ONU Power --}}
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div>
-                                    <label class="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">📞 {{ __('Complaint Source') }}</label>
-                                    <select name="complaint_source"
-                                            class="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition">
-                                        <option value="">— {{ __('Select') }} —</option>
-                                        @foreach(['Phone','Office','Online','WhatsApp','Reseller'] as $src)
-                                            <option value="{{ $src }}" {{ old('complaint_source') === $src ? 'selected' : '' }}>{{ $src }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">📡 {{ __('ONU Power') }}</label>
-                                    <input type="text" name="onu_power" value="{{ old('onu_power') }}" placeholder="-23.56 dBm"
-                                           class="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition">
-                                </div>
-                            </div>
-                        </div>
-                        {{-- ==== END EXTERNAL ==== --}}
 
                         {{-- Labels --}}
                         @if($labels->count() > 0)

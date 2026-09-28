@@ -173,8 +173,8 @@ class TicketController extends Controller
             'changed_by' => auth()->id(),
         ]);
 
-        // Sync to Google Sheet only for external tickets (and if user kept the option checked)
-        if (! $isInternal && $request->boolean('sync_to_google_sheet', true)) {
+        // External tickets always sync to Google Sheet (no toggle)
+        if (! $isInternal) {
             SyncTicketToGoogleSheet::dispatch($ticket->id, 'create');
         }
 
