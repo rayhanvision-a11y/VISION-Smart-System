@@ -125,12 +125,8 @@ class TicketController extends Controller
                 ? 'Untitled'
                 : (trim(($validated['client_name'] ?? '') . ' — ' . \App\Services\GoogleSheetSyncService::mapCategoryName($validated['category'] ?? ''), ' —') ?: 'External Ticket'));
 
-        // Description: same rule
-        $autoDescription = ! empty($validated['description'])
-            ? $validated['description']
-            : ($isInternal
-                ? ''
-                : ('Client ID: ' . ($validated['client_id'] ?? 'N/A') . ' · Area: ' . ($validated['area'] ?? 'N/A') . ' · Source: ' . ($validated['complaint_source'] ?? 'Phone')));
+        // Description: keep whatever was submitted; external tickets leave it blank if user did not enter
+        $autoDescription = $validated['description'] ?? '';
 
         $ticket = Ticket::create([
             'ticket_key' => Ticket::generateKey(),
