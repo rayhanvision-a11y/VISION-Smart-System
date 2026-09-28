@@ -4,6 +4,7 @@ import '../models/user.dart';
 import '../services/api_service.dart';
 import '../services/storage_service.dart';
 import '../services/app_state.dart';
+import '../services/background_service.dart';
 import '../services/location_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common/primary_button.dart';
@@ -172,6 +173,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
     );
     if (confirmed == true) {
+      try { await BgService.stop(); } catch (_) {}
       await ApiService.logout();
       if (mounted) {
         Navigator.pushAndRemoveUntil(

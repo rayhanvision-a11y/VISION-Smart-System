@@ -3,6 +3,7 @@ import '../config/app_config.dart';
 import '../services/api_service.dart';
 import '../services/storage_service.dart';
 import '../services/app_state.dart';
+import '../services/background_service.dart';
 import '../services/biometric_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common/primary_button.dart';
@@ -74,6 +75,7 @@ class _LoginScreenState extends State<LoginScreen> {
         _passwordController.text,
         _rememberMe,
       );
+      try { await BgService.start(); } catch (_) {}
       if (!mounted) return;
       Navigator.pushReplacement(
         context,

@@ -6,7 +6,9 @@ import 'config/app_config.dart';
 import 'theme/app_theme.dart';
 import 'screens/splash_screen.dart';
 import 'services/app_state.dart';
+import 'services/background_service.dart';
 import 'services/push_service.dart';
+import 'services/storage_service.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -38,6 +40,18 @@ void main() async {
     }
   } catch (e) {
     debugPrint('Firebase safe fallback note: $e');
+  }
+
+  // Register background service (foreground service on Android). Only start
+  // it if user is already logged in — otherwise wait until login completes.
+  try {
+    await BgService.init();
+    final token = await StorageService.getToken();
+    if (token != null && token.isNotEmpty) {
+      await BgService.start();
+    }
+  } catch (e) {
+    debugPrint('BgService init note: $e');
   }
 
   runApp(const VisionSmartApp());
