@@ -18,6 +18,7 @@ class Ticket extends Model
         'category',
         'priority',
         'status',
+        'ticket_type',
         'created_by',
         'assigned_to',
         'pop_office_id',

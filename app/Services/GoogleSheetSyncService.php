@@ -35,6 +35,11 @@ class GoogleSheetSyncService
             return;
         }
 
+        // Internal tickets never go to Google Sheet
+        if (($ticket->ticket_type ?? 'external') === 'internal') {
+            return;
+        }
+
         // Prevent duplicate creation sync in the same lifecycle
         if (isset(static::$syncedCreatedTickets[$ticket->id])) {
             return;
@@ -111,6 +116,11 @@ class GoogleSheetSyncService
     public static function syncTicketUpdated(Ticket $ticket, ?string $remarks = null): void
     {
         if (! static::isEnabled()) {
+            return;
+        }
+
+        // Internal tickets never go to Google Sheet
+        if (($ticket->ticket_type ?? 'external') === 'internal') {
             return;
         }
 

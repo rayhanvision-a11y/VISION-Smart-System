@@ -9,7 +9,7 @@ use App\Models\TicketCategory;
 use App\Models\TicketMessage;
 use App\Models\TicketAttachment;
 use App\Models\User;
-use App\Services\GoogleSheetSyncService;
+use App\Jobs\SyncTicketToGoogleSheet;
 use App\Services\NotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -176,7 +176,7 @@ class ApiTicketController extends Controller
             );
         }
 
-        GoogleSheetSyncService::syncTicketCreated($ticket);
+        SyncTicketToGoogleSheet::dispatch($ticket->id, 'create');
 
         return response()->json([
             'message' => 'Ticket created successfully',
@@ -202,7 +202,7 @@ class ApiTicketController extends Controller
             'resolved_at' => $validated['status'] === 'resolved' ? now() : $ticket->resolved_at,
         ]);
 
-        GoogleSheetSyncService::syncTicketUpdated($ticket);
+        SyncTicketToGoogleSheet::dispatch($ticket->id, 'update');
 
         $statusName = strtoupper(str_replace('_', ' ', $validated['status']));
         $notifMsg = "🔄 Ticket #{$ticket->ticket_key} status updated to {$statusName} by {$user->name}";

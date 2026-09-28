@@ -14,7 +14,7 @@ use App\Models\TicketHistory;
 use App\Models\TicketLink;
 use App\Models\TicketNote;
 use App\Models\User;
-use App\Services\GoogleSheetSyncService;
+use App\Jobs\SyncTicketToGoogleSheet;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -90,6 +90,7 @@ class TicketController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
+            'ticket_type' => 'nullable|in:internal,external',
             'title' => 'required|string|max:255',
             'description' => 'required|string|max:10000',
             'category' => 'required|string|max:255',
@@ -113,8 +114,12 @@ class TicketController extends Controller
             'forwarded_to' => 'nullable|string|max:100',
         ]);
 
+        $ticketType = $validated['ticket_type'] ?? 'external';
+        $isInternal = $ticketType === 'internal';
+
         $ticket = Ticket::create([
             'ticket_key' => Ticket::generateKey(),
+            'ticket_type' => $ticketType,
             'title' => $validated['title'],
             'description' => $validated['description'],
             'category' => $validated['category'],
@@ -123,12 +128,12 @@ class TicketController extends Controller
             'created_by' => auth()->id(),
             'assigned_to' => auth()->user()->isReseller() ? null : ($validated['assigned_to'] ?? null),
             'pop_office_id' => auth()->user()->isReseller() ? null : ($validated['pop_office_id'] ?? null),
-            'area' => isset($validated['area']) ? trim($validated['area']) : null,
-            'client_id' => $validated['client_id'] ?? null,
-            'client_name' => $validated['client_name'] ?? null,
-            'complaint_source' => $validated['complaint_source'] ?? null,
-            'onu_power' => $validated['onu_power'] ?? null,
-            'forwarded_to' => $validated['forwarded_to'] ?? null,
+            'area' => $isInternal ? null : (isset($validated['area']) ? trim($validated['area']) : null),
+            'client_id' => $isInternal ? null : ($validated['client_id'] ?? null),
+            'client_name' => $isInternal ? null : ($validated['client_name'] ?? null),
+            'complaint_source' => $isInternal ? null : ($validated['complaint_source'] ?? null),
+            'onu_power' => $isInternal ? null : ($validated['onu_power'] ?? null),
+            'forwarded_to' => $isInternal ? null : ($validated['forwarded_to'] ?? null),
         ]);
 
         $slaPolicy = SlaPolicy::forPriority($validated['priority']);
@@ -152,9 +157,9 @@ class TicketController extends Controller
             'changed_by' => auth()->id(),
         ]);
 
-        // Sync to Google Sheet (if checked by user)
-        if ($request->boolean('sync_to_google_sheet', true)) {
-            GoogleSheetSyncService::syncTicketCreated($ticket);
+        // Sync to Google Sheet only for external tickets (and if user kept the option checked)
+        if (! $isInternal && $request->boolean('sync_to_google_sheet', true)) {
+            SyncTicketToGoogleSheet::dispatch($ticket->id, 'create');
         }
 
         // Notify team members who have permission to view this ticket
@@ -292,7 +297,7 @@ class TicketController extends Controller
         }
 
         $ticket->update($data);
-        GoogleSheetSyncService::syncTicketUpdated($ticket);
+        SyncTicketToGoogleSheet::dispatch($ticket->id, 'update');
 
         $label = ucfirst(str_replace('_', ' ', $newStatus));
 
@@ -319,7 +324,7 @@ class TicketController extends Controller
         ]);
 
         $ticket->update(['status' => 'resolved', 'resolved_at' => now()]);
-        GoogleSheetSyncService::syncTicketUpdated($ticket, $validated['resolution_note'] ?? null);
+        SyncTicketToGoogleSheet::dispatch($ticket->id, 'update', $validated['resolution_note'] ?? null);
 
         TicketNote::create([
             'ticket_id' => $ticket->id,
@@ -375,7 +380,7 @@ class TicketController extends Controller
         ]);
 
         $ticket->update(['status' => 'in_progress', 'resolved_at' => null, 'sla_notified_at' => null]);
-        GoogleSheetSyncService::syncTicketUpdated($ticket, $validated['reopen_reason'] ?? 'Reopened');
+        SyncTicketToGoogleSheet::dispatch($ticket->id, 'update', $validated['reopen_reason'] ?? 'Reopened');
 
         TicketNote::create([
             'ticket_id' => $ticket->id,
@@ -429,7 +434,7 @@ class TicketController extends Controller
         }
 
         $ticket->update(['status' => 'resolved', 'resolved_at' => $ticket->resolved_at ?? now()]);
-        GoogleSheetSyncService::syncTicketUpdated($ticket, 'Closed');
+        SyncTicketToGoogleSheet::dispatch($ticket->id, 'update', 'Closed');
 
         TicketHistory::create([
             'ticket_id' => $ticket->id,
@@ -538,7 +543,7 @@ class TicketController extends Controller
             }
         }
 
-        GoogleSheetSyncService::syncTicketUpdated($ticket);
+        SyncTicketToGoogleSheet::dispatch($ticket->id, 'update');
 
         return redirect()->route('tickets.show', $ticket)->with('success', 'Ticket updated successfully.');
     }
@@ -563,7 +568,7 @@ class TicketController extends Controller
 
         $oldAssignee = $ticket->assigned_to;
         $ticket->update(['assigned_to' => $validated['assigned_to']]);
-        GoogleSheetSyncService::syncTicketUpdated($ticket);
+        SyncTicketToGoogleSheet::dispatch($ticket->id, 'update');
 
         TicketHistory::create([
             'ticket_id' => $ticket->id,

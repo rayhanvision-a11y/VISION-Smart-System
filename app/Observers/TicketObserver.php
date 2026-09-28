@@ -2,10 +2,10 @@
 
 namespace App\Observers;
 
+use App\Jobs\SyncTicketToGoogleSheet;
 use App\Models\ActivityLog;
 use App\Models\Ticket;
 use App\Services\FirebaseService;
-use App\Services\GoogleSheetSyncService;
 
 class TicketObserver
 {
@@ -21,7 +21,7 @@ class TicketObserver
         $firebase->syncTicket($ticket);
 
         if (! app()->runningUnitTests()) {
-            GoogleSheetSyncService::syncTicketCreated($ticket);
+            SyncTicketToGoogleSheet::dispatch($ticket->id, 'create');
         }
 
         if ($ticket->assignedTo) {
@@ -48,7 +48,7 @@ class TicketObserver
         }
 
         if (! app()->runningUnitTests() && (isset($tracked['status']) || isset($tracked['assigned_to']))) {
-            GoogleSheetSyncService::syncTicketUpdated($ticket);
+            SyncTicketToGoogleSheet::dispatch($ticket->id, 'update');
         }
 
         $parts = [];
