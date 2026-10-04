@@ -24,10 +24,24 @@ class ReportController extends Controller
         [$from, $to] = $this->periodDates($request);
 
         $tab = $request->get('tab', 'team');
+        $selectedTeam = $request->get('team_name');
         $personId = $request->get('person_id');
 
-        // --- Team members (super_admin, admin, noc, call_center) ---
-        $teamUsers = User::whereIn('role', ['super_admin', 'admin', 'noc', 'call_center'])->orderBy('name')->get();
+        // --- Dynamic Teams list (from teams table + distinct user teams) ---
+        $allTeams = \Schema::hasTable('teams')
+            ? \App\Models\Team::where('is_active', true)->orderBy('name')->pluck('name')->toArray()
+            : array_values(\App\Models\User::TEAMS);
+
+        $userTeams = User::whereNotNull('team')->where('team', '!=', '')->distinct()->pluck('team')->toArray();
+        $teamsList = array_values(array_unique(array_filter(array_merge($allTeams, $userTeams))));
+        sort($teamsList);
+
+        // --- Team members query ---
+        $teamUsersQuery = User::where('role', '!=', 'reseller');
+        if ($selectedTeam) {
+            $teamUsersQuery->where('team', $selectedTeam);
+        }
+        $teamUsers = $teamUsersQuery->orderBy('name')->get();
         $teamMembers = $this->bulkMemberStats($teamUsers, $from, $to);
 
         // --- Resellers ---
@@ -47,7 +61,12 @@ class ReportController extends Controller
                 $selectedPerson = array_merge($personStatsArr, [
                     'email' => $person->email,
                     'phone' => $person->phone ?? null,
+                    'team' => $person->team ?? null,
                 ]);
+
+                if (!$selectedTeam && !empty($person->team)) {
+                    $selectedTeam = $person->team;
+                }
 
                 // Base closure for reuse
                 $baseQuery = fn () => $tab === 'reseller'
@@ -92,10 +111,102 @@ class ReportController extends Controller
             }
         }
 
-        // --- Overall trend chart ---
-        [$chartDays, $chartCounts] = $this->buildTrendChart($from, $to);
+        // --- Team Performance stats if a specific team is selected ---
+        $selectedTeamStats = null;
+        if ($selectedTeam) {
+            $teamUserIds = $teamUsers->pluck('id')->toArray();
+            if (!empty($teamUserIds)) {
+                $teamAgg = Ticket::whereIn('assigned_to', $teamUserIds)
+                    ->whereBetween('created_at', [$from, $to])
+                    ->selectRaw("
+                        COUNT(*) as total,
+                        SUM(CASE WHEN status = 'in_progress' THEN 1 ELSE 0 END) as in_progress,
+                        SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending,
+                        SUM(CASE WHEN status = 'waiting_for_customer_feedback' THEN 1 ELSE 0 END) as waiting_for_customer_feedback,
+                        SUM(CASE WHEN status = 'resolved' THEN 1 ELSE 0 END) as resolved_all_time,
+                        SUM(CASE WHEN status = 'resolved' AND resolved_at BETWEEN ? AND ? THEN 1 ELSE 0 END) as resolved_period,
+                        AVG(CASE WHEN resolved_at IS NOT NULL THEN TIMESTAMPDIFF(MINUTE, created_at, resolved_at) END) as avg_res
+                    ", [$from, $to])->first();
 
-        // --- Period summary stats ---
+                $tot = (int) ($teamAgg->total ?? 0);
+                $res = (int) ($teamAgg->resolved_period ?? 0);
+                $selectedTeamStats = [
+                    'name' => $selectedTeam,
+                    'members_count' => $teamUsers->count(),
+                    'total' => $tot,
+                    'in_progress' => (int) ($teamAgg->in_progress ?? 0),
+                    'pending' => (int) ($teamAgg->pending ?? 0),
+                    'waiting_for_customer_feedback' => (int) ($teamAgg->waiting_for_customer_feedback ?? 0),
+                    'resolved' => $res,
+                    'resolved_all_time' => (int) ($teamAgg->resolved_all_time ?? 0),
+                    'rate' => $tot > 0 ? round(($res / $tot) * 100) : 0,
+                    'resolution_rate' => $tot > 0 ? round(($res / $tot) * 100) : 0,
+                    'avg_resolution_time' => $this->formatDuration($teamAgg->avg_res),
+                    'avg_time' => $this->formatDuration($teamAgg->avg_res),
+                ];
+            } else {
+                $selectedTeamStats = [
+                    'name' => $selectedTeam,
+                    'members_count' => 0,
+                    'total' => 0,
+                    'in_progress' => 0,
+                    'pending' => 0,
+                    'waiting_for_customer_feedback' => 0,
+                    'resolved' => 0,
+                    'resolved_all_time' => 0,
+                    'rate' => 0,
+                    'resolution_rate' => 0,
+                    'avg_resolution_time' => 'N/A',
+                    'avg_time' => 'N/A',
+                ];
+            }
+            [$chartDays, $chartCounts] = $this->buildTrendChart($from, $to, $teamUserIds);
+        } else {
+            [$chartDays, $chartCounts] = $this->buildTrendChart($from, $to);
+        }
+
+        // --- All Teams Performance Overview (for leaderboard / comparison cards) ---
+        $teamsPerformance = collect($teamsList)->map(function ($tName) use ($from, $to) {
+            $members = User::where('team', $tName)->where('role', '!=', 'reseller')->get();
+            $memberIds = $members->pluck('id')->toArray();
+
+            $tot = 0;
+            $res = 0;
+            $inProg = 0;
+            $avgTime = 'N/A';
+
+            if (!empty($memberIds)) {
+                $agg = Ticket::whereIn('assigned_to', $memberIds)
+                    ->whereBetween('created_at', [$from, $to])
+                    ->selectRaw("
+                        COUNT(*) as total,
+                        SUM(CASE WHEN status = 'resolved' THEN 1 ELSE 0 END) as resolved,
+                        SUM(CASE WHEN status = 'in_progress' THEN 1 ELSE 0 END) as in_progress,
+                        AVG(CASE WHEN resolved_at IS NOT NULL THEN TIMESTAMPDIFF(MINUTE, created_at, resolved_at) END) as avg_res
+                    ")->first();
+
+                $tot = (int) ($agg->total ?? 0);
+                $res = (int) ($agg->resolved ?? 0);
+                $inProg = (int) ($agg->in_progress ?? 0);
+                $avgTime = $this->formatDuration($agg->avg_res);
+            }
+
+            $rate = $tot > 0 ? round(($res / $tot) * 100) : 0;
+
+            return [
+                'name' => $tName,
+                'members_count' => $members->count(),
+                'total' => $tot,
+                'resolved' => $res,
+                'in_progress' => $inProg,
+                'rate' => $rate,
+                'resolution_rate' => $rate,
+                'avg_resolution_time' => $avgTime,
+                'avg_time' => $avgTime,
+            ];
+        });
+
+        // --- Period summary stats (Global or Team) ---
         $periodAgg = Ticket::selectRaw("
             COUNT(*) as total,
             SUM(CASE WHEN status = 'in_progress' THEN 1 ELSE 0 END) as in_progress,
@@ -116,10 +227,7 @@ class ReportController extends Controller
             'avg_resolution_time' => $this->formatDuration($periodAgg->avg_res),
         ];
 
-        // --- Previous period, same length, for trend comparison ---
-        // "total" trend compares NEW tickets created this period vs the prior one (a volume
-        // signal) since the KPI value itself is now a static grand total. "resolved" trend
-        // compares resolutions (via resolved_at) in both windows, matching the KPI above.
+        // --- Trend calculation ---
         $periodLengthDays = $from->diffInDays($to) ?: 1;
         $prevTo = $from->copy()->subSecond();
         $prevFrom = $prevTo->copy()->subDays($periodLengthDays)->startOfDay();
@@ -139,6 +247,7 @@ class ReportController extends Controller
 
         return view('reports.index', compact(
             'tab', 'period', 'dateFrom', 'dateTo',
+            'teamsList', 'selectedTeam', 'selectedTeamStats', 'teamsPerformance',
             'teamMembers', 'resellers',
             'periodStats', 'chartDays', 'chartCounts', 'trend',
             'selectedPerson', 'personTickets',
@@ -155,6 +264,7 @@ class ReportController extends Controller
 
         $personId = $request->get('person_id');
         $person = $personId ? User::find($personId) : null;
+        $teamName = $request->get('team_name');
 
         if ($person) {
             $personStats = $this->bulkMemberStats(collect([$person]), $from, $to)->first();
@@ -164,11 +274,39 @@ class ReportController extends Controller
                 ->latest()
                 ->get();
 
-            $filters = "Person: {$person->name} ({$person->role}) | Period: {$from->format('d M Y')} — {$to->format('d M Y')}";
+            $teamStr = !empty($person->team) ? " | Team: {$person->team}" : "";
+            $filters = "Person: {$person->name} ({$person->role}){$teamStr} | Period: {$from->format('d M Y')} — {$to->format('d M Y')}";
             $pdf = Pdf::loadView('reports.pdf', compact('tickets', 'filters', 'person', 'personStats'))->setPaper('a4', 'landscape');
             $safeName = Str::slug($person->name);
 
             return $pdf->download("report-{$safeName}-".now()->format('Y-m-d').'.pdf');
+        }
+
+        if ($teamName) {
+            $teamUsers = User::where('team', $teamName)->where('role', '!=', 'reseller')->orderBy('name')->get();
+            $teamMembers = $this->bulkMemberStats($teamUsers, $from, $to);
+            $teamUserIds = $teamUsers->pluck('id')->toArray();
+            $tickets = Ticket::whereIn('assigned_to', $teamUserIds)
+                ->with(['creator', 'assignee'])
+                ->whereBetween('created_at', [$from, $to])
+                ->latest()
+                ->get();
+
+            $teamStats = [
+                'total' => $tickets->count(),
+                'in_progress' => $tickets->where('status', 'in_progress')->count(),
+                'resolved' => $tickets->where('status', 'resolved')->count(),
+                'closed' => $tickets->where('status', 'closed')->count(),
+                'pending' => $tickets->where('status', 'pending')->count(),
+                'members_count' => $teamUsers->count(),
+                'rate' => $tickets->count() > 0 ? round(($tickets->where('status', 'resolved')->count() / $tickets->count()) * 100) : 0,
+            ];
+
+            $filters = "Team: {$teamName} ({$teamUsers->count()} members) | Period: {$from->format('d M Y')} — {$to->format('d M Y')}";
+            $pdf = Pdf::loadView('reports.pdf', compact('tickets', 'filters', 'teamName', 'teamStats', 'teamMembers'))->setPaper('a4', 'landscape');
+            $safeName = Str::slug($teamName);
+
+            return $pdf->download("team-report-{$safeName}-".now()->format('Y-m-d').'.pdf');
         }
 
         $tickets = Ticket::with(['creator', 'assignee'])->whereBetween('created_at', [$from, $to])->latest()->get();
@@ -194,6 +332,7 @@ class ReportController extends Controller
 
         $personId = $request->get('person_id');
         $person = $personId ? User::find($personId) : null;
+        $teamName = $request->get('team_name');
 
         $csvEscape = function ($value): string {
             $value = (string) $value;
@@ -220,6 +359,9 @@ class ReportController extends Controller
                 fputcsv($h, ['SINGLE PERSON PERFORMANCE REPORT']);
                 fputcsv($h, ['Name', $person->name]);
                 fputcsv($h, ['Role', strtoupper(str_replace('_', ' ', $person->role))]);
+                if (!empty($person->team)) {
+                    fputcsv($h, ['Team', $person->team]);
+                }
                 fputcsv($h, ['Email', $person->email]);
                 fputcsv($h, ['Period', $from->format('Y-m-d').' to '.$to->format('Y-m-d')]);
                 fputcsv($h, []);
@@ -234,6 +376,65 @@ class ReportController extends Controller
                 fputcsv($h, ['Pending', $personStats['pending'] ?? 0]);
                 fputcsv($h, ['Resolution Rate', ($personStats['rate'] ?? 0).'%']);
                 fputcsv($h, ['Avg Resolution Time', $personStats['avg_resolution_time'] ?? 'N/A']);
+                fputcsv($h, []);
+                fputcsv($h, ['TICKETS DETAIL']);
+                fputcsv($h, ['ID', 'Title', 'Category', 'Priority', 'Status', 'Created By', 'Assigned To', 'Created At', 'Resolved At']);
+                foreach ($tickets as $t) {
+                    fputcsv($h, [
+                        '#'.$t->id,
+                        $csvEscape($t->title),
+                        $csvEscape(ucfirst(str_replace('_', ' ', $t->category))),
+                        $csvEscape(ucfirst($t->priority)),
+                        $csvEscape(ucfirst(str_replace('_', ' ', $t->status))),
+                        $csvEscape($t->creator->name ?? 'N/A'),
+                        $csvEscape($t->assignee->name ?? 'Unassigned'),
+                        $t->created_at->format('Y-m-d H:i'),
+                        $t->resolved_at ? $t->resolved_at->format('Y-m-d H:i') : '',
+                    ]);
+                }
+                fclose($h);
+            };
+
+            return response()->stream($callback, 200, [
+                'Content-Type' => 'text/csv',
+                'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+            ]);
+        }
+
+        if ($teamName) {
+            $teamUsers = User::where('team', $teamName)->where('role', '!=', 'reseller')->orderBy('name')->get();
+            $teamMembers = $this->bulkMemberStats($teamUsers, $from, $to);
+            $teamUserIds = $teamUsers->pluck('id')->toArray();
+            $tickets = Ticket::whereIn('assigned_to', $teamUserIds)
+                ->with(['creator', 'assignee', 'popOffice'])
+                ->whereBetween('created_at', [$from, $to])
+                ->latest()
+                ->get();
+
+            $safeName = Str::slug($teamName);
+            $filename = "team-report-{$safeName}-".now()->format('Y-m-d').'.csv';
+
+            $callback = function () use ($tickets, $teamName, $teamUsers, $teamMembers, $csvEscape, $from, $to) {
+                $h = fopen('php://output', 'w');
+                fputcsv($h, ['TEAM PERFORMANCE REPORT']);
+                fputcsv($h, ['Team Name', $teamName]);
+                fputcsv($h, ['Total Members', $teamUsers->count()]);
+                fputcsv($h, ['Total Tickets', $tickets->count()]);
+                fputcsv($h, ['Resolved Tickets', $tickets->where('status', 'resolved')->count()]);
+                fputcsv($h, ['Period', $from->format('Y-m-d').' to '.$to->format('Y-m-d')]);
+                fputcsv($h, []);
+                fputcsv($h, ['TEAM MEMBERS BREAKDOWN']);
+                fputcsv($h, ['Member Name', 'Role', 'Assigned Tickets', 'Resolved Tickets', 'Resolution Rate', 'Avg Resolution Time']);
+                foreach ($teamMembers as $tm) {
+                    fputcsv($h, [
+                        $tm['name'],
+                        strtoupper(str_replace('_', ' ', $tm['role'])),
+                        $tm['assigned'],
+                        $tm['resolved'],
+                        $tm['rate'].'%',
+                        $tm['avg_resolution_time'],
+                    ]);
+                }
                 fputcsv($h, []);
                 fputcsv($h, ['TICKETS DETAIL']);
                 fputcsv($h, ['ID', 'Title', 'Category', 'Priority', 'Status', 'Created By', 'Assigned To', 'Created At', 'Resolved At']);
@@ -380,6 +581,7 @@ class ReportController extends Controller
                 'id' => $u->id,
                 'name' => $u->name,
                 'role' => $u->role,
+                'team' => $u->team ?? null,
                 'avatarUrl' => $u->avatarUrl(),
                 'total' => $total,
                 'created' => $created,
@@ -421,15 +623,23 @@ class ReportController extends Controller
         return "{$mins}m";
     }
 
-    private function buildTrendChart(Carbon $from, Carbon $to): array
+    private function buildTrendChart(Carbon $from, Carbon $to, ?array $assignedUserIds = null): array
     {
         $days = [];
         $counts = [];
         $diff = $from->diffInDays($to);
 
+        $filterUsers = function ($query) use ($assignedUserIds) {
+            if (!empty($assignedUserIds)) {
+                $query->whereIn('assigned_to', $assignedUserIds);
+            }
+            return $query;
+        };
+
         if ($diff <= 31) {
-            $tData = Ticket::whereBetween('created_at', [$from, $to])
-                ->selectRaw('DATE(created_at) as date, count(*) as count')
+            $q = Ticket::whereBetween('created_at', [$from, $to]);
+            $filterUsers($q);
+            $tData = $q->selectRaw('DATE(created_at) as date, count(*) as count')
                 ->groupBy('date')
                 ->pluck('count', 'date');
 
@@ -442,7 +652,9 @@ class ReportController extends Controller
             while ($cur->lte($to)) {
                 $wEnd = $cur->copy()->endOfWeek()->min($to);
                 $days[] = $cur->format('d M');
-                $counts[] = Ticket::whereBetween('created_at', [$cur, $wEnd])->count();
+                $q = Ticket::whereBetween('created_at', [$cur, $wEnd]);
+                $filterUsers($q);
+                $counts[] = $q->count();
                 $cur->addWeek();
             }
         } else {
@@ -450,7 +662,9 @@ class ReportController extends Controller
             while ($cur->lte($to)) {
                 $mEnd = $cur->copy()->endOfMonth()->min($to);
                 $days[] = $cur->format('M Y');
-                $counts[] = Ticket::whereBetween('created_at', [$cur, $mEnd])->count();
+                $q = Ticket::whereBetween('created_at', [$cur, $mEnd]);
+                $filterUsers($q);
+                $counts[] = $q->count();
                 $cur->addMonth();
             }
         }

@@ -36,13 +36,13 @@
 </head>
 <body>
     <div class="header">
-        <h1>VISION Technologies Limited &mdash; {{ isset($person) ? 'Single Person Performance Report' : 'Ticket Report' }}</h1>
+        <h1>VISION Technologies Limited &mdash; {{ isset($person) ? 'Single Person Performance Report' : (isset($teamName) ? 'Team Performance Report' : 'Ticket Report') }}</h1>
         <p>Generated: {{ now()->format('d M Y, H:i') }} &nbsp;&bull;&nbsp; Filters: {{ $filters }}</p>
     </div>
 
     @if(isset($person))
     <div class="person-card">
-        <h2>{{ $person->name }} <span style="font-size:10px;color:#4f46e5;">({{ strtoupper(str_replace('_',' ',$person->role)) }})</span></h2>
+        <h2>{{ $person->name }} <span style="font-size:10px;color:#4f46e5;">({{ strtoupper(str_replace('_',' ',$person->role)) }}{{ !empty($person->team) ? ' &bull; '.strtoupper($person->team) : '' }})</span></h2>
         <p>Email: {{ $person->email }} &nbsp;&bull;&nbsp; Phone: {{ $person->phone ?? 'N/A' }} &nbsp;&bull;&nbsp; Resolution Rate: <strong>{{ $personStats['rate'] ?? 0 }}%</strong> &nbsp;&bull;&nbsp; Avg Time: <strong>{{ $personStats['avg_resolution_time'] ?? 'N/A' }}</strong></p>
     </div>
 
@@ -56,6 +56,41 @@
         <div class="stat-cell"><div class="num" style="color:#3b82f6;">{{ $personStats['in_progress'] ?? 0 }}</div><div class="lbl">In Progress</div></div>
         <div class="stat-cell"><div class="num" style="color:#f97316;">{{ $personStats['pending'] ?? 0 }}</div><div class="lbl">Pending</div></div>
     </div>
+    @elseif(isset($teamName))
+    <div class="person-card" style="border-left: 4px solid #4f46e5; margin-bottom: 12px;">
+        <h2>Team: {{ $teamName }} <span style="font-size:10px;color:#4f46e5;">({{ $teamStats['members_count'] }} Members)</span></h2>
+        <p>Total Tickets Handled: <strong>{{ $teamStats['total'] }}</strong> &nbsp;&bull;&nbsp; Resolved: <strong>{{ $teamStats['resolved'] }}</strong> &nbsp;&bull;&nbsp; In Progress: <strong>{{ $teamStats['in_progress'] }}</strong> &nbsp;&bull;&nbsp; Pending: <strong>{{ $teamStats['pending'] }}</strong> &nbsp;&bull;&nbsp; Resolution Rate: <strong>{{ $teamStats['rate'] }}%</strong></p>
+    </div>
+
+    @if(isset($teamMembers) && count($teamMembers) > 0)
+    <div style="margin: 0 20px 14px;">
+        <h3 style="font-size: 10px; margin-bottom: 5px; color: #1e293b; text-transform: uppercase;">Team Members Performance Breakdown</h3>
+        <table class="tickets" style="margin: 0; width: 100%;">
+            <thead>
+                <tr>
+                    <th>Member Name</th>
+                    <th>Role</th>
+                    <th>Assigned Tickets</th>
+                    <th>Resolved Tickets</th>
+                    <th>Resolution Rate</th>
+                    <th>Avg Resolution Time</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($teamMembers as $tm)
+                <tr>
+                    <td><strong>{{ $tm['name'] }}</strong></td>
+                    <td>{{ strtoupper(str_replace('_', ' ', $tm['role'])) }}</td>
+                    <td>{{ $tm['assigned'] }}</td>
+                    <td><strong style="color: #10b981;">{{ $tm['resolved'] }}</strong></td>
+                    <td>{{ $tm['rate'] }}%</td>
+                    <td>{{ $tm['avg_resolution_time'] }}</td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+    @endif
     @else
     <div class="meta">
         <span>Total: <strong>{{ $stats['total'] }}</strong></span>

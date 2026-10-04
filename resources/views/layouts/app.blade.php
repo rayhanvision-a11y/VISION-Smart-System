@@ -146,6 +146,7 @@
             html.dark .bg-indigo-50  { background-color: color-mix(in srgb, var(--cp) 14%, transparent) !important; }
             html.dark .bg-indigo-100 { background-color: color-mix(in srgb, var(--cp) 20%, transparent) !important; }
             html.dark .text-indigo-500, html.dark .text-indigo-600, html.dark .text-indigo-700 { color: color-mix(in srgb, var(--cp) 70%, #fff) !important; }
+            html.dark .bg-slate-50, html.dark .bg-slate-50\/50, html.dark .bg-slate-50\/60, html.dark .bg-slate-50\/70 { background-color: #0f172a !important; }
 
             /* ── Secondary: only solid buttons (50/100/950 left alone for badges) ── */
             .bg-emerald-500, .bg-emerald-600              { background-color: var(--cs) !important; }
@@ -465,10 +466,10 @@
             {{-- Mobile Overlay --}}
             <div x-show="sidebarOpen" x-cloak @click="sidebarOpen = false"
                  x-transition.opacity
-                 class="fixed inset-0 bg-black/50 z-20 lg:hidden"></div>            {{-- Sidebar --}}
+                 class="fixed inset-0 bg-black/50 z-40 lg:hidden"></div>            {{-- Sidebar --}}
             <aside id="main-sidebar"
                    :class="(sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0') + (sidebarCollapsed ? ' sidebar-collapsed' : '')"
-                   class="bg-white dark:bg-slate-950 text-slate-800 dark:text-white border-r border-slate-200 dark:border-slate-800 flex flex-col flex-shrink-0 fixed top-0 left-0 h-full z-30 lg:translate-x-0 overflow-visible transition-colors duration-200">
+                   class="bg-white dark:bg-slate-950 text-slate-800 dark:text-white border-r border-slate-200 dark:border-slate-800 flex flex-col flex-shrink-0 fixed top-0 left-0 h-full z-50 lg:z-30 lg:translate-x-0 overflow-visible transition-colors duration-200">
 
                 {{-- Logo & Prominent Collapse Toggle Icon --}}
                 <div class="h-16 sidebar-header-box border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 flex items-center justify-center flex-shrink-0 relative px-3 overflow-visible">
@@ -855,7 +856,7 @@
                  class="flex-1 flex flex-col min-h-screen">
 
                 {{-- Top Bar --}}
-                <header class="h-16 main-top-header bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-2 sm:px-4 lg:px-6 flex items-center justify-between sticky top-0 z-10 gap-1 sm:gap-3">
+                <header class="h-16 main-top-header bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-2 sm:px-4 lg:px-6 flex items-center justify-between sticky top-0 z-30 gap-1 sm:gap-3">
                     <div class="flex items-center gap-1.5 sm:gap-3 flex-shrink-0 min-w-0">
                         {{-- Mobile-only menu toggle --}}
                         <button type="button"
@@ -1025,30 +1026,41 @@
                                 </svg>
                             </div>
                         </form>
-                        {{-- Language Switcher --}}
-                        <div x-data="{ open: false }" class="relative hidden sm:block">
+                        {{-- Language Switcher (Always visible on all screen sizes) --}}
+                        <div x-data="{ open: false }" class="relative inline-block">
                             <button @click="open = !open" @click.outside="open = false"
-                                    class="flex items-center gap-1.5 px-2.5 py-1.5 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors text-xs font-semibold select-none">
-                                <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    type="button"
+                                    class="flex items-center gap-1.5 px-2 sm:px-2.5 py-1.5 text-slate-700 dark:text-slate-200 hover:text-indigo-600 dark:hover:text-indigo-400 bg-slate-100 hover:bg-slate-200/80 dark:bg-slate-800 dark:hover:bg-slate-700/80 border border-slate-200/80 dark:border-slate-700 rounded-lg sm:rounded-xl transition-all text-xs font-bold select-none cursor-pointer shadow-2xs"
+                                    title="{{ __('Change Language') }}">
+                                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-indigo-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"/>
                                 </svg>
-                                <span>{{ app()->getLocale() === 'bn' ? 'বাংলা (BN)' : 'English (EN)' }}</span>
-                                <svg class="w-3.5 h-3.5 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                                <span class="inline sm:hidden">{{ app()->getLocale() === 'bn' ? '🇧🇩 বাং' : '🇬🇧 EN' }}</span>
+                                <span class="hidden sm:inline">{{ app()->getLocale() === 'bn' ? '🇧🇩 বাংলা' : '🇬🇧 English' }}</span>
+                                <svg class="w-3 h-3 opacity-60 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                             </button>
                             <div x-show="open" x-cloak @click.outside="open = false"
-                                 class="absolute right-0 top-full mt-2 w-44 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl z-50 overflow-hidden py-1">
+                                 style="z-index: 99999;"
+                                 class="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl overflow-hidden py-1">
+                                <div class="px-3.5 py-1.5 border-b border-slate-100 dark:border-slate-700/80 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                                    {{ __('Language / ভাষা') }}
+                                </div>
                                 <form method="POST" action="{{ route('locale.set', 'en') }}" style="display:contents;">
                                     @csrf
-                                    <button type="submit" class="flex items-center justify-between w-full px-3.5 py-2 text-xs font-medium hover:bg-indigo-50 dark:hover:bg-slate-700/60 {{ app()->getLocale() === 'en' ? 'text-indigo-600 dark:text-indigo-400 font-bold bg-indigo-50/50 dark:bg-indigo-500/10' : 'text-slate-700 dark:text-slate-300' }}">
-                                        <span>🇬🇧 English (EN)</span>
-                                        @if(app()->getLocale() === 'en')<svg class="w-4 h-4 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>@endif
+                                    <button type="submit" class="flex items-center justify-between w-full px-3.5 py-2.5 text-xs font-semibold hover:bg-indigo-50 dark:hover:bg-slate-700/60 transition-colors {{ app()->getLocale() === 'en' ? 'text-indigo-600 dark:text-indigo-400 font-bold bg-indigo-50/70 dark:bg-indigo-500/15' : 'text-slate-700 dark:text-slate-300' }}">
+                                        <span class="flex items-center gap-2 text-sm">🇬🇧 <span class="text-xs font-semibold">English (EN)</span></span>
+                                        @if(app()->getLocale() === 'en')
+                                            <svg class="w-4 h-4 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                                        @endif
                                     </button>
                                 </form>
                                 <form method="POST" action="{{ route('locale.set', 'bn') }}" style="display:contents;">
                                     @csrf
-                                    <button type="submit" class="flex items-center justify-between w-full px-3.5 py-2 text-xs font-medium hover:bg-indigo-50 dark:hover:bg-slate-700/60 {{ app()->getLocale() === 'bn' ? 'text-indigo-600 dark:text-indigo-400 font-bold bg-indigo-50/50 dark:bg-indigo-500/10' : 'text-slate-700 dark:text-slate-300' }}">
-                                        <span>🇧🇩 বাংলা (BN)</span>
-                                        @if(app()->getLocale() === 'bn')<svg class="w-4 h-4 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>@endif
+                                    <button type="submit" class="flex items-center justify-between w-full px-3.5 py-2.5 text-xs font-semibold hover:bg-indigo-50 dark:hover:bg-slate-700/60 transition-colors {{ app()->getLocale() === 'bn' ? 'text-indigo-600 dark:text-indigo-400 font-bold bg-indigo-50/70 dark:bg-indigo-500/15' : 'text-slate-700 dark:text-slate-300' }}">
+                                        <span class="flex items-center gap-2 text-sm">🇧🇩 <span class="text-xs font-semibold">বাংলা (BN)</span></span>
+                                        @if(app()->getLocale() === 'bn')
+                                            <svg class="w-4 h-4 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                                        @endif
                                     </button>
                                 </form>
                             </div>
@@ -1100,8 +1112,8 @@
 
                             {{-- Dropdown --}}
                             <div x-show="open" x-cloak @click.outside="open = false"
-                                 style="width: 280px; max-width: 92vw; z-index: 99999;"
-                                 class="absolute left-1/2 -translate-x-1/2 top-full mt-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl overflow-hidden">
+                                 style="width: 320px; max-width: 92vw; z-index: 99999;"
+                                 class="absolute right-0 sm:right-auto sm:left-1/2 sm:-translate-x-1/2 top-full mt-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl overflow-hidden">
                                 <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-slate-700">
                                     <span class="text-sm font-semibold text-slate-700 dark:text-slate-200">{{ __('Notifications') }}
                                         <span x-show="count > 0" class="ml-1 px-1.5 py-0.5 bg-red-100 text-red-600 rounded-full text-xs font-bold" x-text="count"></span>
@@ -1193,8 +1205,8 @@
             </div>
         </div>
 
-    {{-- Floating Toast Notification Container --}}
-    <div id="toast-container" class="fixed bottom-5 right-5 z-[9999] flex flex-col gap-2.5 max-w-sm w-full pointer-events-none"></div>
+    {{-- Floating Toast Notification Container (Top-right, highest z-index above everything) --}}
+    <div id="toast-container" class="fixed top-5 right-5 sm:top-6 sm:right-6 flex flex-col gap-2.5 max-w-sm w-full pointer-events-none" style="z-index: 9999999;"></div>
 
     <script>
     // ── Web Audio Chime Sound ────────────────────────────────────────────────
@@ -1225,7 +1237,7 @@
         if (!container) return;
 
         const toast = document.createElement('div');
-        toast.className = 'pointer-events-auto flex items-start gap-3 p-3.5 bg-slate-900/95 text-white rounded-xl shadow-2xl border border-slate-700/80 transform translate-y-4 opacity-0 transition-all duration-300 cursor-pointer hover:bg-slate-800';
+        toast.className = 'pointer-events-auto flex items-start gap-3 p-3.5 bg-slate-900/95 dark:bg-slate-800 text-white rounded-xl shadow-2xl border border-slate-700/80 transform -translate-y-4 opacity-0 transition-all duration-300 cursor-pointer hover:bg-slate-800';
         toast.innerHTML = `
             <div class="w-8 h-8 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center flex-shrink-0 mt-0.5">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
@@ -1249,11 +1261,11 @@
         container.appendChild(toast);
 
         setTimeout(() => {
-            toast.classList.remove('translate-y-4', 'opacity-0');
+            toast.classList.remove('-translate-y-4', 'opacity-0');
         }, 50);
 
         setTimeout(() => {
-            toast.classList.add('opacity-0', 'translate-y-2');
+            toast.classList.add('opacity-0', '-translate-y-2');
             setTimeout(() => toast.remove(), 300);
         }, 6000);
     }
@@ -1459,10 +1471,10 @@
          x-cloak
          @open-user-profile.window="openModal($event.detail)"
          @keydown.escape.window="closeModal()"
-         class="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4 overflow-y-auto"
+         class="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 overflow-y-auto"
+         style="padding-top: 2.5rem; padding-bottom: 4.5rem;"
          role="dialog"
-         aria-modal="true"
-         style="display: none;">
+         aria-modal="true">
 
         {{-- Backdrop --}}
         <div x-show="isOpen"
@@ -1473,7 +1485,7 @@
              x-transition:leave-start="opacity-100"
              x-transition:leave-end="opacity-0"
              @click="closeModal()"
-             class="fixed inset-0 bg-slate-950/70 backdrop-blur-xs transition-opacity"></div>
+             class="fixed inset-0 bg-slate-950/75 backdrop-blur-xs transition-opacity"></div>
 
         {{-- Modal Dialog --}}
         <div x-show="isOpen"
@@ -1483,68 +1495,75 @@
              x-transition:leave="ease-in duration-200"
              x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
              x-transition:leave-end="opacity-0 translate-y-3 sm:scale-95"
-             class="relative w-full max-w-sm sm:max-w-md bg-white dark:bg-[#0f172a] rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800/90 overflow-hidden z-10 transition-all text-slate-800 dark:text-slate-100 my-auto">
+             class="relative w-full max-w-sm sm:max-w-md bg-white dark:bg-[#0f172a] rounded-3xl shadow-2xl border border-slate-200/90 dark:border-slate-800/90 overflow-hidden z-10 transition-all text-slate-800 dark:text-slate-100 my-auto mb-8 sm:mb-10">
 
             {{-- Top Hero Gradient with Ambient Circles --}}
-            <div class="relative h-28 sm:h-32 bg-gradient-to-tr from-indigo-600 via-indigo-700 to-purple-800 p-4 flex items-start justify-between overflow-hidden">
+            <div class="relative h-24 sm:h-28 bg-gradient-to-r from-indigo-600 via-indigo-700 to-purple-800 p-4 flex items-start justify-between overflow-hidden">
                 <div class="absolute -top-10 -right-10 w-36 h-36 rounded-full bg-white/10 blur-xl pointer-events-none"></div>
                 <div class="absolute -bottom-8 -left-8 w-32 h-32 rounded-full bg-indigo-400/20 blur-lg pointer-events-none"></div>
 
-                <div class="relative z-10 flex items-center gap-2 text-white/90">
+                <div class="relative z-10 flex items-center gap-2 text-white/95">
                     <svg class="w-4 h-4 text-indigo-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                     </svg>
-                    <span class="text-xs font-semibold uppercase tracking-wider text-indigo-100">
+                    <span class="text-xs font-bold uppercase tracking-wider text-indigo-100">
                         {{ app()->getLocale() === 'bn' ? 'প্রোফাইল বিবরণ' : 'Profile Details' }}
                     </span>
                 </div>
 
                 <button type="button"
                         @click="closeModal()"
-                        class="relative z-10 w-8 h-8 rounded-full bg-black/20 hover:bg-black/35 text-white/90 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+                        class="relative z-10 w-7 h-7 rounded-full bg-black/25 hover:bg-black/40 text-white flex items-center justify-center transition-colors cursor-pointer"
                         title="{{ __('Close') }}">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
                 </button>
             </div>
 
             {{-- Avatar & Identity Section --}}
-            <div class="px-5 sm:px-6 pt-0 pb-5">
-                <div class="flex flex-col items-center -mt-14 sm:-mt-16 text-center">
-                    <div class="relative inline-block mb-2.5">
+            <div class="px-5 sm:px-6 pt-0 pb-6 sm:pb-7">
+                <div class="flex flex-col items-center -mt-12 sm:-mt-14 text-center">
+                    {{-- Avatar Container with Precision Positioned Duty Status Dot --}}
+                    <div style="position: relative; display: inline-block; margin-bottom: 10px;">
                         <img :src="profile.avatar_url"
                              :alt="profile.name"
-                             class="w-24 h-24 sm:w-28 sm:h-28 rounded-full object-cover border-4 border-white dark:border-[#0f172a] shadow-xl bg-slate-100 dark:bg-slate-800">
+                             class="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover border-4 border-white dark:border-[#0f172a] shadow-xl bg-slate-100 dark:bg-slate-800"
+                             style="display: block;">
 
-                        {{-- Status Dot --}}
+                        {{-- Status Dot (Locked at bottom-right of avatar) --}}
                         <span x-show="profile.is_on_duty"
-                              class="absolute bottom-1 right-1 w-5 h-5 rounded-full bg-emerald-500 border-2 sm:border-3 border-white dark:border-[#0f172a] shadow-sm flex items-center justify-center"
+                              style="position: absolute; right: 4px; bottom: 4px; width: 18px; height: 18px; border-radius: 9999px; display: flex; align-items: center; justify-content: center; z-index: 10; box-shadow: 0 1px 3px rgba(0,0,0,0.3);"
+                              class="bg-emerald-500 border-2 border-white dark:border-[#0f172a]"
                               title="{{ app()->getLocale() === 'bn' ? 'অন ডিউটি' : 'On Duty' }}">
-                            <span class="w-2 h-2 rounded-full bg-white animate-pulse"></span>
+                            <span class="animate-pulse" style="display: block; width: 6px; height: 6px; border-radius: 9999px; background-color: #ffffff;"></span>
                         </span>
                         <span x-show="!profile.is_on_duty"
-                              class="absolute bottom-1 right-1 w-5 h-5 rounded-full bg-slate-400 border-2 sm:border-3 border-white dark:border-[#0f172a] shadow-sm"
+                              style="position: absolute; right: 4px; bottom: 4px; width: 18px; height: 18px; border-radius: 9999px; display: flex; align-items: center; justify-content: center; z-index: 10; box-shadow: 0 1px 3px rgba(0,0,0,0.3);"
+                              class="bg-slate-400 dark:bg-slate-500 border-2 border-white dark:border-[#0f172a]"
                               title="{{ app()->getLocale() === 'bn' ? 'অফ ডিউটি' : 'Off Duty' }}">
+                            <span style="display: block; width: 5px; height: 5px; border-radius: 9999px; background-color: #ffffff;"></span>
                         </span>
                     </div>
 
                     {{-- User Name --}}
-                    <h3 class="text-xl font-bold text-slate-900 dark:text-white leading-snug" x-text="profile.name"></h3>
+                    <h3 class="text-lg sm:text-xl font-black text-slate-900 dark:text-white leading-snug tracking-tight" x-text="profile.name"></h3>
 
-                    {{-- Contact Info (Email & Phone) --}}
-                    <div class="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 mt-1 text-xs text-slate-500 dark:text-slate-400">
-                        <span class="flex items-center gap-1.5">
-                            <svg class="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    {{-- Contact Info (Email & Phone) with clean badges --}}
+                    <div class="flex flex-wrap items-center justify-center gap-1.5 mt-2 text-xs">
+                        <a :href="'mailto:' + profile.email"
+                           class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100/90 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700/80 text-slate-600 dark:text-slate-300 border border-slate-200/60 dark:border-slate-700/60 transition-colors">
+                            <svg class="w-3.5 h-3.5 text-indigo-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                             </svg>
-                            <span x-text="profile.email"></span>
-                        </span>
-                        <span x-show="profile.phone" class="flex items-center gap-1.5">
-                            <svg class="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <span x-text="profile.email" class="font-medium truncate max-w-[190px]"></span>
+                        </a>
+                        <span x-show="profile.phone"
+                              class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100/90 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 border border-slate-200/60 dark:border-slate-700/60">
+                            <svg class="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
                             </svg>
-                            <span x-text="profile.phone"></span>
+                            <span x-text="profile.phone" class="font-medium"></span>
                         </span>
                     </div>
 
@@ -1555,8 +1574,8 @@
                               x-text="profile.role_label"></span>
 
                         <span x-show="profile.team"
-                              class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
-                            <svg class="w-3 h-3 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                            <svg class="w-3.5 h-3.5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
                             </svg>
                             <span x-text="profile.team"></span>
@@ -1564,9 +1583,10 @@
                     </div>
                 </div>
 
-                {{-- Ticket Stats (Active, Resolved, Total) --}}
-                <div class="mt-4">
-                    <div class="flex items-center justify-between mb-2 px-1">
+                {{-- Ticket Stats (Active, Resolved, Total in 3 Columns Side-by-Side!) --}}
+                <div style="margin-top: 22px;">
+                    {{-- Header with generous bottom gap --}}
+                    <div class="flex items-center justify-between px-1" style="margin-bottom: 14px;">
                         <span class="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
                             {{ app()->getLocale() === 'bn' ? 'টিকিট পরিসংখ্যান' : 'Ticket Overview' }}
                         </span>
@@ -1575,35 +1595,43 @@
                         </a>
                     </div>
 
-                    <div class="grid grid-cols-3 gap-2.5">
-                        {{-- Active Tickets (Interactive & Highlighted) --}}
+                    {{-- 3-Column Cards Grid with ample bottom gap --}}
+                    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-bottom: 18px;">
+                        {{-- Active Tickets (Interactive & Perfectly Centered) --}}
                         <a :href="profile.active_tickets_url"
-                           class="group relative bg-gradient-to-b from-indigo-50 to-indigo-100/60 dark:from-indigo-950/50 dark:to-indigo-900/30 hover:from-indigo-100 hover:to-indigo-200/70 dark:hover:from-indigo-900/60 dark:hover:to-indigo-800/40 border border-indigo-200 dark:border-indigo-700/60 rounded-2xl p-2.5 sm:p-3 flex flex-col items-center justify-center text-center transition-all hover:scale-[1.03] shadow-xs cursor-pointer">
-                            <div class="flex items-center gap-1.5 mb-1">
-                                <span class="relative flex h-2.5 w-2.5">
-                                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
-                                    <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-indigo-600 dark:bg-indigo-400"></span>
-                                </span>
-                                <span class="text-2xl font-black text-indigo-700 dark:text-indigo-300 tracking-tight" x-text="profile.active_tickets"></span>
-                            </div>
-                            <span class="text-[11px] font-bold text-indigo-700 dark:text-indigo-300 flex items-center gap-0.5">
-                                {{ app()->getLocale() === 'bn' ? 'সক্রিয় টিকিট' : 'Active' }}
+                           style="position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;"
+                           class="group relative bg-indigo-50/70 hover:bg-indigo-100/80 dark:bg-indigo-950/40 dark:hover:bg-indigo-900/50 border border-indigo-200/90 dark:border-indigo-700/60 rounded-2xl p-2.5 sm:p-3 transition-all hover:scale-[1.02] shadow-xs cursor-pointer">
+                            
+                            {{-- Top-Right Pulse Indicator Badge --}}
+                            <span style="position: absolute; top: 8px; right: 8px; display: flex; height: 8px; width: 8px;">
+                                <span class="animate-ping" style="position: absolute; display: inline-flex; height: 100%; width: 100%; border-radius: 9999px; background-color: #818cf8; opacity: 0.75;"></span>
+                                <span style="position: relative; display: inline-flex; border-radius: 9999px; height: 8px; width: 8px; background-color: #6366f1;"></span>
+                            </span>
+
+                            {{-- Number (100% Centered) --}}
+                            <span class="text-xl sm:text-2xl font-black text-indigo-600 dark:text-indigo-400 tracking-tight mb-1" x-text="profile.active_tickets"></span>
+
+                            {{-- Label (100% Centered) --}}
+                            <span class="text-[10px] sm:text-[11px] font-bold text-indigo-600 dark:text-indigo-300 flex items-center justify-center gap-0.5">
+                                <span>{{ app()->getLocale() === 'bn' ? 'সক্রিয়' : 'Active' }}</span>
                                 <svg class="w-3 h-3 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
                             </span>
                         </a>
 
-                        {{-- Resolved Tickets --}}
-                        <div class="bg-slate-50 dark:bg-slate-900/50 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/20 border border-slate-200 dark:border-slate-800 rounded-2xl p-2.5 sm:p-3 flex flex-col items-center justify-center text-center transition-colors">
-                            <span class="text-2xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight mb-1" x-text="profile.resolved_tickets"></span>
-                            <span class="text-[11px] font-semibold text-slate-600 dark:text-slate-400">
+                        {{-- Resolved Tickets (100% Centered) --}}
+                        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;"
+                             class="bg-slate-50/80 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-2.5 sm:p-3">
+                            <span class="text-xl sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight mb-1" x-text="profile.resolved_tickets"></span>
+                            <span class="text-[10px] sm:text-[11px] font-semibold text-slate-500 dark:text-slate-400">
                                 {{ app()->getLocale() === 'bn' ? 'সমাধানকৃত' : 'Resolved' }}
                             </span>
                         </div>
 
-                        {{-- Total Tickets --}}
-                        <div class="bg-slate-50 dark:bg-slate-900/50 hover:bg-slate-100/60 dark:hover:bg-slate-800/40 border border-slate-200 dark:border-slate-800 rounded-2xl p-2.5 sm:p-3 flex flex-col items-center justify-center text-center transition-colors">
-                            <span class="text-2xl font-black text-slate-800 dark:text-slate-200 tracking-tight mb-1" x-text="profile.total_tickets"></span>
-                            <span class="text-[11px] font-semibold text-slate-600 dark:text-slate-400">
+                        {{-- Total Tickets (100% Centered) --}}
+                        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;"
+                             class="bg-slate-50/80 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-2.5 sm:p-3">
+                            <span class="text-xl sm:text-2xl font-black text-slate-800 dark:text-slate-200 tracking-tight mb-1" x-text="profile.total_tickets"></span>
+                            <span class="text-[10px] sm:text-[11px] font-semibold text-slate-500 dark:text-slate-400">
                                 {{ app()->getLocale() === 'bn' ? 'মোট টিকিট' : 'Total' }}
                             </span>
                         </div>
@@ -1611,7 +1639,7 @@
                 </div>
 
                 {{-- Duty Shift Card (For Staff / NOC) --}}
-                <div class="mt-3 bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-2xl p-3 flex items-center justify-between">
+                <div style="margin-bottom: 20px;" class="bg-slate-50/80 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-3 flex items-center justify-between">
                     <div class="flex items-center gap-2.5 min-w-0">
                         <div class="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center flex-shrink-0">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1619,30 +1647,31 @@
                             </svg>
                         </div>
                         <div class="min-w-0">
-                            <p class="text-[11px] font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wide">
+                            <p class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                                 {{ app()->getLocale() === 'bn' ? 'ডিউটি শিফট' : 'Duty Shift' }}
                             </p>
-                            <p class="text-xs font-bold text-slate-800 dark:text-slate-200 truncate" x-text="profile.current_shift_label"></p>
+                            <p class="text-xs font-bold text-slate-800 dark:text-slate-200 truncate mt-0.5" x-text="profile.current_shift_label"></p>
                         </div>
                     </div>
 
                     <div class="flex-shrink-0">
                         <span x-show="profile.is_on_duty"
-                              class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/50">
+                              class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/50 shadow-2xs">
                             <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                             {{ app()->getLocale() === 'bn' ? 'অন ডিউটি' : 'On Duty' }}
                         </span>
                         <span x-show="!profile.is_on_duty"
-                              class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                              class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                            <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
                             {{ app()->getLocale() === 'bn' ? 'অফ ডিউটি' : 'Off Duty' }}
                         </span>
                     </div>
                 </div>
 
-                {{-- Action Buttons --}}
-                <div class="mt-4 flex items-center gap-2.5">
+                {{-- Action Buttons with Good Spacing & Generous Bottom Gap --}}
+                <div class="flex items-center gap-2.5" style="margin-bottom: 6px;">
                     <a :href="profile.active_tickets_url"
-                       class="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-sm shadow-indigo-600/20 hover:shadow-indigo-600/30">
+                       class="flex-1 flex items-center justify-center gap-2 py-2.5 px-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-xs font-bold transition-all shadow-md shadow-indigo-600/20 hover:shadow-indigo-600/30 cursor-pointer">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/>
                         </svg>
@@ -1650,7 +1679,7 @@
                     </a>
 
                     <a :href="profile.profile_url"
-                       class="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold border border-slate-200 dark:border-slate-700 transition-all">
+                       class="flex-1 flex items-center justify-center gap-2 py-2.5 px-3.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 active:bg-slate-300 dark:active:bg-slate-600 text-slate-700 dark:text-slate-200 text-xs font-bold border border-slate-200 dark:border-slate-700 transition-all cursor-pointer shadow-xs">
                         <svg class="w-4 h-4 text-slate-500 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                         </svg>

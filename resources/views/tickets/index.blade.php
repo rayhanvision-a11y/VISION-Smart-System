@@ -107,14 +107,25 @@
 
             <div class="flex-1 min-w-40">
                 <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">📍 {{ __('Area') }}</label>
-                <input type="text" name="area" list="area-filter-list" value="{{ request('area') }}"
-                       placeholder="{{ __('Any area') }}"
-                       class="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-700 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 bg-slate-50 dark:bg-slate-800">
-                <datalist id="area-filter-list">
-                    @foreach(\App\Models\Ticket::whereNotNull('area')->where('area','!=','')->distinct()->orderBy('area')->limit(200)->pluck('area') as $areaOption)
-                        <option value="{{ $areaOption }}"></option>
+                <select name="area" class="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-700 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-slate-50 dark:bg-slate-800">
+                    <option value="">{{ __('All Areas') }}</option>
+                    @php
+                        $areaList = $allAreas ?? (
+                            (\App\Models\Area::where('is_active', true)->orderBy('name')->pluck('name'))
+                                ->concat(\App\Models\Ticket::whereNotNull('area')->where('area','!=','')->distinct()->pluck('area'))
+                                ->map(fn($a) => trim($a))
+                                ->filter()
+                                ->unique(fn($a) => strtolower($a))
+                                ->sortBy(fn($a) => strtolower($a))
+                                ->values()
+                        );
+                    @endphp
+                    @foreach($areaList as $areaOption)
+                    <option value="{{ $areaOption }}" {{ strtolower((string)request('area')) === strtolower((string)$areaOption) ? 'selected' : '' }}>
+                        {{ $areaOption }}
+                    </option>
                     @endforeach
-                </datalist>
+                </select>
             </div>
 
             <div class="flex-1 min-w-48">
@@ -143,8 +154,43 @@
 
     {{-- Bulk Action Form --}}
     @if(auth()->user()->isAdmin())
-    <div x-data="{ selectedIds: [], showBulk: false }" class="mb-4">
-        <div x-show="showBulk" x-cloak class="bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/30 rounded-xl p-3 mb-3 flex items-center gap-3 flex-wrap">
+    <div x-data="{
+        selectedIds: [],
+        toggleSelectAll(checked) {
+            const rows = Array.from(document.querySelectorAll('.row-check'));
+            if (checked) {
+                this.selectedIds = rows.map(cb => cb.value);
+            } else {
+                this.selectedIds = [];
+            }
+            rows.forEach(cb => {
+                cb.checked = checked;
+            });
+        },
+        toggleRow(val, checked) {
+            val = String(val);
+            if (checked) {
+                if (!this.selectedIds.includes(val)) {
+                    this.selectedIds.push(val);
+                }
+            } else {
+                this.selectedIds = this.selectedIds.filter(id => id !== val);
+            }
+            this.syncHeader();
+        },
+        syncHeader() {
+            this.$nextTick(() => {
+                const headerCb = document.getElementById('select-all-tickets');
+                const rows = Array.from(document.querySelectorAll('.row-check'));
+                if (!headerCb || rows.length === 0) return;
+                const allChecked = rows.every(cb => cb.checked);
+                const someChecked = rows.some(cb => cb.checked);
+                headerCb.checked = allChecked;
+                headerCb.indeterminate = someChecked && !allChecked;
+            });
+        }
+    }" class="mb-4">
+        <div x-show="selectedIds.length > 0" x-cloak class="bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/30 rounded-xl p-3 mb-3 flex items-center gap-3 flex-wrap">
             <span class="text-sm font-medium text-indigo-700 dark:text-indigo-300" x-text="selectedIds.length + ' selected'"></span>
             <form method="POST" action="{{ route('tickets.bulk-action') }}" class="flex items-center gap-2 flex-wrap">
                 @csrf
@@ -188,8 +234,8 @@
                         <tr class="bg-slate-50 dark:bg-slate-800 border-b border-slate-100 dark:border-slate-700">
                             <th class="w-9 px-2 py-3 text-center text-xs font-semibold text-slate-400 dark:text-slate-500" style="width:36px"></th>
                             <th class="px-4 py-3" style="width:40px">
-                                <input type="checkbox" class="rounded border-slate-300 dark:border-slate-600"
-                                       @change="selectedIds = $event.target.checked ? Array.from(document.querySelectorAll('.row-check')).map(c => c.value) : []; showBulk = selectedIds.length > 0">
+                                <input type="checkbox" id="select-all-tickets" class="rounded border-slate-300 dark:border-slate-600 cursor-pointer"
+                                       @change="toggleSelectAll($event.target.checked)">
                             </th>
                             <th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide" style="min-width:250px">{{ __('Work') }}</th>
                             <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide" style="width:140px">{{ __('Assignee') }}</th>
@@ -244,8 +290,10 @@
                                 </svg>
                             </td>
                             <td class="px-4 py-3.5" onclick="event.stopPropagation()">
-                                <input type="checkbox" class="row-check rounded border-slate-300 dark:border-slate-600" value="{{ $ticket->id }}"
-                                       @change="selectedIds = $event.target.checked ? [...selectedIds, $event.target.value] : selectedIds.filter(id => id !== $event.target.value); showBulk = selectedIds.length > 0">
+                                <input type="checkbox" class="row-check rounded border-slate-300 dark:border-slate-600 cursor-pointer"
+                                       value="{{ $ticket->id }}"
+                                       :checked="selectedIds.includes(String('{{ $ticket->id }}'))"
+                                       @change="toggleRow('{{ $ticket->id }}', $event.target.checked)">
                             </td>
                             {{-- Work column: icon + key + title --}}
                             <td class="px-5 py-3.5 max-w-xs">

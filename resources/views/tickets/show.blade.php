@@ -737,22 +737,22 @@
             @endif
 
             {{-- Ticket Info Sidebar --}}
-            <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden" x-data="{ open: true }">
-                <button type="button" @click="open = !open" class="w-full flex items-center justify-between px-5 py-3 border-b border-slate-100 bg-slate-50">
-                    <h2 class="text-sm font-semibold text-slate-600">{{ __('Details') }}</h2>
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm overflow-hidden" x-data="{ open: true }">
+                <button type="button" @click="open = !open" class="w-full flex items-center justify-between px-5 py-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900">
+                    <h2 class="text-sm font-semibold text-slate-600 dark:text-slate-300">{{ __('Details') }}</h2>
                     <svg class="w-4 h-4 text-slate-400 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                 </button>
-                <div class="divide-y divide-slate-50" x-show="open" x-cloak>
+                <div class="divide-y divide-slate-50 dark:divide-slate-800" x-show="open" x-cloak>
                     <div class="px-5 py-3">
                         <p class="text-xs text-slate-400 font-semibold uppercase tracking-wide mb-1">{{ __('Ticket ID') }}</p>
-                        <p class="text-sm font-mono font-bold text-indigo-600">{{ $ticketKey }}</p>
+                        <p class="text-sm font-mono font-bold text-indigo-600 dark:text-indigo-400">{{ $ticketKey }}</p>
                     </div>
                     <div class="px-5 py-3">
                         <p class="text-xs text-slate-400 font-semibold uppercase tracking-wide mb-1">{{ __('Assignee') }}</p>
                         @if($ticket->assignee)
                         <div class="flex items-center gap-2">
                             <img src="{{ $ticket->assignee->avatarUrl() }}" alt="{{ $ticket->assignee->name }}" class="w-6 h-6 rounded-full object-cover">
-                            <span class="text-sm text-slate-700">{{ $ticket->assignee->name }}</span>
+                            <span class="text-sm text-slate-700 dark:text-slate-200">{{ $ticket->assignee->name }}</span>
                         </div>
                         @else
                         <span class="text-sm text-slate-400">{{ __('Unassigned') }}</span>
@@ -766,17 +766,20 @@
                             @else
                             <div class="w-6 h-6 rounded-full bg-slate-400 flex items-center justify-center text-white font-bold text-xs">?</div>
                             @endif
-                            <span class="text-sm text-slate-700">{{ $ticket->creator->name ?? __('N/A') }}</span>
+                            <span class="text-sm text-slate-700 dark:text-slate-200">{{ $ticket->creator->name ?? __('N/A') }}</span>
                         </div>
                     </div>
                     @if(!empty($ticket->client_id) || !empty($ticket->client_name))
-                    <div class="px-5 py-3 bg-slate-50/50 dark:bg-slate-800/40">
-                        <p class="text-xs text-slate-400 font-semibold uppercase tracking-wide mb-1">👤 {{ __('Client Info') }}</p>
+                    <div class="px-5 py-3 bg-slate-50 dark:bg-slate-900 border-y border-slate-100 dark:border-slate-800/80">
+                        <p class="text-xs text-slate-400 dark:text-slate-400 font-semibold uppercase tracking-wide mb-1 flex items-center gap-1.5">
+                            <span class="text-indigo-500 dark:text-indigo-400">👤</span>
+                            <span>{{ __('Client Info') }}</span>
+                        </p>
                         @if($ticket->client_id)
                             <div class="text-xs font-mono font-bold text-slate-800 dark:text-slate-100">ID: <span class="text-indigo-600 dark:text-indigo-400">{{ $ticket->client_id }}</span></div>
                         @endif
                         @if($ticket->client_name)
-                            <div class="text-xs text-slate-600 dark:text-slate-300 font-medium">{{ $ticket->client_name }}</div>
+                            <div class="text-xs text-slate-600 dark:text-slate-300 font-medium mt-0.5">{{ $ticket->client_name }}</div>
                         @endif
                     </div>
                     @endif

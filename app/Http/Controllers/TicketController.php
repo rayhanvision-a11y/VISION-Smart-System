@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Mail\TicketAssigned;
 use App\Mail\TicketReopened;
 use App\Mail\TicketResolved;
+use App\Models\Area;
 use App\Models\Label;
 use App\Models\Notification;
 use App\Models\SlaPolicy;
@@ -49,7 +50,10 @@ class TicketController extends Controller
             $query->where('title', 'like', '%'.$request->search.'%');
         }
         if ($request->filled('area')) {
-            $query->where('area', $request->area);
+            $query->where(function ($q) use ($request) {
+                $q->where('area', $request->area)
+                  ->orWhereRaw('LOWER(area) = ?', [strtolower($request->area)]);
+            });
         }
         if ($request->get('assigned') === 'me') {
             if ($user->isReseller()) {
@@ -74,8 +78,21 @@ class TicketController extends Controller
         $tickets = $query->latest()->paginate(15)->withQueryString();
         $allLabels = Label::orderBy('name')->get();
         $categories = TicketCategory::where('is_active', true)->orderBy('name')->get();
+        $managedAreas = Area::where('is_active', true)->orderBy('name')->pluck('name');
+        $ticketAreas = Ticket::whereNotNull('area')
+            ->where('area', '!=', '')
+            ->distinct()
+            ->orderBy('area')
+            ->pluck('area');
 
-        return view('tickets.index', compact('tickets', 'allLabels', 'categories'));
+        $allAreas = $managedAreas->concat($ticketAreas)
+            ->map(fn ($a) => trim($a))
+            ->filter()
+            ->unique(fn ($a) => strtolower($a))
+            ->sortBy(fn ($a) => strtolower($a))
+            ->values();
+
+        return view('tickets.index', compact('tickets', 'allLabels', 'categories', 'allAreas'));
     }
 
     public function create()
@@ -644,7 +661,7 @@ class TicketController extends Controller
         $request->validate([
             'ticket_ids' => 'required|array',
             'ticket_ids.*' => 'exists:tickets,id',
-            'action' => 'required|in:assign,status,delete',
+            'action' => 'required|in:close,assign,status,delete',
             'assigned_to' => 'nullable|exists:users,id',
             'bulk_status' => 'nullable|in:in_progress,pending,waiting_for_customer_feedback,resolved',
         ]);
@@ -667,7 +684,14 @@ class TicketController extends Controller
         $count = 0;
 
         foreach ($tickets as $ticket) {
-            if ($request->action === 'assign' && $request->filled('assigned_to')) {
+            if ($request->action === 'close') {
+                $ticket->update([
+                    'status' => 'closed',
+                    'closed_at' => $ticket->closed_at ?? now(),
+                ]);
+                $action = 'Ticket closed (bulk action)';
+                $newAssignee = null;
+            } elseif ($request->action === 'assign' && $request->filled('assigned_to')) {
                 $ticket->update(['assigned_to' => $request->assigned_to]);
                 $action = 'Ticket reassigned (bulk action)';
                 $newAssignee = $request->assigned_to;

@@ -83,24 +83,27 @@ class NotificationController extends Controller
 
         $html = $permBtn;
         if ($notifications->isEmpty()) {
-            $html .= '<p class="px-4 py-8 text-center text-sm text-slate-400">No notifications yet.</p>';
+            $html .= '<p class="px-4 py-8 text-center text-sm text-slate-400 dark:text-slate-500">No notifications yet.</p>';
         } else {
             foreach ($notifications as $n) {
-                $dot = $n->is_read ? '' : '<span class="w-2 h-2 rounded-full bg-indigo-500 flex-shrink-0 mt-1.5"></span>';
-                $bg = $n->is_read ? 'bg-white' : 'bg-indigo-50';
-                $fw = $n->is_read ? '' : 'font-semibold';
+                $dot = $n->is_read ? '' : '<span class="w-2 h-2 rounded-full bg-indigo-500 flex-shrink-0 mt-1.5 shadow-xs"></span>';
+                $bg = $n->is_read 
+                    ? 'bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/60' 
+                    : 'bg-indigo-50/70 dark:bg-indigo-950/40 hover:bg-indigo-100/70 dark:hover:bg-indigo-900/50';
+                $fw = $n->is_read ? 'text-slate-700 dark:text-slate-200' : 'font-semibold text-slate-900 dark:text-white';
                 $time = $n->created_at->diffForHumans();
-                $link = $n->ticket_id
-                    ? '<form method="POST" action="'.route('notifications.read', $n->id).'" class="mt-1"><input type="hidden" name="_token" value="'.csrf_token().'"><button type="submit" class="text-xs text-indigo-600 hover:underline">View ticket →</button></form>'
-                    : '';
-                $html .= "<div class=\"flex gap-3 px-4 py-3 {$bg}\">
+                $url = route('notifications.read', $n->id);
+
+                $html .= "<a href=\"{$url}\" class=\"flex items-start gap-3 px-4 py-3.5 border-b border-slate-100 dark:border-slate-700/60 last:border-0 transition-colors cursor-pointer group block {$bg}\">
                     <div class=\"flex-1 min-w-0\">
-                        <p class=\"text-xs text-slate-700 leading-snug {$fw}\">{$n->message}</p>
-                        <p class=\"text-xs text-slate-400 mt-0.5\">{$time}</p>
-                        {$link}
+                        <p class=\"text-xs leading-snug {$fw} group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors\">{$n->message}</p>
+                        <div class=\"flex items-center justify-between mt-1.5\">
+                            <span class=\"text-[11px] text-slate-400 dark:text-slate-500\">{$time}</span>
+                            <span class=\"text-[11px] font-medium text-indigo-600 dark:text-indigo-400 group-hover:translate-x-0.5 transition-transform flex items-center gap-0.5\">View &rarr;</span>
+                        </div>
                     </div>
                     {$dot}
-                </div>";
+                </a>";
             }
         }
 

@@ -360,7 +360,7 @@
                     <a href="{{ route('roster.index', ['team' => $teamKey]) }}"
                        class="bg-white dark:bg-[#131b2e] border border-slate-200 dark:border-slate-800/90 rounded-2xl p-3 sm:p-4 hover:border-slate-300 dark:hover:border-slate-700 transition-all hover:shadow-sm group block relative overflow-hidden">
 
-                        <div class="flex items-center justify-between gap-2 h-full relative z-10">
+                        <div class="flex items-center justify-between gap-2 h-full relative">
                             {{-- Left: Team Badge, Big Metric, Mini Progress & Link --}}
                             <div class="flex-1 min-w-0">
                                 <div class="flex items-center gap-1.5 mb-1.5">
