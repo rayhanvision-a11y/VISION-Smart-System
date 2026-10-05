@@ -31,6 +31,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Live Dashboard & Duty Stats
     Route::get('/dashboard', [ApiDashboardController::class, 'index']);
+    Route::get('/technician-teams/today', [ApiDashboardController::class, 'todayTeams']);
 
     // Team Roster & Duty Shifts
     Route::get('/roster', [ApiRosterController::class, 'index']);

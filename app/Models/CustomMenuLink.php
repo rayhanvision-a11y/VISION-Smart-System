@@ -13,11 +13,46 @@ class CustomMenuLink extends Model
         'name',
         'url',
         'icon',
+        'icon_image',
         'is_important',
         'is_active',
         'open_in_new_tab',
         'sort_order',
     ];
+
+    /**
+     * Resolve uploaded icon image to a browseable URL (or null).
+     */
+    public function iconImageUrl(): ?string
+    {
+        if (empty($this->icon_image)) {
+            return null;
+        }
+        if (str_starts_with($this->icon_image, 'http://') || str_starts_with($this->icon_image, 'https://')) {
+            return $this->icon_image;
+        }
+        if (\Storage::disk('public')->exists($this->icon_image)) {
+            return url('storage/'.$this->icon_image);
+        }
+        return url($this->icon_image);
+    }
+
+    /**
+     * Render the icon as an <img> tag if an image is uploaded, else fall back to SVG.
+     */
+    public function renderIcon(string $cssClass = 'w-4 h-4'): string
+    {
+        $url = $this->iconImageUrl();
+        if ($url) {
+            return sprintf(
+                '<img src="%s" alt="%s" class="%s object-contain rounded">',
+                e($url),
+                e($this->name),
+                e($cssClass)
+            );
+        }
+        return $this->svgIcon($cssClass);
+    }
 
     protected function casts(): array
     {

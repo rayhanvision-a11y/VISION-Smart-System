@@ -33,6 +33,71 @@
             display: none;
         }
 
+        /* Modern Hover Tooltip Card (Matching Reference Card) */
+        .leaflet-tooltip.map-hover-card {
+            background: #ffffff;
+            color: #0f172a;
+            border: 1px solid rgba(226, 232, 240, 0.95);
+            border-radius: 14px;
+            padding: 10px 14px;
+            box-shadow: 0 14px 35px -8px rgba(0, 0, 0, 0.25), 0 4px 12px rgba(0, 0, 0, 0.08);
+            font-family: inherit;
+            line-height: 1.35;
+            min-width: 220px;
+            max-width: 320px;
+            white-space: normal;
+            pointer-events: auto !important;
+            cursor: default;
+        }
+        .leaflet-tooltip.map-hover-card::before {
+            border-top-color: #ffffff;
+        }
+        .dark .leaflet-tooltip.map-hover-card {
+            background: #1e293b;
+            color: #f1f5f9;
+            border-color: #334155;
+            box-shadow: 0 14px 35px -8px rgba(0, 0, 0, 0.5);
+        }
+        .dark .leaflet-tooltip.map-hover-card::before {
+            border-top-color: #1e293b;
+        }
+        .dark .leaflet-tooltip.map-hover-card .hover-card-inner .hover-card-title {
+            color: #f8fafc !important;
+        }
+        .dark .leaflet-tooltip.map-hover-card .hover-card-inner .hover-card-sub {
+            color: #94a3b8 !important;
+        }
+        .dark .leaflet-tooltip.map-hover-card .hover-card-assigned {
+            background: rgba(30, 41, 59, 0.95) !important;
+            border-color: rgba(99, 102, 241, 0.4) !important;
+        }
+        .dark .leaflet-tooltip.map-hover-card .hover-card-assigned strong {
+            color: #a5b4fc !important;
+        }
+        .dark .leaflet-tooltip.map-hover-card .hover-card-real {
+            background: rgba(6, 78, 59, 0.35) !important;
+            border-color: rgba(16, 185, 129, 0.4) !important;
+        }
+        .dark .leaflet-tooltip.map-hover-card .hover-card-real strong,
+        .dark .leaflet-tooltip.map-hover-card .hover-card-real div {
+            color: #6ee7b7 !important;
+        }
+        .dark .leaflet-tooltip.map-hover-card .hover-card-close-btn {
+            background: rgba(255, 255, 255, 0.1) !important;
+            color: #94a3b8 !important;
+        }
+        .dark .leaflet-tooltip.map-hover-card .hover-card-close-btn:hover {
+            background: rgba(239, 68, 68, 0.25) !important;
+            color: #f87171 !important;
+        }
+        .dark .leaflet-tooltip.map-hover-card .hover-card-stat-box {
+            background: rgba(30, 41, 59, 0.85) !important;
+            border-color: rgba(51, 65, 85, 0.8) !important;
+        }
+        .dark .leaflet-tooltip.map-hover-card .hover-card-stat-box strong {
+            color: #f8fafc !important;
+        }
+
         /* App-identical Circular Halo Marker matching Flutter screenshot */
         .app-marker-container {
             position: relative;
@@ -104,6 +169,42 @@
             height: 11px;
             border-radius: 50%;
             border: 2px solid #ffffff;
+        }
+
+        /* Marker Area Pill Badge (Visible directly on the map marker) */
+        .app-marker-area-pill {
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%) translateY(3px);
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            padding: 2.5px 8px;
+            border-radius: 9999px;
+            background: #059669;
+            color: #ffffff;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.01em;
+            line-height: 1.2;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
+            border: 1.5px solid #ffffff;
+            pointer-events: none;
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            max-width: 175px;
+            text-overflow: ellipsis;
+            overflow: hidden;
+        }
+        .app-marker-area-pill.pill-squad {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            border-color: #ffffff;
+        }
+        .app-marker-area-pill.pill-gps {
+            background: linear-gradient(135deg, #059669, #10b981);
+            border-color: #ffffff;
         }
 
         /* Glassmorphism floating panels */
@@ -194,6 +295,51 @@
                 width: auto;
             }
         }
+
+        /* Fixed Avatar & Active Status Dot Positioning (Top Right) */
+        .staff-avatar-wrapper {
+            position: relative !important;
+            flex-shrink: 0 !important;
+            display: inline-flex !important;
+            align-items: center;
+            justify-content: center;
+        }
+        .staff-status-dot {
+            position: absolute !important;
+            top: 0 !important;
+            right: 0 !important;
+            border-radius: 9999px !important;
+            border: 2px solid #ffffff !important;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25) !important;
+            z-index: 25 !important;
+            pointer-events: none !important;
+        }
+        .dark .staff-status-dot {
+            border-color: #0f172a !important;
+        }
+        .staff-status-dot.dot-online {
+            background-color: #10b981 !important;
+        }
+        .staff-status-dot.dot-idle {
+            background-color: #f59e0b !important;
+        }
+        .staff-status-dot.dot-offline {
+            background-color: #64748b !important;
+        }
+        .staff-status-dot.dot-lg {
+            width: 15px !important;
+            height: 15px !important;
+            top: -2px !important;
+            right: -2px !important;
+            border-width: 2.5px !important;
+        }
+        .staff-status-dot.dot-sm {
+            width: 11px !important;
+            height: 11px !important;
+            top: -1px !important;
+            right: -1px !important;
+            border-width: 2px !important;
+        }
     </style>
 
     {{-- 2. Alpine Component Function Defined on window BEFORE HTML uses it --}}
@@ -203,9 +349,11 @@
                 map: null,
                 markers: {},
                 technicians: [],
+                geoAddressCache: {},
                 searchQuery: '',
                 roleFilter: '',
                 roleFilterLabel: 'All Staff',
+                areaFilter: '',
                 statusFilter: '',
                 showDirectory: false,
                 selectedTechnician: null,
@@ -225,10 +373,17 @@
                 },
 
                 init() {
+                    window.liveStaffMapInstance = this;
+                    const params = new URLSearchParams(window.location.search);
+                    if (params.get('area')) {
+                        this.areaFilter = params.get('area');
+                        this.searchQuery = params.get('area');
+                    }
                     this.pollLeaflet();
                 },
 
                 pollLeaflet() {
+                    window.liveStaffMapInstance = this;
                     if (typeof L !== 'undefined' && typeof L.map === 'function') {
                         this.initMap();
                         this.fetchLocations();
@@ -242,6 +397,217 @@
                     } else {
                         setTimeout(() => this.pollLeaflet(), 100);
                     }
+                },
+
+                // Pin / Fix technician card in place
+                pinTechnician(userId) {
+                    const tech = this.technicians.find(t => t.user_id === userId);
+                    if (!tech) return;
+
+                    // Unpin others
+                    this.technicians.forEach(other => {
+                        if (other.user_id !== userId && other.is_pinned) {
+                            other.is_pinned = false;
+                            if (this.markers[other.user_id]) {
+                                this.markers[other.user_id].closeTooltip();
+                                this.markers[other.user_id].setTooltipContent(this.buildMarkerTooltipHtml(other));
+                            }
+                        }
+                    });
+
+                    tech.is_pinned = true;
+                    if (this.markers[userId]) {
+                        this.markers[userId].setTooltipContent(this.buildMarkerTooltipHtml(tech));
+                        this.markers[userId].openTooltip();
+                    }
+                    this.selectTechnician(tech);
+                },
+
+                // Unpin / Close technician card
+                unpinTechnician(userId) {
+                    const tech = this.technicians.find(t => t.user_id === userId);
+                    if (tech) {
+                        tech.is_pinned = false;
+                        tech._hovering_card = false;
+                    }
+                    if (this.markers[userId]) {
+                        this.markers[userId].closeTooltip();
+                        if (tech) {
+                            this.markers[userId].setTooltipContent(this.buildMarkerTooltipHtml(tech));
+                        }
+                    }
+                },
+
+                // Keep card open when mouse hovers over the card itself
+                setCardHovering(userId, isHovering) {
+                    const tech = this.technicians.find(t => t.user_id === userId);
+                    if (!tech) return;
+                    tech._hovering_card = isHovering;
+                    if (!isHovering && !tech.is_pinned) {
+                        setTimeout(() => {
+                            if (!tech.is_pinned && !tech._hovering_card && this.markers[userId]) {
+                                this.markers[userId].closeTooltip();
+                            }
+                        }, 150);
+                    }
+                },
+
+                // Pabna City Precise Landmark / Area Geocoder
+                getPabnaRealArea(lat, lng) {
+                    if (!lat || !lng) return null;
+                    const nLat = Number(lat);
+                    const nLng = Number(lng);
+
+                    // 1. Arman Center & Gopalpur (Pabna town center, DC Road, Zilla School, Mohila College, Hospital Rd intersection)
+                    if (nLat >= 24.0010 && nLat <= 24.0055 && nLng >= 89.2320 && nLng <= 89.2378) {
+                        return {
+                            shortName: 'Arman Center, Gopalpur',
+                            fullAddress: 'Arman Center, Gopalpur, Pabna Sadar, Pabna'
+                        };
+                    }
+
+                    // 2. Hospital Road / Abdul Hamid Road / Indira Mor
+                    if (nLat >= 24.0055 && nLat <= 24.0080 && nLng >= 89.2340 && nLng <= 89.2395) {
+                        return {
+                            shortName: 'Hospital Road, Gopalpur',
+                            fullAddress: 'Hospital Road, Gopalpur, Pabna Sadar, Pabna'
+                        };
+                    }
+
+                    // 3. Radhanagar / Edward College Area
+                    if (nLat >= 24.0080 && nLat <= 24.0180 && nLng >= 89.2250 && nLng <= 89.2400) {
+                        return {
+                            shortName: 'Radhanagar',
+                            fullAddress: 'Radhanagar, Pabna Sadar, Pabna'
+                        };
+                    }
+
+                    // 4. Dilalpur / Traffic Mor / Central Bus Terminal
+                    if (nLat >= 23.9950 && nLat <= 24.0020 && nLng >= 89.2360 && nLng <= 89.2500) {
+                        return {
+                            shortName: 'Dilalpur, Traffic Mor',
+                            fullAddress: 'Dilalpur, Traffic Mor, Pabna Sadar, Pabna'
+                        };
+                    }
+
+                    // 5. Shalgaria / Jubilee Tank
+                    if (nLat >= 24.0020 && nLat <= 24.0150 && nLng >= 89.2480 && nLng <= 89.2650) {
+                        return {
+                            shortName: 'Shalgaria',
+                            fullAddress: 'Shalgaria, Pabna Sadar, Pabna'
+                        };
+                    }
+
+                    // 6. Shadhupara (Real Geographic area north-east of town)
+                    if (nLat >= 24.0150 && nLat <= 24.0300 && nLng >= 89.2400 && nLng <= 89.2600) {
+                        return {
+                            shortName: 'Shadhupara',
+                            fullAddress: 'Shadhupara, Pabna Sadar, Pabna'
+                        };
+                    }
+
+                    // 7. Hemayetpur / Mental Hospital Area
+                    if (nLat >= 23.9900 && nLat <= 24.0100 && nLng >= 89.1800 && nLng <= 89.2200) {
+                        return {
+                            shortName: 'Hemayetpur',
+                            fullAddress: 'Hemayetpur, Pabna Sadar, Pabna'
+                        };
+                    }
+
+                    return null;
+                },
+
+                // Reverse Geocode: Get live area/street name from lat/lng with local caching (short name + full multiline address)
+                async getGeoAddress(lat, lng, callback) {
+                    if (!lat || !lng) return;
+
+                    // 1. Precise Pabna landmark area check first
+                    const localArea = this.getPabnaRealArea(lat, lng);
+                    if (localArea) {
+                        if (callback) callback(localArea.shortName, localArea.fullAddress);
+                        return localArea;
+                    }
+
+                    const key = `${Number(lat).toFixed(4)},${Number(lng).toFixed(4)}`;
+                    if (this.geoAddressCache[key]) {
+                        const cached = this.geoAddressCache[key];
+                        if (callback) callback(cached.shortName, cached.fullAddress);
+                        return cached;
+                    }
+
+                    try {
+                        const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1&accept-language=en,bn`;
+                        const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+                        if (res.ok) {
+                            const data = await res.json();
+                            const addr = data.address || {};
+
+                            // 1. Short Real Name for the bottom pill under avatar (e.g. "Pabna Sadar", "Shadhupara", "Radhanagar")
+                            const neighborhood = addr.suburb || addr.neighbourhood || addr.village || addr.residential || addr.road || '';
+                            const municipality = addr.municipality || addr.city || addr.town || addr.county || addr.state_district || '';
+                            let shortName = '';
+                            if (neighborhood && municipality && neighborhood.toLowerCase() !== municipality.toLowerCase()) {
+                                shortName = `${neighborhood}, ${municipality}`;
+                            } else {
+                                shortName = neighborhood || municipality || (data.display_name ? data.display_name.split(',')[0].trim() : 'Pabna Sadar');
+                            }
+                            if (shortName.length > 24) {
+                                shortName = neighborhood || municipality || shortName.substring(0, 22);
+                            }
+
+                            // 2. Full Multiline Address for the Card (Clean 2-4 lines, no truncation)
+                            let fullAddress = data.display_name || '';
+                            if (!fullAddress) {
+                                const parts = [neighborhood, municipality, addr.district, addr.state].filter(Boolean);
+                                fullAddress = parts.join(', ');
+                            } else {
+                                fullAddress = fullAddress.replace(/,\s*\d{4,5}/g, '').replace(/,\s*Bangladesh$/i, '').trim();
+                            }
+
+                            const result = { shortName, fullAddress };
+                            this.geoAddressCache[key] = result;
+                            if (callback) callback(shortName, fullAddress);
+                            return result;
+                        }
+                    } catch (e) {
+                        // Silent fallback
+                    }
+
+                    const fallback = { shortName: 'Pabna Sadar', fullAddress: 'Pabna Sadar, Pabna' };
+                    if (callback) callback(fallback.shortName, fallback.fullAddress);
+                    return fallback;
+                },
+
+                get allSquadAreas() {
+                    const areas = new Set();
+                    this.technicians.forEach(t => {
+                        if (t.squad_area) areas.add(t.squad_area);
+                        if (Array.isArray(t.ticket_areas)) {
+                            t.ticket_areas.forEach(a => a && areas.add(a));
+                        }
+                    });
+                    return Array.from(areas).sort();
+                },
+
+                get filteredTechnicians() {
+                    return this.technicians.filter(t => {
+                        const q = this.searchQuery.toLowerCase().trim();
+                        const matchesSearch = !q ||
+                            (t.name && t.name.toLowerCase().includes(q)) ||
+                            (t.team && t.team.toLowerCase().includes(q)) ||
+                            (t.squad_area && t.squad_area.toLowerCase().includes(q)) ||
+                            (t.squad_name && t.squad_name.toLowerCase().includes(q)) ||
+                            (Array.isArray(t.ticket_areas) && t.ticket_areas.some(a => a.toLowerCase().includes(q))) ||
+                            (t.live_geo_area && t.live_geo_area.toLowerCase().includes(q)) ||
+                            (t.phone && t.phone.toLowerCase().includes(q));
+
+                        const matchesStatus = !this.statusFilter || t.status === this.statusFilter;
+                        const matchesArea = !this.areaFilter || 
+                            (t.squad_area && t.squad_area.toLowerCase() === this.areaFilter.toLowerCase()) ||
+                            (Array.isArray(t.ticket_areas) && t.ticket_areas.some(a => a.toLowerCase() === this.areaFilter.toLowerCase()));
+
+                        return matchesSearch && matchesStatus && matchesArea;
+                    });
                 },
 
                 initMap() {
@@ -258,6 +624,19 @@
                     }).setView([defaultLat, defaultLng], 13);
 
                     L.control.zoom({ position: 'bottomright' }).addTo(this.map);
+
+                    // Clicking on map canvas unpins any fixed technician card
+                    this.map.on('click', () => {
+                        this.technicians.forEach(t => {
+                            if (t.is_pinned) {
+                                t.is_pinned = false;
+                                if (this.markers[t.user_id]) {
+                                    this.markers[t.user_id].closeTooltip();
+                                    this.markers[t.user_id].setTooltipContent(this.buildMarkerTooltipHtml(t));
+                                }
+                            }
+                        });
+                    });
 
                     // 1. OpenStreetMap Standard (Exact same layer as Mobile App with Bengali road labels)
                     this.tileLayers['osm'] = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -324,8 +703,36 @@
                         if (!res.ok) throw new Error('Failed to load location data');
                         const json = await res.json();
 
-                        this.technicians = json.technicians || [];
+                        const oldMap = new Map(this.technicians.map(t => [t.user_id, t]));
+                        const newTechs = json.technicians || [];
+                        newTechs.forEach(t => {
+                            const old = oldMap.get(t.user_id);
+                            if (old) {
+                                t.is_pinned = old.is_pinned;
+                                t._hovering_card = old._hovering_card;
+                                if (old.live_geo_area) t.live_geo_area = old.live_geo_area;
+                                if (old.live_full_address) t.live_full_address = old.live_full_address;
+                            }
+                            if (t.real_area) {
+                                t.live_geo_area = t.real_area;
+                            }
+                            if (t.real_address) {
+                                t.live_full_address = t.real_address;
+                            }
+                        });
+                        this.technicians = newTechs;
                         this.renderMarkers();
+
+                        // If user opened with ?area=XYZ, automatically focus on the matching technician
+                        if (this.areaFilter && !this.selectedTechnician) {
+                            const match = this.technicians.find(t => 
+                                (t.squad_area && t.squad_area.toLowerCase() === this.areaFilter.toLowerCase()) ||
+                                (Array.isArray(t.ticket_areas) && t.ticket_areas.some(a => a.toLowerCase() === this.areaFilter.toLowerCase()))
+                            );
+                            if (match) {
+                                this.selectTechnician(match);
+                            }
+                        }
 
                         // Refresh selected technician data if currently open
                         if (this.selectedTechnician) {
@@ -341,17 +748,51 @@
                     }
                 },
 
-                get filteredTechnicians() {
-                    return this.technicians.filter(t => {
-                        const q = this.searchQuery.toLowerCase().trim();
-                        const matchesSearch = !q ||
-                            (t.name && t.name.toLowerCase().includes(q)) ||
-                            (t.team && t.team.toLowerCase().includes(q)) ||
-                            (t.phone && t.phone.toLowerCase().includes(q));
+                createMarkerIcon(t) {
+                    const initial = (t.name || '?').trim().charAt(0).toUpperCase();
+                    const hasRealAvatar = t.avatar_url && !t.avatar_url.includes('ui-avatars.com') && !t.avatar_url.includes('gravatar.com');
 
-                        const matchesStatus = !this.statusFilter || t.status === this.statusFilter;
+                    if (t.real_area) {
+                        t.live_geo_area = t.real_area;
+                    }
+                    if (t.real_address) {
+                        t.live_full_address = t.real_address;
+                    }
 
-                        return matchesSearch && matchesStatus;
+                    // Check if local Pabna area matches immediately
+                    const localArea = this.getPabnaRealArea(t.latitude, t.longitude);
+                    if (localArea && !t.live_geo_area) {
+                        t.live_geo_area = localArea.shortName;
+                        t.live_full_address = localArea.fullAddress;
+                    }
+
+                    // STRICTLY Real Location ONLY - NEVER squad/assigned area!
+                    const realLocationName = t.live_geo_area 
+                        || t.real_area
+                        || (localArea ? localArea.shortName : 'Arman Center, Gopalpur');
+
+                    const iconHtml = `
+                        <div class="app-marker-container" id="marker-user-${t.user_id}" title="${t.name}">
+                            <div class="app-marker-halo halo-${t.status}"></div>
+                            <div class="app-marker-inner inner-${t.status}">
+                                ${hasRealAvatar
+                                    ? `<img src="${t.avatar_url}" alt="${t.name}" onerror="this.remove()"><span>${initial}</span>`
+                                    : `<span>${initial}</span>`}
+                            </div>
+                            <div class="app-marker-dot inner-${t.status}"></div>
+                            <div class="app-marker-area-pill pill-gps" id="marker-pill-${t.user_id}">
+                                <span>📍</span>
+                                <span class="truncate" id="marker-pill-text-${t.user_id}">${realLocationName}</span>
+                            </div>
+                        </div>
+                    `;
+
+                    return L.divIcon({
+                        className: 'custom-leaflet-marker',
+                        html: iconHtml,
+                        iconSize: [48, 48],
+                        iconAnchor: [24, 24],
+                        popupAnchor: [0, -24]
                     });
                 },
 
@@ -375,50 +816,62 @@
                         activeIds.add(t.user_id);
                         bounds.push([t.latitude, t.longitude]);
 
-                        const initial = (t.name || '?').trim().charAt(0).toUpperCase();
-                        const hasRealAvatar = t.avatar_url && !t.avatar_url.includes('ui-avatars.com') && !t.avatar_url.includes('gravatar.com');
+                        const customIcon = this.createMarkerIcon(t);
 
-                        // Exact Halo + Circular Avatar Marker matching the Mobile App Screenshot!
-                        const iconHtml = `
-                            <div class="app-marker-container" id="marker-user-${t.user_id}" title="${t.name}">
-                                <div class="app-marker-halo halo-${t.status}"></div>
-                                <div class="app-marker-inner inner-${t.status}">
-                                    ${hasRealAvatar
-                                        ? `<img src="${t.avatar_url}" alt="${t.name}" onerror="this.remove()"><span>${initial}</span>`
-                                        : `<span>${initial}</span>`}
-                                </div>
-                                <div class="app-marker-dot inner-${t.status}"></div>
-                            </div>
-                        `;
+                        // Resolve real live street/area address from GPS coordinates in background
+                        if (!t.live_geo_area) {
+                            this.getGeoAddress(t.latitude, t.longitude, (shortName, fullAddress) => {
+                                t.live_geo_area = shortName;
+                                t.live_full_address = fullAddress;
 
-                        const customIcon = L.divIcon({
-                            className: 'custom-leaflet-marker',
-                            html: iconHtml,
-                            iconSize: [48, 48],
-                            iconAnchor: [24, 24],
-                            popupAnchor: [0, -24]
-                        });
+                                if (this.markers[t.user_id]) {
+                                    this.markers[t.user_id].setIcon(this.createMarkerIcon(t));
+                                    this.markers[t.user_id].setTooltipContent(this.buildMarkerTooltipHtml(t));
+                                }
+                            });
+                        }
 
                         if (this.markers[t.user_id]) {
                             this.markers[t.user_id].setLatLng([t.latitude, t.longitude]);
                             this.markers[t.user_id].setIcon(customIcon);
+                            this.markers[t.user_id].setTooltipContent(this.buildMarkerTooltipHtml(t));
+                            if (t.is_pinned) {
+                                this.markers[t.user_id].openTooltip();
+                            }
                         } else {
                             const marker = L.marker([t.latitude, t.longitude], { icon: customIcon }).addTo(this.map);
-                            
-                            marker.on('click', () => {
-                                this.selectTechnician(t);
+
+                            // Rich Hover Card Tooltip (interactive: true enables clicking cross button & pinning)
+                            marker.bindTooltip(this.buildMarkerTooltipHtml(t), {
+                                direction: 'top',
+                                offset: [0, -26],
+                                opacity: 1,
+                                className: 'map-hover-card',
+                                interactive: true,
+                                permanent: false
                             });
 
-                            // Mobile-app like tooltip on hover
-                            marker.bindTooltip(`
-                                <div style="font-family: inherit; padding: 2px 4px;">
-                                    <div style="font-weight: 700; color: #1e293b;">${t.name}</div>
-                                    <div style="font-size: 11px; color: #64748b;">${t.role} • <span style="text-transform: uppercase; font-weight: 600;">${t.status}</span></div>
-                                </div>
-                            `, {
-                                direction: 'top',
-                                offset: [0, -24],
-                                opacity: 0.95
+                            // Custom hover & click control for Pin / Fix behavior:
+                            marker.off('mouseover');
+                            marker.off('mouseout');
+
+                            marker.on('mouseover', () => {
+                                marker.openTooltip();
+                            });
+
+                            marker.on('mouseout', () => {
+                                setTimeout(() => {
+                                    if (!t.is_pinned && !t._hovering_card) {
+                                        marker.closeTooltip();
+                                    }
+                                }, 160);
+                            });
+
+                            marker.on('click', (e) => {
+                                if (e && e.originalEvent) {
+                                    e.originalEvent.stopPropagation();
+                                }
+                                this.pinTechnician(t.user_id);
                             });
 
                             this.markers[t.user_id] = marker;
@@ -444,9 +897,115 @@
                     }
                 },
 
+                buildMarkerTooltipHtml(t) {
+                    const leaderBadge = t.is_squad_leader ? '👑 ' : '';
+                    const statusColor = t.status === 'online' ? '#10b981' : (t.status === 'idle' ? '#f59e0b' : '#64748b');
+
+                    // Assigned duty location (Squad area or ticket areas)
+                    const assignedLocation = t.squad_area 
+                        ? t.squad_area 
+                        : (t.ticket_areas && t.ticket_areas.length ? t.ticket_areas.join(', ') : 'Not Assigned');
+
+                    const localArea = this.getPabnaRealArea(t.latitude, t.longitude);
+                    // Real live address (strictly real location - never assigned squad area)
+                    const realLocation = t.live_full_address 
+                        || t.live_geo_area 
+                        || (localArea ? localArea.fullAddress : 'Pabna Sadar, Pabna');
+
+                    const totalTickets = t.total_tickets_count ?? 0;
+                    const activeTickets = t.active_tickets_count ?? 0;
+                    const solvedToday = t.solved_today_count ?? 0;
+                    const solvedTotal = t.solved_total_count ?? 0;
+
+                    return `
+                        <div class="hover-card-inner" 
+                             onclick="window.liveStaffMapInstance && window.liveStaffMapInstance.pinTechnician(${t.user_id})"
+                             onmouseenter="window.liveStaffMapInstance && window.liveStaffMapInstance.setCardHovering(${t.user_id}, true)"
+                             onmouseleave="window.liveStaffMapInstance && window.liveStaffMapInstance.setCardHovering(${t.user_id}, false)"
+                             style="min-width: 220px; max-width: 310px; line-height: 1.35; position: relative; cursor: pointer;">
+                            
+                            <!-- Header: Name + Pin State Badge + Close (✕) Button -->
+                            <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 2px;">
+                                <div>
+                                    <div class="hover-card-title" style="font-size: 14px; font-weight: 800; color: #0f172a; letter-spacing: -0.01em; display: flex; align-items: center; gap: 5px;">
+                                        <span>${leaderBadge}${t.name}</span>
+                                        ${t.is_pinned ? `<span style="font-size: 9px; background: #6366f1; color: #ffffff; padding: 1.5px 5px; border-radius: 4px; font-weight: 700; letter-spacing: 0.02em;">FIXED</span>` : ''}
+                                    </div>
+                                    <!-- Role & Status -->
+                                    <div class="hover-card-sub" style="font-size: 11px; font-weight: 600; color: #64748b; display: flex; align-items: center; gap: 5px; margin-top: 1px;">
+                                        <span>${t.role}</span>
+                                        <span style="opacity: 0.5;">•</span>
+                                        <span style="color: ${statusColor}; font-weight: 800; text-transform: uppercase;">${t.status}</span>
+                                    </div>
+                                </div>
+
+                                <!-- Close / Dismiss Cross (✕) Button -->
+                                <button type="button" 
+                                        class="hover-card-close-btn"
+                                        onclick="event.stopPropagation(); window.liveStaffMapInstance && window.liveStaffMapInstance.unpinTechnician(${t.user_id})"
+                                        style="background: rgba(148, 163, 184, 0.15); border: none; cursor: pointer; color: #64748b; font-size: 13px; font-weight: bold; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; padding: 0; line-height: 1; transition: all 0.15s;"
+                                        title="Close card (✕)"
+                                        onmouseover="this.style.background='#fee2e2'; this.style.color='#ef4444';"
+                                        onmouseout="this.style.background='rgba(148, 163, 184, 0.15)'; this.style.color='#64748b';">
+                                    ✕
+                                </button>
+                            </div>
+
+                            <!-- Assigned Location -->
+                            <div class="hover-card-assigned" style="margin-top: 6px; margin-bottom: 5px; padding: 5px 8px; background: #eef2ff; border-radius: 8px; border: 1px solid #c7d2fe; display: flex; align-items: center; gap: 6px;">
+                                <span style="font-size: 13px; flex-shrink: 0;">🎯</span>
+                                <div style="flex: 1; min-width: 0;">
+                                    <span style="font-size: 9px; color: #6366f1; font-weight: 700; text-transform: uppercase; display: block; line-height: 1; margin-bottom: 2px;">Assigned Location</span>
+                                    <strong style="font-size: 11px; color: #3730a3; font-weight: 800; display: block; line-height: 1.25; word-break: break-word;">${assignedLocation}</strong>
+                                </div>
+                            </div>
+
+                            <!-- Real Location (Full address 2-4 lines, no truncation!) -->
+                            <div class="hover-card-real" style="margin-bottom: 6px; padding: 5px 8px; background: #ecfdf5; border-radius: 8px; border: 1px solid #a7f3d0; display: flex; align-items: flex-start; gap: 6px;">
+                                <span style="font-size: 13px; flex-shrink: 0; margin-top: 1px;">📍</span>
+                                <div style="flex: 1; min-width: 0;">
+                                    <span style="font-size: 9px; color: #059669; font-weight: 700; text-transform: uppercase; display: block; line-height: 1; margin-bottom: 2px;">Real Location</span>
+                                    <div style="font-size: 11px; color: #065f46; font-weight: 700; line-height: 1.35; word-break: break-word; white-space: normal;">${realLocation}</div>
+                                </div>
+                            </div>
+
+                            <!-- Total Ticket & Solve Details -->
+                            <div style="padding-top: 6px; border-top: 1px dashed #cbd5e1; display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
+                                <div class="hover-card-stat-box" style="background: #f8fafc; padding: 4px 6px; border-radius: 6px; border: 1px solid #e2e8f0;">
+                                    <span style="color: #64748b; font-size: 9px; font-weight: 600; display: block;">Total Tickets</span>
+                                    <div style="display: flex; align-items: baseline; gap: 4px; margin-top: 1px;">
+                                        <strong style="color: #0f172a; font-size: 13px; font-weight: 800;">${totalTickets}</strong>
+                                        <span style="color: #d97706; font-size: 9px; font-weight: 700;">(${activeTickets} active)</span>
+                                    </div>
+                                </div>
+                                <div class="hover-card-stat-box" style="background: #f0fdf4; padding: 4px 6px; border-radius: 6px; border: 1px solid #bbf7d0;">
+                                    <span style="color: #166534; font-size: 9px; font-weight: 600; display: block;">Solved Today</span>
+                                    <div style="display: flex; align-items: baseline; gap: 4px; margin-top: 1px;">
+                                        <strong style="color: #15803d; font-size: 13px; font-weight: 800;">${solvedToday}</strong>
+                                        <span style="color: #166534; font-size: 9px; font-weight: 700;">(Tot: ${solvedTotal})</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            ${!t.is_pinned ? `<div style="text-align: center; font-size: 8.5px; color: #94a3b8; margin-top: 4px; font-weight: 500;">Click to pin / fix in place</div>` : ''}
+                        </div>
+                    `;
+                },
+
                 selectTechnician(tech) {
                     this.selectedTechnician = tech;
                     this.clearHistoryTrail();
+
+                    if (tech.has_location) {
+                        if (tech.real_area) tech.live_geo_area = tech.real_area;
+                        if (tech.real_address) tech.live_full_address = tech.real_address;
+
+                        const localArea = this.getPabnaRealArea(tech.latitude, tech.longitude);
+                        if (localArea) {
+                            if (!tech.live_geo_area) tech.live_geo_area = localArea.shortName;
+                            if (!tech.live_full_address) tech.live_full_address = localArea.fullAddress;
+                        }
+                    }
 
                     if (tech.has_location && this.map) {
                         this.map.flyTo([tech.latitude, tech.longitude], 15, {
@@ -531,6 +1090,15 @@
                                 this.map.flyTo([lat, lng], 16, { animate: true, duration: 1.2 });
                             }
 
+                            // Capture device battery level if available
+                            let batteryLevel = null;
+                            try {
+                                if ('getBattery' in navigator) {
+                                    const batt = await navigator.getBattery();
+                                    batteryLevel = Math.round(batt.level * 100);
+                                }
+                            } catch (_) {}
+
                             try {
                                 const res = await fetch("{{ route('map.update-my-location') }}", {
                                     method: 'POST',
@@ -539,7 +1107,7 @@
                                         'X-CSRF-TOKEN': '{{ csrf_token() }}',
                                         'Accept': 'application/json'
                                     },
-                                    body: JSON.stringify({ lat: lat, lng: lng, accuracy: acc })
+                                    body: JSON.stringify({ lat: lat, lng: lng, accuracy: acc, battery: batteryLevel })
                                 });
                                 if (res.ok) {
                                     await this.fetchLocations(false);
@@ -661,6 +1229,35 @@
                     </div>
                 </div>
 
+                {{-- Area Filter Dropdown --}}
+                <div class="relative" x-data="{ areaOpen: false }">
+                    <button @click="areaOpen = !areaOpen"
+                            class="glass-panel px-3.5 py-2 rounded-2xl text-xs font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-1.5 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
+                            :class="areaFilter ? 'border-rose-400 text-rose-600 dark:text-rose-400 font-bold' : ''">
+                        <span class="text-rose-500">📍</span>
+                        <span x-text="areaFilter || @js(__('All Areas'))" class="max-w-[100px] truncate"></span>
+                        <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+
+                    <div x-show="areaOpen" @click.away="areaOpen = false"
+                         style="display: none; position: absolute; right: 0; top: 100%; margin-top: 8px; width: 190px; max-height: 280px; overflow-y: auto; z-index: 1100;"
+                         class="glass-panel rounded-2xl py-1 text-xs shadow-2xl">
+                        <button @click="areaFilter = ''; areaOpen = false; renderMarkers()"
+                                class="w-full text-left px-3.5 py-2 hover:bg-indigo-50 dark:hover:bg-slate-800 font-medium flex items-center justify-between text-slate-700 dark:text-slate-200">
+                            <span>📍 {{ __('All Areas') }}</span>
+                            <span x-show="!areaFilter" class="text-emerald-500 font-bold">✓</span>
+                        </button>
+                        <template x-for="a in allSquadAreas" :key="a">
+                            <button @click="areaFilter = a; areaOpen = false; renderMarkers()"
+                                    class="w-full text-left px-3.5 py-2 hover:bg-indigo-50 dark:hover:bg-slate-800 font-medium flex items-center justify-between text-slate-700 dark:text-slate-200"
+                                    :class="areaFilter === a ? 'bg-indigo-50 dark:bg-slate-800 text-indigo-600 font-bold' : ''">
+                                <span class="truncate" x-text="a"></span>
+                                <span x-show="areaFilter === a" class="text-emerald-500 font-bold">✓</span>
+                            </button>
+                        </template>
+                    </div>
+                </div>
+
                 {{-- Staff Directory Drawer Button --}}
                 <button @click="showDirectory = !showDirectory"
                         class="glass-panel px-3.5 py-2 rounded-2xl text-xs font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-1.5 hover:bg-slate-50 dark:hover:bg-slate-800 transition">
@@ -733,14 +1330,22 @@
 
             {{-- Search Input --}}
             <div class="p-3 border-b border-slate-100 dark:border-slate-800">
-                <div class="relative">
+                <div class="relative flex items-center">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                    </div>
                     <input type="text"
                            x-model="searchQuery"
                            placeholder="{{ __('Search technician, phone, team…') }}"
-                           class="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
-                    <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                    </svg>
+                           class="w-full pl-9 pr-8 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500 focus:border-transparent placeholder-slate-400 dark:placeholder-slate-500 leading-normal">
+                    <button x-show="searchQuery"
+                            x-cloak
+                            @click="searchQuery = ''"
+                            class="absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
                 </div>
             </div>
 
@@ -749,30 +1354,47 @@
                 <template x-for="tech in filteredTechnicians" :key="tech.user_id">
                     <div @click="selectTechnician(tech); showDirectory = false"
                          :class="selectedTechnician && selectedTechnician.user_id === tech.user_id ? 'bg-emerald-50 dark:bg-emerald-950/40 border-l-4 border-emerald-500' : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'"
-                         class="p-3 transition-colors cursor-pointer flex items-center gap-3">
-                        <div class="relative flex-shrink-0">
+                         class="px-3.5 py-2.5 transition-colors cursor-pointer flex items-center gap-3">
+                        
+                        {{-- Avatar with locked dimensions & pinned status dot --}}
+                        <div class="staff-avatar-wrapper w-10 h-10">
                             <img :src="tech.avatar_url"
                                  onerror="this.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(this.getAttribute('alt') || 'User') + '&background=10b981&color=fff'"
                                  :alt="tech.name"
-                                 class="w-10 h-10 rounded-full object-cover border border-slate-200 dark:border-slate-700 shadow-sm">
-                            <span class="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white dark:border-slate-800"
+                                 class="w-10 h-10 rounded-full object-cover border border-slate-200 dark:border-slate-700 shadow-sm block">
+                            <span class="staff-status-dot dot-sm"
                                   :class="{
-                                      'bg-emerald-500': tech.status === 'online',
-                                      'bg-amber-500': tech.status === 'idle',
-                                      'bg-slate-400': tech.status === 'offline'
+                                      'dot-online': tech.status === 'online',
+                                      'dot-idle': tech.status === 'idle',
+                                      'dot-offline': tech.status === 'offline'
                                   }"></span>
                         </div>
-                        <div class="min-w-0 flex-1">
-                            <div class="flex items-center justify-between gap-1">
-                                <h4 class="text-xs font-bold text-slate-800 dark:text-slate-100 truncate" x-text="tech.name"></h4>
-                                <span class="text-[10px] font-semibold text-slate-400" x-text="tech.last_seen_text"></span>
+
+                        {{-- Technician Details Column --}}
+                        <div class="min-w-0 flex-1 flex flex-col justify-center">
+                            {{-- Row 1: Name (with Squad Leader crown) & Last Seen --}}
+                            <div class="flex items-center justify-between gap-2">
+                                <h4 class="text-xs font-bold text-slate-800 dark:text-slate-100 truncate flex items-center gap-1.5 leading-tight">
+                                    <span x-show="tech.is_squad_leader" class="text-amber-500 text-[11px]" title="Squad Leader">👑</span>
+                                    <span x-text="tech.name" class="truncate"></span>
+                                </h4>
+                                <span class="text-[10px] font-medium text-slate-400 dark:text-slate-500 flex-shrink-0 whitespace-nowrap" x-text="tech.last_seen_text"></span>
                             </div>
-                            <div class="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                                <span class="truncate" x-text="tech.team"></span>
-                                <span>•</span>
-                                <span class="text-indigo-600 dark:text-indigo-400 font-semibold" x-text="tech.active_tickets_count + ' tickets'"></span>
+
+                            {{-- Row 2: Team, Duty Area Pill & Ticket Count --}}
+                            <div class="flex items-center justify-between gap-2 mt-1">
+                                <div class="flex items-center gap-1.5 min-w-0 truncate">
+                                    <span class="text-[11px] text-slate-500 dark:text-slate-400 font-medium truncate" x-text="tech.team"></span>
+                                    <template x-if="tech.squad_area">
+                                        <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9.5px] font-semibold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200/60 dark:border-indigo-800/40 flex-shrink-0 leading-none">
+                                            <span>📍</span> <span x-text="tech.squad_area"></span>
+                                        </span>
+                                    </template>
+                                </div>
+                                <span class="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 flex-shrink-0 whitespace-nowrap" x-text="tech.active_tickets_count + ' tix'"></span>
                             </div>
                         </div>
+
                     </div>
                 </template>
             </div>
@@ -785,20 +1407,23 @@
                 {{-- Sheet Header with Profile Photo, Name & Close Button --}}
                 <div class="flex items-start justify-between gap-3 mb-4">
                     <div class="flex items-center gap-3.5">
-                        <div class="relative">
+                        <div class="staff-avatar-wrapper w-14 h-14">
                             <img :src="selectedTechnician.avatar_url"
                                  onerror="this.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(this.getAttribute('alt') || 'User') + '&background=10b981&color=fff'"
                                  :alt="selectedTechnician.name"
-                                 class="w-14 h-14 rounded-2xl object-cover border-2 border-emerald-500 shadow-md">
-                            <span class="absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white dark:border-slate-800"
+                                 class="w-14 h-14 rounded-2xl object-cover border-2 border-emerald-500 shadow-md block">
+                            <span class="staff-status-dot dot-lg"
                                   :class="{
-                                      'bg-emerald-500': selectedTechnician.status === 'online',
-                                      'bg-amber-500': selectedTechnician.status === 'idle',
-                                      'bg-slate-400': selectedTechnician.status === 'offline'
+                                      'dot-online': selectedTechnician.status === 'online',
+                                      'dot-idle': selectedTechnician.status === 'idle',
+                                      'dot-offline': selectedTechnician.status === 'offline'
                                   }"></span>
                         </div>
                         <div>
-                            <h3 class="text-base font-bold text-slate-800 dark:text-slate-100 leading-tight" x-text="selectedTechnician.name"></h3>
+                            <h3 class="text-base font-bold text-slate-800 dark:text-slate-100 leading-tight flex items-center gap-1.5">
+                                <span x-show="selectedTechnician.is_squad_leader" class="text-amber-500" title="Squad Leader">👑</span>
+                                <span x-text="selectedTechnician.name"></span>
+                            </h3>
                             <div class="flex items-center gap-2 mt-1">
                                 <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider"
                                       :class="{
@@ -821,6 +1446,27 @@
                 {{-- Detail Rows (Identical to Flutter _detailRow) --}}
                 <div class="space-y-2 mb-4 bg-slate-50 dark:bg-slate-900/60 p-3 rounded-2xl border border-slate-100 dark:border-slate-800 text-xs">
                     
+                    {{-- Assigned Duty / Squad Area --}}
+                    <template x-if="selectedTechnician.squad_area">
+                        <div class="flex items-center gap-2 text-indigo-700 dark:text-indigo-300 font-bold bg-indigo-50/80 dark:bg-indigo-950/40 px-2.5 py-1.5 rounded-xl border border-indigo-200/60 dark:border-indigo-800/50">
+                            <span class="text-sm">📍</span>
+                            <span>{{ __('Duty Area') }}: <strong class="underline decoration-indigo-400" x-text="selectedTechnician.squad_area"></strong></span>
+                            <template x-if="selectedTechnician.squad_name">
+                                <span class="text-[10px] text-slate-400 font-normal ml-auto" x-text="'(' + selectedTechnician.squad_name + ')'"></span>
+                            </template>
+                        </div>
+                    </template>
+
+                    {{-- Live GPS Reverse-Geocoded Location / Street Name --}}
+                    <div class="flex items-start gap-2 text-slate-700 dark:text-slate-200 font-medium bg-white dark:bg-slate-800/80 px-2.5 py-1.5 rounded-xl border border-slate-200/70 dark:border-slate-700/60"
+                         x-init="if (selectedTechnician.has_location && !selectedTechnician.live_geo_area) { getGeoAddress(selectedTechnician.latitude, selectedTechnician.longitude, (short, full) => { selectedTechnician.live_geo_area = short; selectedTechnician.live_full_address = full; }); }">
+                        <span class="text-sm text-emerald-500">📡</span>
+                        <div class="min-w-0 flex-1">
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">{{ __('Current Real Location') }}</span>
+                            <span class="font-bold text-slate-800 dark:text-slate-100 break-words leading-relaxed" x-text="selectedTechnician.real_address || selectedTechnician.live_full_address || selectedTechnician.live_geo_area || (selectedTechnician.has_location ? 'Arman Center, Gopalpur, Pabna' : '{{ __('No GPS Fix') }}')"></span>
+                        </div>
+                    </div>
+
                     {{-- Active Tickets --}}
                     <div class="flex items-center gap-2.5 text-amber-600 dark:text-amber-400 font-semibold">
                         <svg class="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/></svg>
@@ -834,21 +1480,16 @@
                     </div>
 
                     {{-- Battery Level --}}
-                    <template x-if="selectedTechnician.battery_level !== null">
-                        <div class="flex items-center gap-2.5 font-medium"
-                             :class="selectedTechnician.battery_level < 20 ? 'text-rose-600 font-bold' : 'text-emerald-600 dark:text-emerald-400'">
-                            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-                            <span>{{ __('Battery') }}: <span x-text="selectedTechnician.battery_level + '%'"></span></span>
-                        </div>
-                    </template>
+                    <div class="flex items-center gap-2.5 font-medium"
+                         :class="selectedTechnician.battery_level !== null ? (selectedTechnician.battery_level < 20 ? 'text-rose-600 font-bold' : 'text-emerald-600 dark:text-emerald-400') : 'text-slate-400'">
+                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                        <span>{{ __('Battery') }}: <span x-text="selectedTechnician.battery_level !== null ? selectedTechnician.battery_level + '%' : '{{ __('Not reporting') }}'"></span></span>
+                    </div>
 
-                    {{-- Accuracy & Speed --}}
+                    {{-- Speed & Status --}}
                     <div class="flex items-center gap-2.5 text-slate-500 dark:text-slate-400 font-medium">
                         <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
-                        <span>{{ __('Speed') }}: <span x-text="(selectedTechnician.speed_kmh ?? '0') + ' km/h'"></span></span>
-                        <template x-if="selectedTechnician.accuracy_meters">
-                            <span>(±<span x-text="selectedTechnician.accuracy_meters"></span>m)</span>
-                        </template>
+                        <span>{{ __('Status') }}: <span x-text="(!selectedTechnician.speed_kmh || selectedTechnician.speed_kmh == 0) ? '{{ __('Stationary (0 km/h)') }}' : selectedTechnician.speed_kmh + ' km/h'"></span></span>
                     </div>
 
                     {{-- Team & Shift --}}
@@ -885,15 +1526,29 @@
                     <span x-text="showingTrail ? '{{ __('Hide Movement Trail') }}' : '{{ __('View 12h GPS Movement Trail') }}'"></span>
                 </button>
 
-                {{-- Assigned Active Tickets Preview --}}
-                <div>
-                    <h4 class="text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">
-                        {{ __('Assigned Tickets') }} (<span x-text="selectedTechnician.active_tickets_count"></span>)
-                    </h4>
-                    <div class="space-y-1.5 max-h-36 overflow-y-auto pr-1">
+                {{-- Assigned Active Tickets Preview (Collapsible Accordion, Default OFF) --}}
+                <div x-data="{ showAssignedTickets: false }" class="mt-2 pt-2 border-t border-slate-200 dark:border-slate-800">
+                    <button type="button"
+                            @click="showAssignedTickets = !showAssignedTickets"
+                            class="w-full flex items-center justify-between p-2 rounded-xl bg-slate-100 dark:bg-slate-800/90 hover:bg-indigo-50 dark:hover:bg-slate-700/60 transition group border border-slate-200/80 dark:border-slate-700/60">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs">📋</span>
+                            <span class="text-xs font-bold text-slate-800 dark:text-slate-200 group-hover:text-indigo-600 transition">
+                                {{ __('Assigned Tickets') }} (<span x-text="selectedTechnician.active_tickets_count"></span>)
+                            </span>
+                        </div>
+                        <div class="flex items-center gap-1.5 text-slate-400 group-hover:text-indigo-600">
+                            <span class="text-[10px] font-semibold" x-text="showAssignedTickets ? '{{ __('Hide') }}' : '{{ __('Show') }}'"></span>
+                            <svg class="w-4 h-4 transition-transform duration-200" :class="showAssignedTickets ? 'rotate-180 text-indigo-600' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </div>
+                    </button>
+
+                    <div x-show="showAssignedTickets" x-transition class="space-y-1.5 max-h-52 overflow-y-auto pr-1 mt-2">
                         <template x-for="t in selectedTechnician.active_tickets" :key="t.id">
                             <a :href="t.url" target="_blank"
-                               class="block p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-emerald-500 transition text-xs">
+                               class="block p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-emerald-500 transition text-xs shadow-sm">
                                 <div class="flex items-center justify-between gap-1">
                                     <span class="font-bold text-indigo-600 dark:text-indigo-400 text-[11px]" x-text="t.key"></span>
                                     <span class="px-1.5 py-0.2 rounded text-[9px] font-bold uppercase"

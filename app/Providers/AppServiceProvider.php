@@ -35,6 +35,15 @@ class AppServiceProvider extends ServiceProvider
     {
         Model::preventLazyLoading(! app()->isProduction());
 
+        // Record last-login timestamp (used by /users "Last Login" column)
+        \Illuminate\Support\Facades\Event::listen(\Illuminate\Auth\Events\Login::class, function ($event) {
+            try {
+                $event->user?->forceFill(['last_login_at' => now()])->saveQuietly();
+            } catch (\Throwable $e) {
+                // ignore if column missing before migration runs
+            }
+        });
+
         Carbon::macro('toBn', function ($format = null) {
             /** @var Carbon $this */
             $locale = app()->getLocale();

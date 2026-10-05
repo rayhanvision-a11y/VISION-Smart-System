@@ -26,7 +26,7 @@
     </div>
 
     {{-- Filter Bar (Identical to Board layout) --}}
-    <form method="GET" action="{{ route('roster.index') }}"
+    <form method="GET" action="{{ route('roster.index') }}" data-auto-filter
           class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm p-3 mb-5 flex flex-wrap items-center gap-3">
         
         <label class="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300 cursor-pointer px-1">

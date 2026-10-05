@@ -21,6 +21,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
+use Carbon\Carbon;
 
 class TicketController extends Controller
 {
@@ -73,6 +74,19 @@ class TicketController extends Controller
         }
         if ($request->filled('label')) {
             $query->whereHas('labels', fn ($q) => $q->where('labels.id', $request->label));
+        }
+        if ($request->filled('date')) {
+            $query->whereDate('created_at', $request->date);
+        }
+        if ($request->filled('resolved_date')) {
+            $query->where(function ($q) use ($request) {
+                $q->whereDate('resolved_at', $request->resolved_date)
+                  ->orWhere(function ($sub) use ($request) {
+                      $sub->whereNull('resolved_at')
+                          ->whereIn('status', ['resolved', 'closed'])
+                          ->whereDate('updated_at', $request->resolved_date);
+                  });
+            });
         }
 
         $tickets = $query->latest()->paginate(15)->withQueryString();
@@ -886,5 +900,249 @@ class TicketController extends Controller
 
         // 9. Delete ticket record
         $ticket->delete();
+    }
+
+    /**
+     * Display ticket activity calendar with daily created and solved counts.
+     */
+    public function calendar(Request $request)
+    {
+        $user = auth()->user();
+
+        // Target Year & Month
+        $year = (int) $request->input('year', now()->year);
+        $month = (int) $request->input('month', now()->month);
+
+        if ($month < 1 || $month > 12) {
+            $month = (int) now()->month;
+        }
+        if ($year < 2020 || $year > 2040) {
+            $year = (int) now()->year;
+        }
+
+        $targetDate = Carbon::createFromDate($year, $month, 1)->startOfMonth();
+        $prevMonth = $targetDate->copy()->subMonth();
+        $nextMonth = $targetDate->copy()->addMonth();
+
+        // Calendar grid range: starts Sunday of the first week, ends Saturday of last week
+        $startOfCalendar = $targetDate->copy()->startOfWeek(Carbon::SUNDAY);
+        $endOfCalendar = $targetDate->copy()->endOfMonth()->endOfWeek(Carbon::SATURDAY);
+
+        // Filterable base query scoped to current user
+        $baseQuery = Ticket::forUser($user);
+
+        if ($request->filled('category')) {
+            $baseQuery->where('category', $request->category);
+        }
+        if ($request->filled('priority')) {
+            $baseQuery->where('priority', $request->priority);
+        }
+        if ($request->filled('area')) {
+            $baseQuery->where(function ($q) use ($request) {
+                $q->where('area', $request->area)
+                  ->orWhereRaw('LOWER(area) = ?', [strtolower($request->area)]);
+            });
+        }
+        if ($request->filled('assigned_to') && ($user->isAdmin() || $user->isNoc())) {
+            $baseQuery->where('assigned_to', $request->assigned_to);
+        }
+        if ($request->filled('created_by') && $user->isAdmin()) {
+            $baseQuery->where('created_by', $request->created_by);
+        }
+
+        // Query tickets created per day in calendar range
+        $createdCounts = (clone $baseQuery)
+            ->whereBetween('created_at', [$startOfCalendar->copy()->startOfDay(), $endOfCalendar->copy()->endOfDay()])
+            ->selectRaw('DATE(created_at) as date_key, COUNT(*) as count')
+            ->groupBy('date_key')
+            ->pluck('count', 'date_key');
+
+        // Query tickets solved per day in calendar range
+        $solvedCounts = (clone $baseQuery)
+            ->whereIn('status', ['resolved', 'closed'])
+            ->where(function ($q) use ($startOfCalendar, $endOfCalendar) {
+                $q->whereBetween('resolved_at', [$startOfCalendar->copy()->startOfDay(), $endOfCalendar->copy()->endOfDay()])
+                  ->orWhere(function ($sub) use ($startOfCalendar, $endOfCalendar) {
+                      $sub->whereNull('resolved_at')
+                          ->whereBetween('updated_at', [$startOfCalendar->copy()->startOfDay(), $endOfCalendar->copy()->endOfDay()]);
+                  });
+            })
+            ->selectRaw('DATE(COALESCE(resolved_at, updated_at)) as date_key, COUNT(*) as count')
+            ->groupBy('date_key')
+            ->pluck('count', 'date_key');
+
+        // Target Month Totals
+        $monthStart = $targetDate->copy()->startOfMonth()->startOfDay();
+        $monthEnd = $targetDate->copy()->endOfMonth()->endOfDay();
+
+        $monthCreatedTotal = (clone $baseQuery)
+            ->whereBetween('created_at', [$monthStart, $monthEnd])
+            ->count();
+
+        $monthSolvedTotal = (clone $baseQuery)
+            ->whereIn('status', ['resolved', 'closed'])
+            ->where(function ($q) use ($monthStart, $monthEnd) {
+                $q->whereBetween('resolved_at', [$monthStart, $monthEnd])
+                  ->orWhere(function ($sub) use ($monthStart, $monthEnd) {
+                      $sub->whereNull('resolved_at')
+                          ->whereBetween('updated_at', [$monthStart, $monthEnd]);
+                  });
+            })
+            ->count();
+
+        $resolutionRate = $monthCreatedTotal > 0 ? round(($monthSolvedTotal / $monthCreatedTotal) * 100, 1) : 0;
+
+        // Build weeks array
+        $calendarWeeks = [];
+        $currentDay = $startOfCalendar->copy();
+        $todayStr = now()->toDateString();
+        $peakActivityCount = 0;
+        $peakActivityDate = null;
+
+        while ($currentDay->lte($endOfCalendar)) {
+            $week = [];
+            for ($i = 0; $i < 7; $i++) {
+                $dateKey = $currentDay->format('Y-m-d');
+                $isCurrentMonth = $currentDay->month === $targetDate->month;
+                $isToday = $dateKey === $todayStr;
+                $created = (int) ($createdCounts[$dateKey] ?? 0);
+                $solved = (int) ($solvedCounts[$dateKey] ?? 0);
+                $totalActivity = $created + $solved;
+
+                if ($isCurrentMonth && $totalActivity > $peakActivityCount) {
+                    $peakActivityCount = $totalActivity;
+                    $peakActivityDate = $currentDay->format('M d');
+                }
+
+                $week[] = [
+                    'date' => $dateKey,
+                    'day' => $currentDay->day,
+                    'carbon' => $currentDay->copy(),
+                    'is_current_month' => $isCurrentMonth,
+                    'is_today' => $isToday,
+                    'is_weekend' => $currentDay->isFriday() || $currentDay->isSaturday(),
+                    'created_count' => $created,
+                    'solved_count' => $solved,
+                    'total_activity' => $totalActivity,
+                ];
+                $currentDay->addDay();
+            }
+            $calendarWeeks[] = $week;
+        }
+
+        // Dropdown filter data
+        $categories = TicketCategory::where('is_active', true)->orderBy('name')->get();
+        $managedAreas = Area::where('is_active', true)->orderBy('name')->pluck('name');
+        $ticketAreas = Ticket::whereNotNull('area')
+            ->where('area', '!=', '')
+            ->distinct()
+            ->orderBy('area')
+            ->pluck('area');
+
+        $allAreas = $managedAreas->concat($ticketAreas)
+            ->map(fn ($a) => trim($a))
+            ->filter()
+            ->unique(fn ($a) => strtolower($a))
+            ->sortBy(fn ($a) => strtolower($a))
+            ->values();
+
+        $nocUsers = ($user->isAdmin() || $user->isNoc())
+            ? User::whereIn('role', ['noc', 'technician', 'supervisor', 'admin', 'super_admin'])->where('is_active', true)->orderBy('name')->get()
+            : collect();
+
+        return view('tickets.calendar', compact(
+            'calendarWeeks',
+            'targetDate',
+            'prevMonth',
+            'nextMonth',
+            'monthCreatedTotal',
+            'monthSolvedTotal',
+            'resolutionRate',
+            'peakActivityDate',
+            'peakActivityCount',
+            'categories',
+            'allAreas',
+            'nocUsers'
+        ));
+    }
+
+    /**
+     * Return JSON details of tickets created and solved on a specific date.
+     */
+    public function calendarDayDetails(Request $request)
+    {
+        $request->validate([
+            'date' => 'required|date_format:Y-m-d',
+        ]);
+
+        $user = auth()->user();
+        $dateStr = $request->date;
+        $dayStart = Carbon::parse($dateStr)->startOfDay();
+        $dayEnd = Carbon::parse($dateStr)->endOfDay();
+
+        $baseQuery = Ticket::forUser($user)->with(['creator:id,name,role', 'assignee:id,name,role', 'labels']);
+
+        // Created tickets on that date
+        $createdTickets = (clone $baseQuery)
+            ->whereBetween('created_at', [$dayStart, $dayEnd])
+            ->latest('created_at')
+            ->get()
+            ->map(function ($t) {
+                return [
+                    'id' => $t->id,
+                    'ticket_key' => $t->ticket_key ?? ('#'.$t->id),
+                    'title' => $t->title,
+                    'status' => $t->status,
+                    'priority' => $t->priority,
+                    'category' => $t->category,
+                    'client_name' => $t->client_name,
+                    'area' => $t->area,
+                    'creator' => $t->creator ? $t->creator->name : null,
+                    'assignee' => $t->assignee ? $t->assignee->name : null,
+                    'time' => $t->created_at ? $t->created_at->format('h:i A') : '',
+                    'url' => route('tickets.show', $t),
+                ];
+            });
+
+        // Solved tickets on that date
+        $solvedTickets = (clone $baseQuery)
+            ->whereIn('status', ['resolved', 'closed'])
+            ->where(function ($q) use ($dayStart, $dayEnd) {
+                $q->whereBetween('resolved_at', [$dayStart, $dayEnd])
+                  ->orWhere(function ($sub) use ($dayStart, $dayEnd) {
+                      $sub->whereNull('resolved_at')
+                          ->whereBetween('updated_at', [$dayStart, $dayEnd]);
+                  });
+            })
+            ->latest('resolved_at')
+            ->get()
+            ->map(function ($t) {
+                $solvedTime = $t->resolved_at ?? $t->updated_at;
+                return [
+                    'id' => $t->id,
+                    'ticket_key' => $t->ticket_key ?? ('#'.$t->id),
+                    'title' => $t->title,
+                    'status' => $t->status,
+                    'priority' => $t->priority,
+                    'category' => $t->category,
+                    'client_name' => $t->client_name,
+                    'area' => $t->area,
+                    'creator' => $t->creator ? $t->creator->name : null,
+                    'assignee' => $t->assignee ? $t->assignee->name : null,
+                    'time' => $solvedTime ? $solvedTime->format('h:i A') : '',
+                    'url' => route('tickets.show', $t),
+                ];
+            });
+
+        return response()->json([
+            'date' => $dateStr,
+            'formatted_date' => Carbon::parse($dateStr)->format('l, d F Y'),
+            'created_count' => $createdTickets->count(),
+            'solved_count' => $solvedTickets->count(),
+            'created_tickets' => $createdTickets,
+            'solved_tickets' => $solvedTickets,
+            'view_all_created_url' => route('tickets.index', ['date' => $dateStr]),
+            'view_all_solved_url' => route('tickets.index', ['resolved_date' => $dateStr]),
+        ]);
     }
 }

@@ -6,6 +6,43 @@
         </div>
         <a href="{{ route('users.create') }}" class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors shadow-sm">+ {{ __('New User') }}</a>
     </div>
+
+    <form method="GET" action="{{ route('users.index') }}" data-auto-filter class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm p-3 mb-4 flex flex-wrap items-end gap-3">
+        <div class="flex-1 min-w-[180px]">
+            <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">{{ __('Designation') }}</label>
+            <select name="designation" class="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500">
+                <option value="">{{ __('All Designations') }}</option>
+                @foreach(($designations ?? []) as $d)
+                    <option value="{{ $d }}" {{ ($designationFilter ?? '') === $d ? 'selected' : '' }}>{{ $d }}</option>
+                @endforeach
+            </select>
+        </div>
+        <div class="flex-1 min-w-[180px]">
+            <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">{{ __('POP Office') }}</label>
+            <select name="pop_office_id" class="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500">
+                <option value="">{{ __('All Offices') }}</option>
+                @foreach(($offices ?? []) as $o)
+                    <option value="{{ $o->id }}" {{ (string) ($officeFilter ?? '') === (string) $o->id ? 'selected' : '' }}>🏢 {{ $o->name }}</option>
+                @endforeach
+            </select>
+        </div>
+        <div class="flex-1 min-w-[180px]">
+            <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">{{ __('Office ID') }}</label>
+            <input type="text" name="office_id" value="{{ $officeIdFilter ?? '' }}" placeholder="{{ __('Search by Office ID') }}"
+                   class="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div class="flex items-center gap-2">
+            @php $activeFilters = (int)!empty($designationFilter) + (int)!empty($officeFilter) + (int)!empty($officeIdFilter); @endphp
+            <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-semibold shadow-sm">{{ __('Filter') }}</button>
+            @if($activeFilters > 0)
+                <a href="{{ route('users.index') }}" class="inline-flex items-center gap-1.5 text-sm font-bold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 px-2.5 py-1 rounded-lg transition-colors">
+                    <span class="inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-red-600 text-white text-[10px] font-black">{{ $activeFilters }}</span>
+                    {{ __('Clear Filters') }}
+                </a>
+            @endif
+        </div>
+    </form>
+
     <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm overflow-hidden">
         <div class="overflow-x-auto">
             <table class="min-w-full text-sm">
@@ -17,6 +54,7 @@
                         <th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">{{ __('Created') }}</th>
                         <th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">{{ __('Resolved') }}</th>
                         <th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">{{ __('Phone') }}</th>
+                        <th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">{{ __('Last Login') }}</th>
                         <th class="px-5 py-3"></th>
                     </tr>
                 </thead>
@@ -49,6 +87,13 @@
                         <td class="px-5 py-3.5 text-slate-500 dark:text-slate-400">{{ $u->created_count }}</td>
                         <td class="px-5 py-3.5 text-slate-500 dark:text-slate-400">{{ $u->resolved_count }}</td>
                         <td class="px-5 py-3.5 text-slate-500 dark:text-slate-400 text-xs">{{ $u->phone ?? '—' }}</td>
+                        <td class="px-5 py-3.5 text-xs">
+                            @if($u->last_login_at)
+                                <span class="text-slate-500 dark:text-slate-400" title="{{ $u->last_login_at->format('Y-m-d H:i') }}">{{ $u->last_login_at->diffForHumans() }}</span>
+                            @else
+                                <span class="text-red-500 dark:text-red-400 font-semibold">{{ __('Never') }}</span>
+                            @endif
+                        </td>
                         <td class="px-5 py-3">
                             <div class="flex items-center gap-2 justify-end">
                                 <a href="{{ route('users.edit', $u) }}" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-medium">{{ __('Edit') }}</a>

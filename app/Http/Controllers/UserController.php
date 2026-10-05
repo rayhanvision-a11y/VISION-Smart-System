@@ -19,23 +19,47 @@ class UserController extends Controller
         }
     }
 
-    public function index()
+    public function index(Request $request)
     {
         $this->adminOnly();
 
-        $users = User::withCount([
+        $designationFilter = trim((string) $request->get('designation', ''));
+        $officeFilter = $request->get('pop_office_id');
+        $officeIdFilter = trim((string) $request->get('office_id', ''));
+
+        $query = User::withCount([
             'tickets as created_count',
             'assignedTickets as resolved_count' => fn ($q) => $q->where('status', 'resolved'),
-        ])->paginate(20);
+        ])->with('popOffice');
 
-        return view('users.index', compact('users'));
+        if ($designationFilter !== '') {
+            $query->where('designation', $designationFilter);
+        }
+        if ($officeFilter) {
+            $query->where('pop_office_id', $officeFilter);
+        }
+        if ($officeIdFilter !== '') {
+            $query->where('office_id', 'like', '%'.$officeIdFilter.'%');
+        }
+
+        $users = $query->paginate(20)->withQueryString();
+
+        $designations = User::whereNotNull('designation')->where('designation', '!=', '')
+            ->distinct()->orderBy('designation')->pluck('designation');
+        $offices = \App\Models\PopOffice::where('is_active', true)->orderBy('name')->get();
+
+        return view('users.index', compact('users', 'designations', 'offices', 'designationFilter', 'officeFilter', 'officeIdFilter'));
     }
 
     public function create()
     {
         $this->adminOnly();
 
-        return view('users.create');
+        $designations = User::whereNotNull('designation')->where('designation', '!=', '')
+            ->distinct()->orderBy('designation')->pluck('designation');
+        $offices = \App\Models\PopOffice::where('is_active', true)->orderBy('name')->get();
+
+        return view('users.create', compact('designations', 'offices'));
     }
 
     public function store(Request $request)
@@ -53,15 +77,24 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'role' => $allowedRoles,
+            'designation' => 'nullable|string|max:120',
+            'office_id' => 'nullable|string|max:60|unique:users,office_id',
+            'pop_office_id' => 'nullable|exists:pop_offices,id',
             'team' => 'nullable|string|max:100',
             'phone' => 'nullable|string|max:20',
+            'password' => 'nullable|min:8',
         ]);
+
+        $hasPassword = ! empty($validated['password']);
 
         $user = User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
-            'password' => Hash::make(Str::random(32)), // temporary; user sets via reset link
+            'password' => Hash::make($validated['password'] ?? Str::random(32)),
             'role' => $validated['role'],
+            'designation' => $validated['designation'] ?? null,
+            'office_id' => $validated['office_id'] ?? null,
+            'pop_office_id' => $validated['pop_office_id'] ?? null,
             'team' => $validated['team'] ?? null,
             'phone' => $validated['phone'] ?? null,
             'is_active' => true,
@@ -73,10 +106,13 @@ class UserController extends Controller
             \Log::warning('Welcome email failed: '.$e->getMessage());
         }
 
-        try {
-            Password::sendResetLink(['email' => $user->email]);
-        } catch (\Exception $e) {
-            \Log::warning('Password reset link email failed: '.$e->getMessage());
+        // Only send reset link when admin didn't set a password upfront
+        if (! $hasPassword) {
+            try {
+                Password::sendResetLink(['email' => $user->email]);
+            } catch (\Exception $e) {
+                \Log::warning('Password reset link email failed: '.$e->getMessage());
+            }
         }
 
         return redirect()->route('users.index')->with('success', 'User created successfully.');
@@ -87,7 +123,11 @@ class UserController extends Controller
         $this->adminOnly();
         $editUser = User::findOrFail($id);
 
-        return view('users.edit', compact('editUser'));
+        $designations = User::whereNotNull('designation')->where('designation', '!=', '')
+            ->distinct()->orderBy('designation')->pluck('designation');
+        $offices = \App\Models\PopOffice::where('is_active', true)->orderBy('name')->get();
+
+        return view('users.edit', compact('editUser', 'designations', 'offices'));
     }
 
     public function update(Request $request, string $id)
@@ -110,6 +150,9 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,'.$editUser->id,
             'role' => $allowedRoles,
+            'designation' => 'nullable|string|max:120',
+            'office_id' => 'nullable|string|max:60|unique:users,office_id,'.$editUser->id,
+            'pop_office_id' => 'nullable|exists:pop_offices,id',
             'team' => 'nullable|string|max:100',
             'is_active' => 'boolean',
             'phone' => 'nullable|string|max:20',
@@ -121,6 +164,9 @@ class UserController extends Controller
             'name' => $validated['name'],
             'email' => $validated['email'],
             'role' => $validated['role'],
+            'designation' => $validated['designation'] ?? null,
+            'office_id' => $validated['office_id'] ?? null,
+            'pop_office_id' => $validated['pop_office_id'] ?? null,
             'team' => $validated['team'] ?? null,
             'is_active' => $request->boolean('is_active'),
             'phone' => $validated['phone'] ?? null,

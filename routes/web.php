@@ -280,11 +280,128 @@ Route::middleware(['auth'])->group(function () {
                 ->latest()->take(20)->get();
         }
 
+        $catSortWeights = ['complain' => 1, 'new_connection' => 2, 'line_transfer' => 3, 'transfer' => 3];
+        $todayTechnicianTeams = \App\Models\DailyTechnicianTeam::with(['leader', 'member1', 'member2'])
+            ->whereDate('duty_date', today())
+            ->get()
+            ->sortBy(fn($t) => [$catSortWeights[$t->category] ?? 99, $t->id])
+            ->values();
+
+        $leaderIds = $todayTechnicianTeams->pluck('leader_id')->filter()->unique()->values();
+        if ($leaderIds->isNotEmpty()) {
+            $todayStart = today();
+            $openCounts = \App\Models\Ticket::whereIn('assigned_to', $leaderIds)
+                ->whereNotIn('status', ['resolved', 'closed'])
+                ->selectRaw('assigned_to, COUNT(*) as c')
+                ->groupBy('assigned_to')->pluck('c', 'assigned_to');
+            $doneCounts = \App\Models\Ticket::whereIn('assigned_to', $leaderIds)
+                ->whereIn('status', ['resolved', 'closed'])
+                ->where('resolved_at', '>=', $todayStart)
+                ->selectRaw('assigned_to, COUNT(*) as c')
+                ->groupBy('assigned_to')->pluck('c', 'assigned_to');
+            foreach ($todayTechnicianTeams as $t) {
+                $t->leader_open_count = (int) ($openCounts[$t->leader_id] ?? 0);
+                $t->leader_done_count = (int) ($doneCounts[$t->leader_id] ?? 0);
+            }
+
+            // Rank squads by highest tickets solved today first (leader_done_count desc)
+            $todayTechnicianTeams = $todayTechnicianTeams->sortBy([
+                fn($a, $b) => ($b->leader_done_count ?? 0) <=> ($a->leader_done_count ?? 0),
+                fn($a, $b) => ($catSortWeights[$a->category] ?? 99) <=> ($catSortWeights[$b->category] ?? 99),
+                fn($a, $b) => $a->id <=> $b->id,
+            ])->values();
+        }
+
+        $myTechnicianTeam = $user ? $todayTechnicianTeams->first(function ($team) use ($user) {
+            return $team->leader_id === $user->id 
+                || $team->member_1_id === $user->id 
+                || $team->member_2_id === $user->id;
+        }) : null;
+
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json(['stats' => $stats]);
         }
 
-        return view('dashboard', compact('stats', 'recentTickets', 'chartDays', 'chartCreated', 'chartByCategory', 'nocLeaderboard', 'activityFeed', 'resellersQuick'));
+        // ─── Daily Summary (grouped by SQUAD CATEGORY for the day, fallback to ticket category) ───
+        $buildSummary = function (string $date) use ($user) {
+            $dayStart = $date.' 00:00:00';
+            $dayEnd = $date.' 23:59:59';
+            $rows = \App\Models\Ticket::forUser($user)
+                ->whereIn('status', ['resolved', 'closed'])
+                ->whereBetween('resolved_at', [$dayStart, $dayEnd])
+                ->whereNotNull('assigned_to')
+                ->selectRaw('category, assigned_to, COUNT(*) as cnt')
+                ->groupBy('category', 'assigned_to')->get();
+
+            // Build user_id → squad category map for the given date
+            $teams = \App\Models\DailyTechnicianTeam::whereDate('duty_date', $date)
+                ->get(['category', 'leader_id', 'member_1_id', 'member_2_id']);
+            $userToSquadCat = [];
+            foreach ($teams as $t) {
+                foreach ([$t->leader_id, $t->member_1_id, $t->member_2_id] as $uid) {
+                    if ($uid) $userToSquadCat[(int) $uid] = $t->category;
+                }
+            }
+
+            $names = \App\Models\User::whereIn('id', $rows->pluck('assigned_to')->unique())->pluck('name', 'id');
+            $allCats = \App\Models\DailyTechnicianTeam::allCategories();
+
+            // Re-group each ticket by the assignee's squad category (if any), else fallback to ticket category
+            $regrouped = [];
+            foreach ($rows as $r) {
+                $effectiveCat = $userToSquadCat[(int) $r->assigned_to] ?? ($r->category ?: 'uncategorized');
+                $regrouped[$effectiveCat] ??= [];
+                $regrouped[$effectiveCat][] = [
+                    'user_id' => (int) $r->assigned_to,
+                    'name' => $names[$r->assigned_to] ?? '—',
+                    'count' => (int) $r->cnt,
+                ];
+            }
+
+            $grouped = collect($regrouped)->map(function ($items, $key) use ($allCats) {
+                // Merge rows for same user within the same squad category (sum counts)
+                $byUser = collect($items)->groupBy('user_id')->map(fn ($g) => [
+                    'user_id' => $g->first()['user_id'],
+                    'name' => $g->first()['name'],
+                    'count' => $g->sum('count'),
+                ])->values();
+                return [
+                    'label' => $allCats[$key]['label'] ?? ucwords(str_replace('_', ' ', $key)),
+                    'icon' => $allCats[$key]['icon'] ?? '',
+                    'items' => $byUser->sortByDesc('count')->values()->all(),
+                    'total' => (int) $byUser->sum('count'),
+                ];
+            })->sortByDesc(fn ($g) => $g['total']);
+
+            return [
+                'date' => $date,
+                'day_total' => (int) $rows->sum('cnt'),
+                'categories' => $grouped,
+            ];
+        };
+        $summaryToday = $buildSummary(now()->toDateString());
+        $summaryPrev = $buildSummary(now()->subDay()->toDateString());
+        $summaryMonthLabel = now()->format('M / Y');
+        $summaryMonthTotal = \App\Models\Ticket::forUser($user)
+            ->whereIn('status', ['resolved', 'closed'])
+            ->whereBetween('resolved_at', [now()->startOfMonth()->toDateTimeString(), now()->endOfDay()->toDateTimeString()])
+            ->count();
+
+        // Data for the inline Create Team modal
+        $dashboardEligibleStaff = \App\Models\User::where('role', 'technician')
+            ->where('is_active', true)->orderBy('name')->get();
+        $dashboardAreas = \Schema::hasTable('areas')
+            ? \App\Models\Area::where('is_active', true)->orderBy('name')->pluck('name')
+            : collect();
+        $dashboardSquadCategories = \App\Models\DailyTechnicianTeam::allCategories();
+
+        return view('dashboard', compact(
+            'stats', 'recentTickets', 'chartDays', 'chartCreated', 'chartByCategory',
+            'nocLeaderboard', 'activityFeed', 'resellersQuick',
+            'todayTechnicianTeams', 'myTechnicianTeam',
+            'summaryToday', 'summaryPrev', 'summaryMonthLabel', 'summaryMonthTotal',
+            'dashboardEligibleStaff', 'dashboardAreas', 'dashboardSquadCategories'
+        ));
     })->name('dashboard');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -297,6 +414,8 @@ Route::middleware(['auth'])->group(function () {
 
     // Bulk action BEFORE resource so it is not treated as ticket ID
     Route::post('/tickets/bulk-action', [TicketController::class, 'bulkAction'])->name('tickets.bulk-action');
+    Route::get('/tickets/calendar', [TicketController::class, 'calendar'])->name('tickets.calendar');
+    Route::get('/tickets/calendar/day-details', [TicketController::class, 'calendarDayDetails'])->name('tickets.calendar.day-details');
 
     Route::resource('tickets', TicketController::class);
     Route::post('/tickets/{ticket}/assign', [TicketController::class, 'assign'])->name('tickets.assign');
@@ -341,6 +460,12 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('ticket-categories', TicketCategoryController::class)->only(['index', 'store', 'update', 'destroy']);
     Route::resource('areas', AreaController::class)->only(['index', 'store', 'update', 'destroy']);
     Route::resource('teams', \App\Http\Controllers\TeamController::class)->only(['index', 'store', 'update', 'destroy']);
+    Route::resource('technician-teams', \App\Http\Controllers\DailyTechnicianTeamController::class)
+        ->parameters(['technician-teams' => 'dailyTeam'])
+        ->only(['index', 'store', 'update', 'destroy']);
+
+    Route::resource('squad-categories', \App\Http\Controllers\SquadCategoryController::class)
+        ->only(['index', 'store', 'update', 'destroy']);
 
     Route::get('/search', [SearchController::class, 'index'])->name('search');
 

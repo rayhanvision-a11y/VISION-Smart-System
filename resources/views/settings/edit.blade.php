@@ -1,5 +1,5 @@
 <x-app-layout>
-    <div class="w-full space-y-4 max-w-7xl mx-auto" x-data="{ 
+    <div class="w-full space-y-4" x-data="{ 
         activeTab: new URLSearchParams(window.location.search).get('tab') || 'notice',
         showDataHub: true,
         setTab(tab) {
@@ -43,78 +43,150 @@
             </div>
         </div>
 
-        {{-- 🗂️ Data Management Hub — Sleek Compact Toolbar Grid --}}
+        {{-- 🗂️ Data Management Hub — Grouped Sections for Clarity --}}
         <div x-show="showDataHub" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0"
-             class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xs p-2.5">
-            <div class="flex items-center justify-between mb-1.5 px-0.5">
-                <span class="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                    <span>🗂️</span> {{ __('Data Management Quick Access') }}
-                </span>
-                <span class="text-[10px] text-slate-400">{{ __('Master tables & lookup records') }}</span>
+             class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xs p-4 space-y-4">
+
+            {{-- Section 1: People & Teams --}}
+            <div>
+                <div class="flex items-center gap-2 mb-2 pb-1.5 border-b border-slate-100 dark:border-slate-800">
+                    <span class="text-sm">👥</span>
+                    <h3 class="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">{{ __('People & Teams') }}</h3>
+                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
+                    <a href="{{ route('users.index') }}"
+                       class="group relative flex items-center gap-2.5 p-3 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700/80 shadow-sm dark:shadow-lg dark:shadow-black/60 hover:border-transparent hover:bg-gradient-to-r hover:from-cyan-500 hover:to-blue-600 hover:shadow-xl hover:shadow-cyan-500/35 hover:-translate-y-0.5 active:scale-95 transition-all duration-200 cursor-pointer overflow-hidden">
+                        <span class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-700/80 group-hover:bg-white/20 flex items-center justify-center text-lg flex-shrink-0 shadow-xs group-hover:scale-110 group-hover:rotate-3 transition-transform duration-200">👥</span>
+                        <div class="min-w-0 flex-1">
+                            <div class="text-xs font-bold text-slate-800 dark:text-slate-100 group-hover:text-white truncate transition-colors">{{ __('Users') }}</div>
+                            <div class="text-[10px] text-slate-500 dark:text-slate-400 group-hover:text-white/80 transition-colors">{{ \App\Models\User::count() }} {{ __('users') }}</div>
+                        </div>
+                    </a>
+                    <a href="{{ route('teams.index') }}"
+                       class="group relative flex items-center gap-2.5 p-3 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700/80 shadow-sm dark:shadow-lg dark:shadow-black/60 hover:border-transparent hover:bg-gradient-to-r hover:from-teal-500 hover:to-emerald-600 hover:shadow-xl hover:shadow-teal-500/35 hover:-translate-y-0.5 active:scale-95 transition-all duration-200 cursor-pointer overflow-hidden">
+                        <span class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-700/80 group-hover:bg-white/20 flex items-center justify-center text-lg flex-shrink-0 shadow-xs group-hover:scale-110 group-hover:rotate-3 transition-transform duration-200">🏷️</span>
+                        <div class="min-w-0 flex-1">
+                            <div class="text-xs font-bold text-slate-800 dark:text-slate-100 group-hover:text-white truncate transition-colors">{{ __('Team Tags') }}</div>
+                            <div class="text-[10px] text-slate-500 dark:text-slate-400 group-hover:text-white/80 transition-colors">@if(\Schema::hasTable('teams')){{ \App\Models\Team::count() }}@else 0 @endif {{ __('teams') }}</div>
+                        </div>
+                    </a>
+                    <a href="{{ route('technician-teams.index') }}"
+                       class="group relative flex items-center gap-2.5 p-3 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700/80 shadow-sm dark:shadow-lg dark:shadow-black/60 hover:border-transparent hover:bg-gradient-to-r hover:from-indigo-500 hover:to-purple-600 hover:shadow-xl hover:shadow-indigo-500/35 hover:-translate-y-0.5 active:scale-95 transition-all duration-200 cursor-pointer overflow-hidden">
+                        <span class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-700/80 group-hover:bg-white/20 flex items-center justify-center text-lg flex-shrink-0 shadow-xs group-hover:scale-110 group-hover:rotate-3 transition-transform duration-200">🛵</span>
+                        <div class="min-w-0 flex-1">
+                            <div class="text-xs font-bold text-slate-800 dark:text-slate-100 group-hover:text-white truncate transition-colors">{{ __('Technician Teams') }}</div>
+                            <div class="text-[10px] text-slate-500 dark:text-slate-400 group-hover:text-white/80 transition-colors">{{ __('Daily Squads') }}</div>
+                        </div>
+                    </a>
+                    <a href="{{ route('squad-categories.index') }}"
+                       class="group relative flex items-center gap-2.5 p-3 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700/80 shadow-sm dark:shadow-lg dark:shadow-black/60 hover:border-transparent hover:bg-gradient-to-r hover:from-amber-500 hover:to-orange-600 hover:shadow-xl hover:shadow-orange-500/35 hover:-translate-y-0.5 active:scale-95 transition-all duration-200 cursor-pointer overflow-hidden">
+                        <span class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-700/80 group-hover:bg-white/20 flex items-center justify-center text-lg flex-shrink-0 shadow-xs group-hover:scale-110 group-hover:rotate-3 transition-transform duration-200">🚐</span>
+                        <div class="min-w-0 flex-1">
+                            <div class="text-xs font-bold text-slate-800 dark:text-slate-100 group-hover:text-white truncate transition-colors">{{ __('Squad Categories') }}</div>
+                            <div class="text-[10px] text-slate-500 dark:text-slate-400 group-hover:text-white/80 transition-colors">@if(\Schema::hasTable('squad_categories')){{ \App\Models\SquadCategory::count() }}@else 0 @endif {{ __('types') }}</div>
+                        </div>
+                    </a>
+                    <a href="{{ route('roster.index') }}"
+                       class="group relative flex items-center gap-2.5 p-3 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700/80 shadow-sm dark:shadow-lg dark:shadow-black/60 hover:border-transparent hover:bg-gradient-to-r hover:from-purple-500 hover:to-pink-600 hover:shadow-xl hover:shadow-purple-500/35 hover:-translate-y-0.5 active:scale-95 transition-all duration-200 cursor-pointer overflow-hidden">
+                        <span class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-700/80 group-hover:bg-white/20 flex items-center justify-center text-lg flex-shrink-0 shadow-xs group-hover:scale-110 group-hover:rotate-3 transition-transform duration-200">📅</span>
+                        <div class="min-w-0 flex-1">
+                            <div class="text-xs font-bold text-slate-800 dark:text-slate-100 group-hover:text-white truncate transition-colors">{{ __('Shift Roster') }}</div>
+                            <div class="text-[10px] text-slate-500 dark:text-slate-400 group-hover:text-white/80 transition-colors">{{ __('Schedule') }}</div>
+                        </div>
+                    </a>
+                </div>
             </div>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 0.375rem;">
-                <a href="{{ route('ticket-categories.index') }}"
-                   class="group flex flex-col p-1.5 rounded-lg border border-indigo-100 dark:border-indigo-950/80 bg-indigo-50/50 dark:bg-indigo-950/20 hover:bg-indigo-100/70 dark:hover:bg-indigo-950/50 transition-colors text-center">
-                    <span class="text-xs">🏷️</span>
-                    <span class="text-[11px] font-bold text-slate-800 dark:text-slate-200 group-hover:text-indigo-600 truncate mt-0.5">{{ __('Categories') }}</span>
-                    <span class="text-[9px] text-slate-400 truncate">{{ \App\Models\TicketCategory::count() }}</span>
-                </a>
 
-                <a href="{{ route('areas.index') }}"
-                   class="group flex flex-col p-1.5 rounded-lg border border-emerald-100 dark:border-emerald-950/80 bg-emerald-50/50 dark:bg-emerald-950/20 hover:bg-emerald-100/70 dark:hover:bg-emerald-950/50 transition-colors text-center">
-                    <span class="text-xs">📍</span>
-                    <span class="text-[11px] font-bold text-slate-800 dark:text-slate-200 group-hover:text-emerald-600 truncate mt-0.5">{{ __('Areas') }}</span>
-                    <span class="text-[9px] text-slate-400 truncate">@if(\Schema::hasTable('areas')){{ \App\Models\Area::count() }}@else 0 @endif</span>
-                </a>
+            {{-- Section 2: Ticket System --}}
+            <div>
+                <div class="flex items-center gap-2 mb-2 pb-1.5 border-b border-slate-100 dark:border-slate-800">
+                    <span class="text-sm">🎫</span>
+                    <h3 class="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">{{ __('Ticket System') }}</h3>
+                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
+                    <a href="{{ route('ticket-categories.index') }}"
+                       class="group relative flex items-center gap-2.5 p-3 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700/80 shadow-sm dark:shadow-lg dark:shadow-black/60 hover:border-transparent hover:bg-gradient-to-r hover:from-indigo-500 hover:to-blue-600 hover:shadow-xl hover:shadow-indigo-500/35 hover:-translate-y-0.5 active:scale-95 transition-all duration-200 cursor-pointer overflow-hidden">
+                        <span class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-700/80 group-hover:bg-white/20 flex items-center justify-center text-lg flex-shrink-0 shadow-xs group-hover:scale-110 group-hover:rotate-3 transition-transform duration-200">🏷️</span>
+                        <div class="min-w-0 flex-1">
+                            <div class="text-xs font-bold text-slate-800 dark:text-slate-100 group-hover:text-white truncate transition-colors">{{ __('Categories') }}</div>
+                            <div class="text-[10px] text-slate-500 dark:text-slate-400 group-hover:text-white/80 transition-colors">{{ \App\Models\TicketCategory::count() }} {{ __('types') }}</div>
+                        </div>
+                    </a>
+                    <a href="{{ route('labels.index') }}"
+                       class="group relative flex items-center gap-2.5 p-3 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700/80 shadow-sm dark:shadow-lg dark:shadow-black/60 hover:border-transparent hover:bg-gradient-to-r hover:from-amber-500 hover:to-rose-600 hover:shadow-xl hover:shadow-amber-500/35 hover:-translate-y-0.5 active:scale-95 transition-all duration-200 cursor-pointer overflow-hidden">
+                        <span class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-700/80 group-hover:bg-white/20 flex items-center justify-center text-lg flex-shrink-0 shadow-xs group-hover:scale-110 group-hover:rotate-3 transition-transform duration-200">🔖</span>
+                        <div class="min-w-0 flex-1">
+                            <div class="text-xs font-bold text-slate-800 dark:text-slate-100 group-hover:text-white truncate transition-colors">{{ __('Labels') }}</div>
+                            <div class="text-[10px] text-slate-500 dark:text-slate-400 group-hover:text-white/80 transition-colors">{{ \App\Models\Label::count() }} {{ __('labels') }}</div>
+                        </div>
+                    </a>
+                    <a href="{{ route('sla-policies.index') }}"
+                       class="group relative flex items-center gap-2.5 p-3 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700/80 shadow-sm dark:shadow-lg dark:shadow-black/60 hover:border-transparent hover:bg-gradient-to-r hover:from-rose-500 hover:to-red-600 hover:shadow-xl hover:shadow-rose-500/35 hover:-translate-y-0.5 active:scale-95 transition-all duration-200 cursor-pointer overflow-hidden">
+                        <span class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-700/80 group-hover:bg-white/20 flex items-center justify-center text-lg flex-shrink-0 shadow-xs group-hover:scale-110 group-hover:rotate-3 transition-transform duration-200">⏱️</span>
+                        <div class="min-w-0 flex-1">
+                            <div class="text-xs font-bold text-slate-800 dark:text-slate-100 group-hover:text-white truncate transition-colors">{{ __('SLA Policies') }}</div>
+                            <div class="text-[10px] text-slate-500 dark:text-slate-400 group-hover:text-white/80 transition-colors">{{ \App\Models\SlaPolicy::count() }} {{ __('policies') }}</div>
+                        </div>
+                    </a>
+                    <a href="{{ route('canned-responses.index') }}"
+                       class="group relative flex items-center gap-2.5 p-3 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700/80 shadow-sm dark:shadow-lg dark:shadow-black/60 hover:border-transparent hover:bg-gradient-to-r hover:from-sky-500 hover:to-cyan-600 hover:shadow-xl hover:shadow-sky-500/35 hover:-translate-y-0.5 active:scale-95 transition-all duration-200 cursor-pointer overflow-hidden">
+                        <span class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-700/80 group-hover:bg-white/20 flex items-center justify-center text-lg flex-shrink-0 shadow-xs group-hover:scale-110 group-hover:rotate-3 transition-transform duration-200">💬</span>
+                        <div class="min-w-0 flex-1">
+                            <div class="text-xs font-bold text-slate-800 dark:text-slate-100 group-hover:text-white truncate transition-colors">{{ __('Canned Replies') }}</div>
+                            <div class="text-[10px] text-slate-500 dark:text-slate-400 group-hover:text-white/80 transition-colors">{{ __('Templates') }}</div>
+                        </div>
+                    </a>
+                    <a href="{{ route('activity-logs.index') }}"
+                       class="group relative flex items-center gap-2.5 p-3 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700/80 shadow-sm dark:shadow-lg dark:shadow-black/60 hover:border-transparent hover:bg-gradient-to-r hover:from-pink-500 hover:to-rose-600 hover:shadow-xl hover:shadow-pink-500/35 hover:-translate-y-0.5 active:scale-95 transition-all duration-200 cursor-pointer overflow-hidden">
+                        <span class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-700/80 group-hover:bg-white/20 flex items-center justify-center text-lg flex-shrink-0 shadow-xs group-hover:scale-110 group-hover:rotate-3 transition-transform duration-200">📋</span>
+                        <div class="min-w-0 flex-1">
+                            <div class="text-xs font-bold text-slate-800 dark:text-slate-100 group-hover:text-white truncate transition-colors">{{ __('Activity Log') }}</div>
+                            <div class="text-[10px] text-slate-500 dark:text-slate-400 group-hover:text-white/80 transition-colors">{{ __('Audit Trail') }}</div>
+                        </div>
+                    </a>
+                </div>
+            </div>
 
-                <a href="{{ route('labels.index') }}"
-                   class="group flex flex-col p-1.5 rounded-lg border border-amber-100 dark:border-amber-950/80 bg-amber-50/50 dark:bg-amber-950/20 hover:bg-amber-100/70 dark:hover:bg-amber-950/50 transition-colors text-center">
-                    <span class="text-xs">🔖</span>
-                    <span class="text-[11px] font-bold text-slate-800 dark:text-slate-200 group-hover:text-amber-600 truncate mt-0.5">{{ __('Labels') }}</span>
-                    <span class="text-[9px] text-slate-400 truncate">{{ \App\Models\Label::count() }}</span>
-                </a>
-
-                <a href="{{ route('pop-offices.index') }}"
-                   class="group flex flex-col p-1.5 rounded-lg border border-sky-100 dark:border-sky-950/80 bg-sky-50/50 dark:bg-sky-950/20 hover:bg-sky-100/70 dark:hover:bg-sky-950/50 transition-colors text-center">
-                    <span class="text-xs">🏢</span>
-                    <span class="text-[11px] font-bold text-slate-800 dark:text-slate-200 group-hover:text-sky-600 truncate mt-0.5">{{ __('POPs') }}</span>
-                    <span class="text-[9px] text-slate-400 truncate">{{ \App\Models\PopOffice::count() }}</span>
-                </a>
-
-                <a href="{{ route('sla-policies.index') }}"
-                   class="group flex flex-col p-1.5 rounded-lg border border-rose-100 dark:border-rose-950/80 bg-rose-50/50 dark:bg-rose-950/20 hover:bg-rose-100/70 dark:hover:bg-rose-950/50 transition-colors text-center">
-                    <span class="text-xs">⏱️</span>
-                    <span class="text-[11px] font-bold text-slate-800 dark:text-slate-200 group-hover:text-rose-600 truncate mt-0.5">{{ __('SLAs') }}</span>
-                    <span class="text-[9px] text-slate-400 truncate">{{ \App\Models\SlaPolicy::count() }}</span>
-                </a>
-
-                <a href="{{ route('kb-categories.index') }}"
-                   class="group flex flex-col p-1.5 rounded-lg border border-purple-100 dark:border-purple-950/80 bg-purple-50/50 dark:bg-purple-950/20 hover:bg-purple-100/70 dark:hover:bg-purple-950/50 transition-colors text-center">
-                    <span class="text-xs">📚</span>
-                    <span class="text-[11px] font-bold text-slate-800 dark:text-slate-200 group-hover:text-purple-600 truncate mt-0.5">{{ __('KB Cat') }}</span>
-                    <span class="text-[9px] text-slate-400 truncate">{{ __('Articles') }}</span>
-                </a>
-
-                <a href="{{ route('users.index') }}"
-                   class="group flex flex-col p-1.5 rounded-lg border border-cyan-100 dark:border-cyan-950/80 bg-cyan-50/50 dark:bg-cyan-950/20 hover:bg-cyan-100/70 dark:hover:bg-cyan-950/50 transition-colors text-center">
-                    <span class="text-xs">👥</span>
-                    <span class="text-[11px] font-bold text-slate-800 dark:text-slate-200 group-hover:text-cyan-600 truncate mt-0.5">{{ __('Users') }}</span>
-                    <span class="text-[9px] text-slate-400 truncate">{{ \App\Models\User::count() }}</span>
-                </a>
-
-                <a href="{{ route('teams.index') }}"
-                   class="group flex flex-col p-1.5 rounded-lg border border-teal-100 dark:border-teal-950/80 bg-teal-50/50 dark:bg-teal-950/20 hover:bg-teal-100/70 dark:hover:bg-teal-950/50 transition-colors text-center">
-                    <span class="text-xs">🏷️</span>
-                    <span class="text-[11px] font-bold text-slate-800 dark:text-slate-200 group-hover:text-teal-600 truncate mt-0.5">{{ __('Teams') }}</span>
-                    <span class="text-[9px] text-slate-400 truncate">@if(\Schema::hasTable('teams')){{ \App\Models\Team::count() }}@else 0 @endif</span>
-                </a>
-
-                <a href="{{ route('canned-responses.index') }}"
-                   class="group flex flex-col p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-center">
-                    <span class="text-xs">💬</span>
-                    <span class="text-[11px] font-bold text-slate-800 dark:text-slate-200 group-hover:text-slate-900 truncate mt-0.5">{{ __('Canned') }}</span>
-                    <span class="text-[9px] text-slate-400 truncate">{{ __('Replies') }}</span>
-                </a>
+            {{-- Section 3: Locations & Knowledge --}}
+            <div>
+                <div class="flex items-center gap-2 mb-2 pb-1.5 border-b border-slate-100 dark:border-slate-800">
+                    <span class="text-sm">🌍</span>
+                    <h3 class="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">{{ __('Locations & Knowledge') }}</h3>
+                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
+                    <a href="{{ route('areas.index') }}"
+                       class="group relative flex items-center gap-2.5 p-3 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700/80 shadow-sm dark:shadow-lg dark:shadow-black/60 hover:border-transparent hover:bg-gradient-to-r hover:from-emerald-500 hover:to-teal-600 hover:shadow-xl hover:shadow-emerald-500/35 hover:-translate-y-0.5 active:scale-95 transition-all duration-200 cursor-pointer overflow-hidden">
+                        <span class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-700/80 group-hover:bg-white/20 flex items-center justify-center text-lg flex-shrink-0 shadow-xs group-hover:scale-110 group-hover:rotate-3 transition-transform duration-200">📍</span>
+                        <div class="min-w-0 flex-1">
+                            <div class="text-xs font-bold text-slate-800 dark:text-slate-100 group-hover:text-white truncate transition-colors">{{ __('Areas') }}</div>
+                            <div class="text-[10px] text-slate-500 dark:text-slate-400 group-hover:text-white/80 transition-colors">@if(\Schema::hasTable('areas')){{ \App\Models\Area::count() }}@else 0 @endif {{ __('zones') }}</div>
+                        </div>
+                    </a>
+                    <a href="{{ route('pop-offices.index') }}"
+                       class="group relative flex items-center gap-2.5 p-3 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700/80 shadow-sm dark:shadow-lg dark:shadow-black/60 hover:border-transparent hover:bg-gradient-to-r hover:from-sky-500 hover:to-indigo-600 hover:shadow-xl hover:shadow-sky-500/35 hover:-translate-y-0.5 active:scale-95 transition-all duration-200 cursor-pointer overflow-hidden">
+                        <span class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-700/80 group-hover:bg-white/20 flex items-center justify-center text-lg flex-shrink-0 shadow-xs group-hover:scale-110 group-hover:rotate-3 transition-transform duration-200">🏢</span>
+                        <div class="min-w-0 flex-1">
+                            <div class="text-xs font-bold text-slate-800 dark:text-slate-100 group-hover:text-white truncate transition-colors">{{ __('POP Offices') }}</div>
+                            <div class="text-[10px] text-slate-500 dark:text-slate-400 group-hover:text-white/80 transition-colors">{{ \App\Models\PopOffice::count() }} {{ __('offices') }}</div>
+                        </div>
+                    </a>
+                    <a href="{{ route('kb-categories.index') }}"
+                       class="group relative flex items-center gap-2.5 p-3 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700/80 shadow-sm dark:shadow-lg dark:shadow-black/60 hover:border-transparent hover:bg-gradient-to-r hover:from-violet-500 hover:to-purple-600 hover:shadow-xl hover:shadow-violet-500/35 hover:-translate-y-0.5 active:scale-95 transition-all duration-200 cursor-pointer overflow-hidden">
+                        <span class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-700/80 group-hover:bg-white/20 flex items-center justify-center text-lg flex-shrink-0 shadow-xs group-hover:scale-110 group-hover:rotate-3 transition-transform duration-200">📚</span>
+                        <div class="min-w-0 flex-1">
+                            <div class="text-xs font-bold text-slate-800 dark:text-slate-100 group-hover:text-white truncate transition-colors">{{ __('KB Categories') }}</div>
+                            <div class="text-[10px] text-slate-500 dark:text-slate-400 group-hover:text-white/80 transition-colors">{{ __('Articles') }}</div>
+                        </div>
+                    </a>
+                    <a href="{{ route('map.index') }}"
+                       class="group relative flex items-center gap-2.5 p-3 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700/80 shadow-sm dark:shadow-lg dark:shadow-black/60 hover:border-transparent hover:bg-gradient-to-r hover:from-blue-500 hover:to-indigo-600 hover:shadow-xl hover:shadow-blue-500/35 hover:-translate-y-0.5 active:scale-95 transition-all duration-200 cursor-pointer overflow-hidden">
+                        <span class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-700/80 group-hover:bg-white/20 flex items-center justify-center text-lg flex-shrink-0 shadow-xs group-hover:scale-110 group-hover:rotate-3 transition-transform duration-200">🗺️</span>
+                        <div class="min-w-0 flex-1">
+                            <div class="text-xs font-bold text-slate-800 dark:text-slate-100 group-hover:text-white truncate transition-colors">{{ __('Live Staff Map') }}</div>
+                            <div class="text-[10px] text-slate-500 dark:text-slate-400 group-hover:text-white/80 transition-colors">{{ __('GPS Tracking') }}</div>
+                        </div>
+                    </a>
+                </div>
             </div>
         </div>
 
@@ -365,7 +437,7 @@
 
             <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xs overflow-hidden">
                 {{-- Compact Header with Master Power Switch inlined --}}
-                <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-850 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div class="flex items-center gap-2.5">
                         <span class="px-2 py-0.5 rounded-md text-[11px] font-black bg-red-600 text-white tracking-wider uppercase shrink-0">
                             📢 TICKER
@@ -484,48 +556,48 @@
                             </div>
                         </div>
 
-                        {{-- Compact Bilingual Cards --}}
-                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                        {{-- Spacious Bilingual Cards --}}
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
                             {{-- English --}}
-                            <div class="p-3 bg-slate-50/70 dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-700/80 space-y-2">
-                                <div class="flex items-center justify-between">
-                                    <span class="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
-                                        <span>🇬🇧</span> {{ __('English Notice') }}
+                            <div class="p-4 sm:p-5 bg-slate-50/80 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700/80 space-y-3.5 shadow-xs">
+                                <div class="flex items-center justify-between pb-1 border-b border-slate-200/60 dark:border-slate-700/60">
+                                    <span class="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                                        <span class="text-base">🇬🇧</span> {{ __('English Notice') }}
                                     </span>
-                                    <span class="text-[10px] text-slate-400">English Language</span>
+                                    <span class="text-xs font-semibold px-2 py-0.5 rounded-md bg-slate-200/70 dark:bg-slate-700 text-slate-600 dark:text-slate-300">English Language</span>
                                 </div>
-                                <div class="grid grid-cols-3 gap-2">
-                                    <div class="col-span-1">
-                                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-0.5">{{ __('Badge') }}</label>
+                                <div class="space-y-3">
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1.5">{{ __('Badge') }}</label>
                                         <input type="text" name="notice_badge_en" value="{{ old('notice_badge_en', $noticeBadgeEn ?? 'GLOBAL NOTICE') }}" maxlength="30"
-                                               class="w-full px-2.5 py-1.5 text-xs font-bold uppercase border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 dark:text-slate-100">
+                                               class="w-full px-3.5 py-2.5 text-sm font-bold uppercase border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-xs">
                                     </div>
-                                    <div class="col-span-2">
-                                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-0.5">{{ __('Notice Message') }}</label>
-                                        <textarea name="notice_text_en" rows="2" placeholder="{{ __('Notice text in English...') }}"
-                                                  class="w-full px-2.5 py-1.5 text-xs border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 dark:text-slate-100 leading-snug">{{ old('notice_text_en', $noticeTextEn ?? '') }}</textarea>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1.5">{{ __('Notice Message') }}</label>
+                                        <textarea name="notice_text_en" rows="5" placeholder="{{ __('Notice text in English...') }}"
+                                                  class="w-full px-3.5 py-3 text-sm border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 dark:text-slate-100 leading-relaxed min-h-[130px] focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-xs resize-y">{{ old('notice_text_en', $noticeTextEn ?? '') }}</textarea>
                                     </div>
                                 </div>
                             </div>
 
                             {{-- Bangla --}}
-                            <div class="p-3 bg-emerald-50/30 dark:bg-emerald-950/20 rounded-xl border border-emerald-200/60 dark:border-emerald-900/40 space-y-2">
-                                <div class="flex items-center justify-between">
-                                    <span class="text-xs font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
-                                        <span>🇧🇩</span> {{ __('Bangla Notice') }}
+                            <div class="p-4 sm:p-5 bg-emerald-50/40 dark:bg-emerald-950/20 rounded-2xl border border-emerald-200/70 dark:border-emerald-900/50 space-y-3.5 shadow-xs">
+                                <div class="flex items-center justify-between pb-1 border-b border-emerald-200/60 dark:border-emerald-900/60">
+                                    <span class="text-sm font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-2">
+                                        <span class="text-base">🇧🇩</span> {{ __('Bangla Notice') }}
                                     </span>
-                                    <span class="text-[10px] text-emerald-600/70 dark:text-emerald-400/60">বাংলা ভাষা</span>
+                                    <span class="text-xs font-semibold px-2 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300">বাংলা ভাষা</span>
                                 </div>
-                                <div class="grid grid-cols-3 gap-2">
-                                    <div class="col-span-1">
-                                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-0.5">{{ __('ব্যাজ') }}</label>
+                                <div class="space-y-3">
+                                    <div>
+                                        <label class="block text-xs font-bold text-emerald-800 dark:text-emerald-300 uppercase tracking-wider mb-1.5">{{ __('ব্যাজ') }}</label>
                                         <input type="text" name="notice_badge_bn" value="{{ old('notice_badge_bn', $noticeBadgeBn ?? 'সাধারণ নোটিশ') }}" maxlength="30"
-                                               class="w-full px-2.5 py-1.5 text-xs font-bold border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 dark:text-slate-100">
+                                               class="w-full px-3.5 py-2.5 text-sm font-bold border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all shadow-xs">
                                     </div>
-                                    <div class="col-span-2">
-                                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-0.5">{{ __('নোটিশ বার্তা') }}</label>
-                                        <textarea name="notice_text_bn" rows="2" placeholder="{{ __('বাংলায় নোটিশ লিখুন...') }}"
-                                                  class="w-full px-2.5 py-1.5 text-xs border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 dark:text-slate-100 leading-snug">{{ old('notice_text_bn', $noticeTextBn ?? '') }}</textarea>
+                                    <div>
+                                        <label class="block text-xs font-bold text-emerald-800 dark:text-emerald-300 uppercase tracking-wider mb-1.5">{{ __('নোটিশ বার্তা') }}</label>
+                                        <textarea name="notice_text_bn" rows="5" placeholder="{{ __('বাংলায় নোটিশ লিখুন...') }}"
+                                                  class="w-full px-3.5 py-3 text-sm border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 dark:text-slate-100 leading-relaxed min-h-[130px] focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all shadow-xs resize-y">{{ old('notice_text_bn', $noticeTextBn ?? '') }}</textarea>
                                     </div>
                                 </div>
                             </div>
@@ -573,47 +645,48 @@
                             </div>
                         </div>
 
-                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                        {{-- Spacious Bilingual Cards --}}
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
                             {{-- English --}}
-                            <div class="p-3 bg-slate-50/70 dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-700/80 space-y-2">
-                                <div class="flex items-center justify-between">
-                                    <span class="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
-                                        <span>🇬🇧</span> {{ __('English (Reseller)') }}
+                            <div class="p-4 sm:p-5 bg-slate-50/80 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700/80 space-y-3.5 shadow-xs">
+                                <div class="flex items-center justify-between pb-1 border-b border-slate-200/60 dark:border-slate-700/60">
+                                    <span class="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                                        <span class="text-base">🇬🇧</span> {{ __('English (Reseller)') }}
                                     </span>
-                                    <span class="text-[10px] text-slate-400">English Language</span>
+                                    <span class="text-xs font-semibold px-2 py-0.5 rounded-md bg-slate-200/70 dark:bg-slate-700 text-slate-600 dark:text-slate-300">English Language</span>
                                 </div>
-                                <div class="grid grid-cols-3 gap-2">
-                                    <div class="col-span-1">
-                                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-0.5">{{ __('Badge') }}</label>
+                                <div class="space-y-3">
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1.5">{{ __('Badge') }}</label>
                                         <input type="text" name="notice_reseller_badge_en" value="{{ old('notice_reseller_badge_en', $noticeResellerBadgeEn ?? 'RESELLER ALERT') }}" maxlength="30"
-                                               class="w-full px-2.5 py-1.5 text-xs font-bold uppercase border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 dark:text-slate-100">
+                                               class="w-full px-3.5 py-2.5 text-sm font-bold uppercase border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all shadow-xs">
                                     </div>
-                                    <div class="col-span-2">
-                                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-0.5">{{ __('Notice Message') }}</label>
-                                        <textarea name="notice_reseller_text_en" rows="2" placeholder="{{ __('Reseller notice in English...') }}"
-                                                  class="w-full px-2.5 py-1.5 text-xs border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 dark:text-slate-100 leading-snug">{{ old('notice_reseller_text_en', $noticeResellerTextEn ?? '') }}</textarea>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1.5">{{ __('Notice Message') }}</label>
+                                        <textarea name="notice_reseller_text_en" rows="5" placeholder="{{ __('Reseller notice in English...') }}"
+                                                  class="w-full px-3.5 py-3 text-sm border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 dark:text-slate-100 leading-relaxed min-h-[130px] focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all shadow-xs resize-y">{{ old('notice_reseller_text_en', $noticeResellerTextEn ?? '') }}</textarea>
                                     </div>
                                 </div>
                             </div>
 
                             {{-- Bangla --}}
-                            <div class="p-3 bg-amber-50/40 dark:bg-amber-950/20 rounded-xl border border-amber-200/70 dark:border-amber-900/50 space-y-2">
-                                <div class="flex items-center justify-between">
-                                    <span class="text-xs font-bold text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
-                                        <span>🇧🇩</span> {{ __('Bangla (Reseller)') }}
+                            <div class="p-4 sm:p-5 bg-amber-50/40 dark:bg-amber-950/20 rounded-2xl border border-amber-200/70 dark:border-amber-900/50 space-y-3.5 shadow-xs">
+                                <div class="flex items-center justify-between pb-1 border-b border-amber-200/60 dark:border-amber-900/60">
+                                    <span class="text-sm font-bold text-amber-800 dark:text-amber-300 flex items-center gap-2">
+                                        <span class="text-base">🇧🇩</span> {{ __('Bangla (Reseller)') }}
                                     </span>
-                                    <span class="text-[10px] text-amber-700/70 dark:text-amber-400/60">বাংলা ভাষা</span>
+                                    <span class="text-xs font-semibold px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-900/60 text-amber-700 dark:text-amber-300">বাংলা ভাষা</span>
                                 </div>
-                                <div class="grid grid-cols-3 gap-2">
-                                    <div class="col-span-1">
-                                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-0.5">{{ __('ব্যাজ') }}</label>
+                                <div class="space-y-3">
+                                    <div>
+                                        <label class="block text-xs font-bold text-amber-800 dark:text-amber-300 uppercase tracking-wider mb-1.5">{{ __('ব্যাজ') }}</label>
                                         <input type="text" name="notice_reseller_badge_bn" value="{{ old('notice_reseller_badge_bn', $noticeResellerBadgeBn ?? 'রিসেলার নোটিশ') }}" maxlength="30"
-                                               class="w-full px-2.5 py-1.5 text-xs font-bold border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 dark:text-slate-100">
+                                               class="w-full px-3.5 py-2.5 text-sm font-bold border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all shadow-xs">
                                     </div>
-                                    <div class="col-span-2">
-                                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-0.5">{{ __('নোটিশ বার্তা') }}</label>
-                                        <textarea name="notice_reseller_text_bn" rows="2" placeholder="{{ __('বাংলায় রিসেলার নোটিশ লিখুন...') }}"
-                                                  class="w-full px-2.5 py-1.5 text-xs border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 dark:text-slate-100 leading-snug">{{ old('notice_reseller_text_bn', $noticeResellerTextBn ?? '') }}</textarea>
+                                    <div>
+                                        <label class="block text-xs font-bold text-amber-800 dark:text-amber-300 uppercase tracking-wider mb-1.5">{{ __('নোটিশ বার্তা') }}</label>
+                                        <textarea name="notice_reseller_text_bn" rows="5" placeholder="{{ __('বাংলায় রিসেলার নোটিশ লিখুন...') }}"
+                                                  class="w-full px-3.5 py-3 text-sm border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 dark:text-slate-100 leading-relaxed min-h-[130px] focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all shadow-xs resize-y">{{ old('notice_reseller_text_bn', $noticeResellerTextBn ?? '') }}</textarea>
                                     </div>
                                 </div>
                             </div>
@@ -661,47 +734,48 @@
                             </div>
                         </div>
 
-                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                        {{-- Spacious Bilingual Cards --}}
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
                             {{-- English --}}
-                            <div class="p-3 bg-slate-50/70 dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-700/80 space-y-2">
-                                <div class="flex items-center justify-between">
-                                    <span class="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
-                                        <span>🇬🇧</span> {{ __('English (NOC)') }}
+                            <div class="p-4 sm:p-5 bg-slate-50/80 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700/80 space-y-3.5 shadow-xs">
+                                <div class="flex items-center justify-between pb-1 border-b border-slate-200/60 dark:border-slate-700/60">
+                                    <span class="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                                        <span class="text-base">🇬🇧</span> {{ __('English (NOC)') }}
                                     </span>
-                                    <span class="text-[10px] text-slate-400">English Language</span>
+                                    <span class="text-xs font-semibold px-2 py-0.5 rounded-md bg-slate-200/70 dark:bg-slate-700 text-slate-600 dark:text-slate-300">English Language</span>
                                 </div>
-                                <div class="grid grid-cols-3 gap-2">
-                                    <div class="col-span-1">
-                                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-0.5">{{ __('Badge') }}</label>
+                                <div class="space-y-3">
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1.5">{{ __('Badge') }}</label>
                                         <input type="text" name="notice_noc_badge_en" value="{{ old('notice_noc_badge_en', $noticeNocBadgeEn ?? 'NOC DISPATCH') }}" maxlength="30"
-                                               class="w-full px-2.5 py-1.5 text-xs font-bold uppercase border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 dark:text-slate-100">
+                                               class="w-full px-3.5 py-2.5 text-sm font-bold uppercase border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-xs">
                                     </div>
-                                    <div class="col-span-2">
-                                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-0.5">{{ __('Notice Message') }}</label>
-                                        <textarea name="notice_noc_text_en" rows="2" placeholder="{{ __('NOC notice in English...') }}"
-                                                  class="w-full px-2.5 py-1.5 text-xs border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 dark:text-slate-100 leading-snug">{{ old('notice_noc_text_en', $noticeNocTextEn ?? '') }}</textarea>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1.5">{{ __('Notice Message') }}</label>
+                                        <textarea name="notice_noc_text_en" rows="5" placeholder="{{ __('NOC notice in English...') }}"
+                                                  class="w-full px-3.5 py-3 text-sm border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 dark:text-slate-100 leading-relaxed min-h-[130px] focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-xs resize-y">{{ old('notice_noc_text_en', $noticeNocTextEn ?? '') }}</textarea>
                                     </div>
                                 </div>
                             </div>
 
                             {{-- Bangla --}}
-                            <div class="p-3 bg-indigo-50/40 dark:bg-indigo-950/20 rounded-xl border border-indigo-200/70 dark:border-indigo-900/50 space-y-2">
-                                <div class="flex items-center justify-between">
-                                    <span class="text-xs font-bold text-indigo-800 dark:text-indigo-300 flex items-center gap-1.5">
-                                        <span>🇧🇩</span> {{ __('Bangla (NOC)') }}
+                            <div class="p-4 sm:p-5 bg-indigo-50/40 dark:bg-indigo-950/20 rounded-2xl border border-indigo-200/70 dark:border-indigo-900/50 space-y-3.5 shadow-xs">
+                                <div class="flex items-center justify-between pb-1 border-b border-indigo-200/60 dark:border-indigo-900/60">
+                                    <span class="text-sm font-bold text-indigo-800 dark:text-indigo-300 flex items-center gap-2">
+                                        <span class="text-base">🇧🇩</span> {{ __('Bangla (NOC)') }}
                                     </span>
-                                    <span class="text-[10px] text-indigo-700/70 dark:text-indigo-400/60">বাংলা ভাষা</span>
+                                    <span class="text-xs font-semibold px-2 py-0.5 rounded-md bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300">বাংলা ভাষা</span>
                                 </div>
-                                <div class="grid grid-cols-3 gap-2">
-                                    <div class="col-span-1">
-                                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-0.5">{{ __('ব্যাজ') }}</label>
+                                <div class="space-y-3">
+                                    <div>
+                                        <label class="block text-xs font-bold text-indigo-800 dark:text-indigo-300 uppercase tracking-wider mb-1.5">{{ __('ব্যাজ') }}</label>
                                         <input type="text" name="notice_noc_badge_bn" value="{{ old('notice_noc_badge_bn', $noticeNocBadgeBn ?? 'এনওসি নোটিশ') }}" maxlength="30"
-                                               class="w-full px-2.5 py-1.5 text-xs font-bold border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 dark:text-slate-100">
+                                               class="w-full px-3.5 py-2.5 text-sm font-bold border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-xs">
                                     </div>
-                                    <div class="col-span-2">
-                                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-0.5">{{ __('নোটিশ বার্তা') }}</label>
-                                        <textarea name="notice_noc_text_bn" rows="2" placeholder="{{ __('বাংলায় এনওসি নোটিশ লিখুন...') }}"
-                                                  class="w-full px-2.5 py-1.5 text-xs border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 dark:text-slate-100 leading-snug">{{ old('notice_noc_text_bn', $noticeNocTextBn ?? '') }}</textarea>
+                                    <div>
+                                        <label class="block text-xs font-bold text-indigo-800 dark:text-indigo-300 uppercase tracking-wider mb-1.5">{{ __('নোটিশ বার্তা') }}</label>
+                                        <textarea name="notice_noc_text_bn" rows="5" placeholder="{{ __('বাংলায় এনওসি নোটিশ লিখুন...') }}"
+                                                  class="w-full px-3.5 py-3 text-sm border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 dark:text-slate-100 leading-relaxed min-h-[130px] focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-xs resize-y">{{ old('notice_noc_text_bn', $noticeNocTextBn ?? '') }}</textarea>
                                     </div>
                                 </div>
                             </div>
@@ -750,7 +824,7 @@
                         {{-- Side-by-side: Preview + Upload Form --}}
                         <div class="flex items-center gap-3">
                             {{-- Compact Preview Box --}}
-                            <div class="w-28 h-20 rounded-lg border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-850 p-1.5 flex items-center justify-center shrink-0 overflow-hidden">
+                            <div class="w-28 h-20 rounded-lg border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 p-1.5 flex items-center justify-center shrink-0 overflow-hidden">
                                 @if($logoPath)
                                     <img src="{{ asset('storage/' . $logoPath) }}" alt="Logo" class="max-h-16 max-w-full object-contain">
                                 @else
@@ -808,7 +882,7 @@
                     <div class="p-3.5 space-y-3">
                         <div class="flex items-center gap-3">
                             {{-- Compact Favicon Preview Box --}}
-                            <div class="w-28 h-20 rounded-lg border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-850 p-1.5 flex items-center justify-center shrink-0">
+                            <div class="w-28 h-20 rounded-lg border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 p-1.5 flex items-center justify-center shrink-0">
                                 @if($faviconPath)
                                     <div class="flex flex-col items-center">
                                         <img src="{{ asset('storage/' . $faviconPath) }}" alt="Favicon" class="w-7 h-7 object-contain">
@@ -903,7 +977,7 @@
 
                     {{-- Compact Color Pickers (Side by Side) --}}
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div class="p-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-850">
+                        <div class="p-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60">
                             <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">{{ __('Primary Color') }}</label>
                             <div class="flex items-center gap-2">
                                 <input type="color" id="primary-color-picker" value="{{ $themePrimary }}"
@@ -915,7 +989,7 @@
                             <div id="primary-preview-bar" class="h-1 rounded-full mt-2 transition-all" style="background-color: {{ $themePrimary }};"></div>
                         </div>
 
-                        <div class="p-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-850">
+                        <div class="p-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60">
                             <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">{{ __('Secondary Accent Color') }}</label>
                             <div class="flex items-center gap-2">
                                 <input type="color" id="secondary-color-picker" value="{{ $themeSecondary }}"

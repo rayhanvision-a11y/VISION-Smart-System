@@ -46,7 +46,16 @@
     <div class="flex items-center gap-1.5 text-sm text-slate-400 mb-3">
         <a href="{{ route('tickets.index') }}" class="hover:text-indigo-600 transition-colors font-medium">{{ __('Tickets') }}</a>
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-        <span class="font-mono text-slate-500 font-semibold">{{ $ticketKey }}</span>
+        <span x-data="{ copied: false }" class="inline-flex items-center gap-1 group">
+            <span class="font-mono text-slate-500 font-semibold">{{ $ticketKey }}</span>
+            <button type="button"
+                    @click="navigator.clipboard.writeText(@js($ticketKey)).then(() => { copied = true; setTimeout(() => copied = false, 1200); })"
+                    class="p-1 rounded-md text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/40 opacity-70 group-hover:opacity-100 transition-opacity"
+                    :title="copied ? @js(__('Copied!')) : @js(__('Copy ticket ID'))">
+                <svg x-show="!copied" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                <svg x-show="copied" x-cloak class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+            </button>
+        </span>
         @if($isOverdue)<span class="ml-2 inline-flex px-2 py-0.5 rounded-full text-xs font-bold bg-red-600 text-white">{{ __('OVERDUE') }}</span>@endif
     </div>
 
@@ -649,11 +658,14 @@
                     </div>
                     <div class="mb-5">
                         <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">{{ __('Assign To') }}</label>
+                        @php
+                            $todayLeaderIds = \App\Models\DailyTechnicianTeam::whereDate('duty_date', today())->pluck('leader_id')->filter()->map(fn($i) => (int) $i)->all();
+                        @endphp
                         <select name="assigned_to" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-700 focus:ring-2 focus:ring-indigo-500 bg-slate-50">
                             <option value="">{{ __('Unassigned') }}</option>
                             @foreach($nocUsers as $noc)
                             <option value="{{ $noc->id }}" {{ $ticket->assigned_to == $noc->id ? 'selected' : '' }}>
-                                {{ $noc->isOnDuty() ? '🟢' : '⚪' }} {{ $noc->name }} ({{ $noc->team ? $noc->team . ' • ' : '' }}{{ $noc->isOnDuty() ? __('On Duty') : __('Off Duty') }})
+                                {{ in_array((int) $noc->id, $todayLeaderIds, true) ? '👑 ' : '' }}{{ $noc->isOnDuty() ? '🟢' : '⚪' }} {{ $noc->name }} ({{ $noc->team ? $noc->team . ' • ' : '' }}{{ $noc->isOnDuty() ? __('On Duty') : __('Off Duty') }})
                             </option>
                             @endforeach
                         </select>

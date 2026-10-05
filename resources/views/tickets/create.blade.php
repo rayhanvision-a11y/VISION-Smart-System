@@ -160,7 +160,7 @@
                             <div x-show="type === 'internal'" x-cloak>
                                 <label class="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">
                                     {{ __('Title') }}
-                                    <span class="text-red-500">*</span>
+                                    <span class="text-red-600 dark:text-red-400">*</span>
                                 </label>
                                 <input type="text" name="title" value="{{ old('title') }}"
                                        placeholder="{{ __('Brief summary of the issue…') }}"
@@ -172,7 +172,7 @@
                             <div x-show="type === 'internal'" x-cloak>
                                 <label class="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">
                                     {{ __('Description') }}
-                                    <span class="text-red-500">*</span>
+                                    <span class="text-red-600 dark:text-red-400">*</span>
                                 </label>
                                 <div id="desc-editor" class="rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus-within:ring-2 focus-within:ring-indigo-500 focus-within:border-transparent transition @error('description') border-red-400 @enderror"></div>
                                 <input type="hidden" name="description" id="desc-hidden">
@@ -184,7 +184,7 @@
                                 <div>
                                     <label class="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">
                                         {{ __('Category') }}
-                                        <span x-show="type === 'external'" class="text-red-500">*</span>
+                                        <span x-show="type === 'external'" class="text-red-600 dark:text-red-400">*</span>
                                     </label>
                                     <select name="category"
                                             class="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition @error('category') border-red-400 @enderror">
@@ -207,7 +207,7 @@
                                 <div>
                                     <label class="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">
                                         {{ __('Priority') }}
-                                        <span class="text-red-500">*</span>
+                                        <span class="text-red-600 dark:text-red-400">*</span>
                                     </label>
                                     <select name="priority"
                                             class="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition @error('priority') border-red-400 @enderror">
@@ -227,12 +227,15 @@
                                     {{ __('Assign To') }}
                                     <span class="text-[10px] font-medium text-slate-400 normal-case">({{ __('Optional') }})</span>
                                 </label>
+                                @php
+                                    $todayLeaderIds = \App\Models\DailyTechnicianTeam::whereDate('duty_date', today())->pluck('leader_id')->filter()->map(fn($i) => (int) $i)->all();
+                                @endphp
                                 <select name="assigned_to" id="assigned_to"
                                         class="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition @error('assigned_to') border-red-400 @enderror">
                                     <option value="">— {{ __('Leave Unassigned') }} —</option>
                                     @foreach($nocUsers as $user)
                                         <option value="{{ $user->id }}" {{ (string)old('assigned_to') === (string)$user->id ? 'selected' : '' }}>
-                                            {{ $user->isOnDuty() ? '🟢' : '⚪' }} {{ $user->name }}{{ $user->team ? ' · ' . $user->team : '' }} ({{ ucfirst(str_replace('_', ' ', $user->role)) }})
+                                            {{ in_array((int) $user->id, $todayLeaderIds, true) ? '👑 ' : '' }}{{ $user->isOnDuty() ? '🟢' : '⚪' }} {{ $user->name }}{{ $user->team ? ' · ' . $user->team : '' }} ({{ ucfirst(str_replace('_', ' ', $user->role)) }})
                                         </option>
                                     @endforeach
                                 </select>

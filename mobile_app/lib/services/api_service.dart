@@ -462,6 +462,24 @@ class ApiService {
     return null;
   }
 
+  // 7b. Daily Technician Teams (3-person field teams)
+  static Future<Map<String, dynamic>?> getTodayTechnicianTeams({String? date}) async {
+    try {
+      final query = date != null ? {'date': date} : null;
+      final uri = await _buildUri('/technician-teams/today', query);
+      final response = await http.get(
+        uri,
+        headers: await _headers(),
+      );
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      }
+    } catch (e) {
+      debugPrint('getTodayTechnicianTeams error: $e');
+    }
+    return null;
+  }
+
   // 8. Duty Roster List
   static Future<Map<String, dynamic>?> getRoster() async {
     try {

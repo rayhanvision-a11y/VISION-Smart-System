@@ -1,8 +1,9 @@
 <x-app-layout>
-    <div class="mb-6">
-        <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100">{{ __('Create User') }}</h1>
-    </div>
-    <div class="max-w-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm p-6">
+    <div class="max-w-xl mx-auto">
+        <div class="mb-6 text-center">
+            <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100">{{ __('Create User') }}</h1>
+        </div>
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm p-6">
         <form method="POST" action="{{ route('users.store') }}" enctype="multipart/form-data">
             @csrf
             <div class="mb-4">
@@ -22,8 +23,9 @@
                 @error('email')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
             </div>
             <div class="mb-4">
-                <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">{{ __('Password') }}</label>
-                <input type="password" name="password" required minlength="8" class="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500">
+                <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">{{ __('Password (optional)') }}</label>
+                <input type="password" name="password" minlength="8" class="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500" placeholder="{{ __('Leave blank — reset link will be emailed') }}">
+                <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">{{ __('If left blank, a password reset link will be emailed to the user.') }}</p>
                 @error('password')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
             </div>
             <div class="mb-4">
@@ -43,6 +45,35 @@
                 @error('role')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
             </div>
             <div class="mb-4">
+                <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">{{ __('Designation') }}</label>
+                <input type="text" name="designation" value="{{ old('designation') }}" list="designation-list"
+                       placeholder="{{ __('e.g. Senior Technician, Field Engineer') }}"
+                       class="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500">
+                <datalist id="designation-list">
+                    @foreach(($designations ?? []) as $d)
+                        <option value="{{ $d }}">
+                    @endforeach
+                </datalist>
+                @error('designation')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">{{ __('Office ID') }}</label>
+                <input type="text" name="office_id" value="{{ old('office_id') }}"
+                       placeholder="{{ __('e.g. VTL-EMP-0012') }}"
+                       class="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500">
+                @error('office_id')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">{{ __('POP Office') }}</label>
+                <select name="pop_office_id" class="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500">
+                    <option value="">{{ __('None') }}</option>
+                    @foreach(($offices ?? []) as $o)
+                        <option value="{{ $o->id }}" {{ (string) old('pop_office_id') === (string) $o->id ? 'selected' : '' }}>🏢 {{ $o->name }}</option>
+                    @endforeach
+                </select>
+                @error('pop_office_id')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
+            </div>
+            <div class="mb-4">
                 <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">{{ __('Team Tag') }}</label>
                 <select name="team" class="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500">
                     <option value="">{{ __('None / No Team Tag') }}</option>
@@ -60,5 +91,6 @@
             <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors shadow-sm">{{ __('Create User') }}</button>
             <a href="{{ route('users.index') }}" class="ml-3 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">{{ __('Cancel') }}</a>
         </form>
+        </div>
     </div>
 </x-app-layout>

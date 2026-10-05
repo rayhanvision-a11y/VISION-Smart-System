@@ -7,7 +7,7 @@
         <form method="POST" action="{{ route('kb.store') }}">
             @csrf
             <div class="mb-4">
-                <label class="block text-sm font-semibold text-slate-700 mb-1.5">{{ __('Title') }} <span class="text-red-500">*</span></label>
+                <label class="block text-sm font-semibold text-slate-700 mb-1.5">{{ __('Title') }} <span class="text-red-600 dark:text-red-400">*</span></label>
                 <input type="text" name="title" value="{{ old('title') }}" required class="w-full border border-slate-200 rounded-lg px-3.5 py-2.5 text-sm bg-slate-50 focus:ring-2 focus:ring-indigo-500">
                 @error('title')<p class="text-red-500 text-xs mt-1.5">{{ $message }}</p>@enderror
             </div>
@@ -16,7 +16,7 @@
                 <input type="text" name="category" value="{{ old('category') }}" placeholder="{{ __('e.g. Router, Billing, Connectivity') }}" class="w-full border border-slate-200 rounded-lg px-3.5 py-2.5 text-sm bg-slate-50 focus:ring-2 focus:ring-indigo-500">
             </div>
             <div class="mb-4">
-                <label class="block text-sm font-semibold text-slate-700 mb-1.5">{{ __('Body') }} <span class="text-red-500">*</span></label>
+                <label class="block text-sm font-semibold text-slate-700 mb-1.5">{{ __('Body') }} <span class="text-red-600 dark:text-red-400">*</span></label>
                 <textarea name="body" rows="12" required class="w-full border border-slate-200 rounded-lg px-3.5 py-2.5 text-sm bg-slate-50 focus:ring-2 focus:ring-indigo-500 resize-none">{{ old('body') }}</textarea>
                 @error('body')<p class="text-red-500 text-xs mt-1.5">{{ $message }}</p>@enderror
             </div>

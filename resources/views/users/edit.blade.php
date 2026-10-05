@@ -50,6 +50,35 @@
                 </select>
             </div>
             <div class="mb-4">
+                <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">{{ __('Designation') }}</label>
+                <input type="text" name="designation" value="{{ old('designation', $editUser->designation) }}" list="designation-list"
+                       placeholder="{{ __('e.g. Senior Technician, Field Engineer') }}"
+                       class="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500">
+                <datalist id="designation-list">
+                    @foreach(($designations ?? []) as $d)
+                        <option value="{{ $d }}">
+                    @endforeach
+                </datalist>
+                @error('designation')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">{{ __('Office ID') }}</label>
+                <input type="text" name="office_id" value="{{ old('office_id', $editUser->office_id) }}"
+                       placeholder="{{ __('e.g. VTL-EMP-0012') }}"
+                       class="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500">
+                @error('office_id')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">{{ __('POP Office') }}</label>
+                <select name="pop_office_id" class="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500">
+                    <option value="">{{ __('None') }}</option>
+                    @foreach(($offices ?? []) as $o)
+                        <option value="{{ $o->id }}" {{ (string) old('pop_office_id', $editUser->pop_office_id) === (string) $o->id ? 'selected' : '' }}>🏢 {{ $o->name }}</option>
+                    @endforeach
+                </select>
+                @error('pop_office_id')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
+            </div>
+            <div class="mb-4">
                 <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">{{ __('Team Tag') }}</label>
                 <select name="team" class="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500">
                     <option value="">{{ __('None / No Team Tag') }}</option>

@@ -30,16 +30,23 @@ class CustomMenuLinkController extends Controller
             'name' => 'required|string|max:255',
             'url' => 'required|string|max:500',
             'icon' => 'nullable|string|max:100',
+            'icon_image' => 'nullable|image|mimes:png,jpg,jpeg,webp,svg,gif|max:512',
             'is_important' => 'nullable|boolean',
             'is_active' => 'nullable|boolean',
             'open_in_new_tab' => 'nullable|boolean',
             'sort_order' => 'nullable|integer',
         ]);
 
+        $iconImagePath = null;
+        if ($request->hasFile('icon_image')) {
+            $iconImagePath = $request->file('icon_image')->store('menu-link-icons', 'public');
+        }
+
         CustomMenuLink::create([
             'name' => $validated['name'],
             'url' => $validated['url'],
             'icon' => $validated['icon'] ?? 'link',
+            'icon_image' => $iconImagePath,
             'is_important' => $request->has('is_important') ? (bool) $request->is_important : false,
             'is_active' => $request->has('is_active') ? (bool) $request->is_active : true,
             'open_in_new_tab' => $request->has('open_in_new_tab') ? (bool) $request->open_in_new_tab : true,
@@ -60,13 +67,14 @@ class CustomMenuLinkController extends Controller
             'name' => 'required|string|max:255',
             'url' => 'required|string|max:500',
             'icon' => 'nullable|string|max:100',
+            'icon_image' => 'nullable|image|mimes:png,jpg,jpeg,webp,svg,gif|max:512',
             'is_important' => 'nullable|boolean',
             'is_active' => 'nullable|boolean',
             'open_in_new_tab' => 'nullable|boolean',
             'sort_order' => 'nullable|integer',
         ]);
 
-        $customMenuLink->update([
+        $data = [
             'name' => $validated['name'],
             'url' => $validated['url'],
             'icon' => $validated['icon'] ?? 'link',
@@ -74,7 +82,21 @@ class CustomMenuLinkController extends Controller
             'is_active' => $request->boolean('is_active'),
             'open_in_new_tab' => $request->boolean('open_in_new_tab'),
             'sort_order' => $validated['sort_order'] ?? 0,
-        ]);
+        ];
+
+        if ($request->hasFile('icon_image')) {
+            if ($customMenuLink->icon_image && \Storage::disk('public')->exists($customMenuLink->icon_image)) {
+                \Storage::disk('public')->delete($customMenuLink->icon_image);
+            }
+            $data['icon_image'] = $request->file('icon_image')->store('menu-link-icons', 'public');
+        } elseif ($request->boolean('remove_icon_image') && $customMenuLink->icon_image) {
+            if (\Storage::disk('public')->exists($customMenuLink->icon_image)) {
+                \Storage::disk('public')->delete($customMenuLink->icon_image);
+            }
+            $data['icon_image'] = null;
+        }
+
+        $customMenuLink->update($data);
 
         return redirect()->route('custom-menu-links.index')->with('success', __('Custom menu link updated successfully!'));
     }
@@ -127,6 +149,10 @@ class CustomMenuLinkController extends Controller
     public function destroy(CustomMenuLink $customMenuLink)
     {
         $this->authorizeAdmin();
+
+        if ($customMenuLink->icon_image && \Storage::disk('public')->exists($customMenuLink->icon_image)) {
+            \Storage::disk('public')->delete($customMenuLink->icon_image);
+        }
 
         $customMenuLink->delete();
 

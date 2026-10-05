@@ -96,7 +96,7 @@
                 </div>
                 <form method="POST" action="{{ route('areas.store') }}">
                     @csrf
-                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">{{ __('Area Name') }} <span class="text-red-500">*</span></label>
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">{{ __('Area Name') }} <span class="text-red-600 dark:text-red-400">*</span></label>
                     <input type="text" name="name" required placeholder="{{ __('e.g. Shadhupara, Gopalpur, Power House Para') }}"
                            class="w-full border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2 text-sm bg-slate-50 dark:bg-slate-800 dark:text-white focus:ring-2 focus:ring-indigo-500">
                     <div class="mt-6 flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
@@ -116,7 +116,7 @@
                 </div>
                 <form :action="'/areas/' + editId" method="POST">
                     @csrf @method('PUT')
-                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">{{ __('Area Name') }} <span class="text-red-500">*</span></label>
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">{{ __('Area Name') }} <span class="text-red-600 dark:text-red-400">*</span></label>
                     <input type="text" name="name" x-model="editName" required
                            class="w-full border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2 text-sm bg-slate-50 dark:bg-slate-800 dark:text-white focus:ring-2 focus:ring-indigo-500">
                     <div class="flex items-center gap-2 mt-3">

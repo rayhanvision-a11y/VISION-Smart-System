@@ -21,10 +21,11 @@
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"/></svg>
                     {{ __('Board') }}
                 </a>
-                <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-slate-400 dark:text-slate-500 text-sm cursor-not-allowed" title="{{ __('Coming soon') }}">
+                <a href="{{ route('tickets.calendar') }}"
+                   class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white dark:hover:bg-slate-700 text-sm font-medium transition-all">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                    {{ __('Calendar') }}*
-                </span>
+                    {{ __('Calendar') }}
+                </a>
             </div>
             <a href="{{ route('tickets.create') }}"
                class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors shadow-sm">
@@ -37,8 +38,39 @@
     </div>
 
     {{-- Filter Bar --}}
-    <form method="GET" action="{{ route('tickets.index') }}"
+    @if(request('date') || request('resolved_date'))
+        <div class="mb-3 flex items-center gap-2 flex-wrap bg-indigo-50/60 dark:bg-indigo-950/30 border border-indigo-200/80 dark:border-indigo-800/60 rounded-xl px-3.5 py-2">
+            <span class="text-xs font-semibold uppercase tracking-wider text-indigo-700 dark:text-indigo-300 flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                {{ __('Calendar Filter') }}:
+            </span>
+            @if(request('date'))
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:emerald-200 border border-emerald-300 dark:border-emerald-700">
+                    <span>📅 {{ __('Created Date') }}: {{ \Carbon\Carbon::parse(request('date'))->format('d M Y') }}</span>
+                    <a href="{{ request()->fullUrlWithoutQuery(['date']) }}" class="hover:text-emerald-950 dark:hover:text-emerald-50 font-bold ml-0.5" title="{{ __('Clear this filter') }}">✕</a>
+                </span>
+            @endif
+            @if(request('resolved_date'))
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-100 dark:bg-indigo-900/60 text-indigo-800 dark:indigo-200 border border-indigo-300 dark:border-indigo-700">
+                    <span>✓ {{ __('Resolved Date') }}: {{ \Carbon\Carbon::parse(request('resolved_date'))->format('d M Y') }}</span>
+                    <a href="{{ request()->fullUrlWithoutQuery(['resolved_date']) }}" class="hover:text-indigo-950 dark:hover:text-indigo-50 font-bold ml-0.5" title="{{ __('Clear this filter') }}">✕</a>
+                </span>
+            @endif
+            <a href="{{ route('tickets.calendar') }}" class="ml-auto text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1">
+                <span>{{ __('Back to Calendar') }}</span>
+                <span>→</span>
+            </a>
+        </div>
+    @endif
+
+    <form method="GET" action="{{ route('tickets.index') }}" data-auto-filter
           class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm p-4 mb-6">
+        @if(request('date'))
+            <input type="hidden" name="date" value="{{ request('date') }}">
+        @endif
+        @if(request('resolved_date'))
+            <input type="hidden" name="resolved_date" value="{{ request('resolved_date') }}">
+        @endif
         <div class="flex flex-wrap gap-3 items-end">
             <div class="flex-1 min-w-32">
                 <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">{{ __('Status') }}</label>
@@ -199,15 +231,21 @@
                 </template>
                 <select name="action" class="border border-indigo-200 dark:border-indigo-500/30 rounded-lg px-2 py-1.5 text-sm text-slate-700 dark:text-slate-100 bg-white dark:bg-slate-800" id="bulk-action-select">
                     <option value="close">{{ __('Close Tickets') }}</option>
-                    <option value="assign">{{ __('Assign to NOC') }}</option>
+                    <option value="assign">{{ __('Assign to Staff') }}</option>
                     <option value="status">{{ __('Change Status') }}</option>
                     @if(auth()->user()->isSuperAdmin())
                     <option value="delete">🗑 {{ __('Delete Permanently') }}</option>
                     @endif
                 </select>
                 <select name="assigned_to" class="border border-indigo-200 dark:border-indigo-500/30 rounded-lg px-2 py-1.5 text-sm text-slate-700 dark:text-slate-100 bg-white dark:bg-slate-800 hidden" id="bulk-assign-select">
-                    @foreach(\App\Models\User::whereIn('role',['super_admin','admin','noc'])->get() as $noc)
-                    <option value="{{ $noc->id }}">{{ $noc->isOnDuty() ? '🟢' : '⚪' }} {{ $noc->name }}</option>
+                    @php
+                        $assignableStaff = \App\Models\User::whereIn('role', ['super_admin','admin','noc','supervisor','senior_supervisor','call_center','technician'])
+                            ->where('is_active', true)->orderBy('name')->get()
+                            ->sortByDesc(fn($u) => $u->isOnDuty() ? 1 : 0);
+                        $todayLeaderIds = \App\Models\DailyTechnicianTeam::whereDate('duty_date', today())->pluck('leader_id')->filter()->map(fn($i) => (int) $i)->all();
+                    @endphp
+                    @foreach($assignableStaff as $staff)
+                    <option value="{{ $staff->id }}">{{ in_array((int) $staff->id, $todayLeaderIds, true) ? '👑 ' : '' }}{{ $staff->isOnDuty() ? '🟢' : '⚪' }} {{ $staff->name }} ({{ ucwords(str_replace('_',' ',$staff->role)) }})</option>
                     @endforeach
                 </select>
                 <select name="bulk_status" class="border border-indigo-200 dark:border-indigo-500/30 rounded-lg px-2 py-1.5 text-sm text-slate-700 dark:text-slate-100 bg-white dark:bg-slate-800 hidden" id="bulk-status-select">

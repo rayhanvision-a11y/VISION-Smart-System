@@ -151,6 +151,14 @@
             /* ── Secondary: only solid buttons (50/100/950 left alone for badges) ── */
             .bg-emerald-500, .bg-emerald-600              { background-color: var(--cs) !important; }
             .hover\:bg-emerald-600:hover                  { background-color: color-mix(in srgb, var(--cs) 85%, #000) !important; }
+
+            /* ── Light-mode softening (reduce harsh pure-white) ── */
+            html:not(.dark) body { background-color: #eef2f7 !important; }
+            html:not(.dark) .bg-slate-50 { background-color: #eef2f7 !important; }
+            html:not(.dark) .bg-white { background-color: #f8fafc !important; }
+            html:not(.dark) .main-top-header { background-color: #f8fafc !important; }
+            html:not(.dark) aside.bg-white,
+            html:not(.dark) [class*="bg-white"].border-r { background-color: #f8fafc !important; }
         </style>
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600,700&display=swap" rel="stylesheet" />
@@ -535,11 +543,21 @@
 
 
 
+                        <a href="{{ route('tickets.create') }}"
+                           :title="sidebarCollapsed ? @js(__('Create Ticket')) : ''"
+                           class="flex items-center px-3 gap-3 py-2.5 mb-1 rounded-lg text-sm font-medium transition-colors
+                                  {{ request()->routeIs('tickets.create') ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800' }}">
+                            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                            </svg>
+                            <span class="sidebar-text truncate">{{ __('Create Ticket') }}</span>
+                        </a>
+
                         {{-- My Tickets (For all users: shows assigned tickets for staff, own tickets for reseller) --}}
                         <a href="{{ route('tickets.index', ['assigned' => 'me']) }}"
                            :title="sidebarCollapsed ? @js(__('My Tickets')) : ''"
                            class="flex items-center px-3 gap-3 py-2.5 mb-1 rounded-lg text-sm font-medium transition-colors
-                                  {{ request()->routeIs('tickets.*') && request('assigned') === 'me' && !request()->routeIs('tickets.create') ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800' }}">
+                                  {{ request()->routeIs('tickets.*') && request('assigned') === 'me' && !request()->routeIs('tickets.create') && !request()->routeIs('tickets.calendar') ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800' }}">
                             <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                             </svg>
@@ -551,7 +569,7 @@
                         <a href="{{ route('tickets.index') }}"
                            :title="sidebarCollapsed ? @js(__('All Tickets')) : ''"
                            class="flex items-center px-3 gap-3 py-2.5 mb-1 rounded-lg text-sm font-medium transition-colors
-                                  {{ request()->routeIs('tickets.*') && request('assigned') !== 'me' && !request()->routeIs('tickets.create') ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800' }}">
+                                  {{ request()->routeIs('tickets.*') && request('assigned') !== 'me' && !request()->routeIs('tickets.create') && !request()->routeIs('tickets.calendar') ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800' }}">
                             <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
@@ -559,16 +577,6 @@
                             <span class="sidebar-text truncate">{{ __('All Tickets') }}</span>
                         </a>
                         @endif
-
-                        <a href="{{ route('tickets.create') }}"
-                           :title="sidebarCollapsed ? @js(__('Create Ticket')) : ''"
-                           class="flex items-center px-3 gap-3 py-2.5 mb-1 rounded-lg text-sm font-medium transition-colors
-                                  {{ request()->routeIs('tickets.create') ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800' }}">
-                            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                            </svg>
-                            <span class="sidebar-text truncate">{{ __('Create Ticket') }}</span>
-                        </a>
 
                         <a href="{{ route('board.index') }}"
                            :title="sidebarCollapsed ? @js(__('Board')) : ''"
@@ -638,36 +646,6 @@
                         </a>
                         @endif
 
-                        @if(auth()->user()?->isAdmin())
-                        <a href="{{ route('users.index') }}"
-                           :title="sidebarCollapsed ? @js(__('Users')) : ''"
-                           class="flex items-center px-3 gap-3 py-2.5 mb-1 rounded-lg text-sm font-medium transition-colors
-                                  {{ request()->routeIs('users.*') ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800' }}">
-                            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
-                            </svg>
-                            <span class="sidebar-text truncate">{{ __('Users') }}</span>
-                        </a>
-                        <a href="{{ route('labels.index') }}"
-                           :title="sidebarCollapsed ? @js(__('Labels')) : ''"
-                           class="flex items-center px-3 gap-3 py-2.5 mb-1 rounded-lg text-sm font-medium transition-colors
-                                  {{ request()->routeIs('labels.*') ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800' }}">
-                            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
-                            </svg>
-                            <span class="sidebar-text truncate">{{ __('Labels') }}</span>
-                        </a>
-                        <a href="{{ route('sla-policies.index') }}"
-                           :title="sidebarCollapsed ? @js(__('SLA Policies')) : ''"
-                           class="flex items-center px-3 gap-3 py-2.5 mb-1 rounded-lg text-sm font-medium transition-colors
-                                  {{ request()->routeIs('sla-policies.*') ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800' }}">
-                            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                            <span class="sidebar-text truncate">{{ __('SLA Policies') }}</span>
-                        </a>
-                        @endif
-
                         @if(auth()->user()?->isSuperAdminOnly())
                         <a href="{{ route('settings.edit') }}"
                            :title="sidebarCollapsed ? @js(__('Site Settings')) : ''"
@@ -677,18 +655,6 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                             </svg>
                             <span class="sidebar-text truncate">{{ __('Site Settings') }}</span>
-                        </a>
-                        @endif
-
-                        @if(auth()->user()?->isAdmin())
-                        <a href="{{ route('activity-logs.index') }}"
-                           :title="sidebarCollapsed ? @js(__('Activity Log')) : ''"
-                           class="flex items-center px-3 gap-3 py-2.5 mb-1 rounded-lg text-sm font-medium transition-colors
-                                  {{ request()->routeIs('activity-logs.*') ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800' }}">
-                            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
-                            </svg>
-                            <span class="sidebar-text truncate">{{ __('Activity Log') }}</span>
                         </a>
                         @endif
 
@@ -723,7 +689,7 @@
                                    class="flex items-center justify-between gap-2 pl-5 pr-3 py-2 rounded-lg text-xs font-medium transition-colors text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800">
                                     <div class="flex items-center gap-2 min-w-0">
                                         <div class="w-5 h-5 flex items-center justify-center flex-shrink-0">
-                                            {!! $cLink->svgIcon('w-4 h-4 text-slate-500 dark:text-slate-400') !!}
+                                            {!! $cLink->renderIcon('w-4 h-4 text-slate-500 dark:text-slate-400') !!}
                                         </div>
                                         <span class="truncate">{{ $cLink->name ?? $cLink->title }}</span>
                                     </div>
@@ -739,7 +705,7 @@
                                title="{{ $cLink->name ?? $cLink->title }}"
                                class="flex items-center justify-center py-2.5 mb-1 rounded-lg text-sm font-medium transition-colors text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800">
                                 <div class="w-5 h-5 flex items-center justify-center flex-shrink-0">
-                                    {!! $cLink->svgIcon('w-5 h-5 text-slate-500 dark:text-slate-400') !!}
+                                    {!! $cLink->renderIcon('w-5 h-5 text-slate-500 dark:text-slate-400') !!}
                                 </div>
                             </a>
                             @endforeach
@@ -912,33 +878,27 @@
                         $hNoticeTheme = 'danger';
 
                         if ($masterActive) {
-                            if ($currentUser?->isReseller()) {
-                                // Resellers only see notice when Reseller toggle is ON
-                                if (\App\Models\Setting::get('header_notice_reseller_active', '0') === '1' && $resellerNotice['has_content']) {
-                                    $activeNoticeType = 'reseller';
-                                    $hNoticeRaw   = $resellerNotice['text'];
-                                    $hNoticeBadge = $resellerNotice['badge'];
-                                    $hNoticeSpeed = \App\Models\Setting::get('header_notice_reseller_speed', '8');
-                                    $hNoticeTheme = \App\Models\Setting::get('header_notice_reseller_theme', 'warning');
-                                }
-                            } elseif ($currentUser?->isNoc()) {
-                                // NOC only sees notice when NOC toggle is ON
-                                if (\App\Models\Setting::get('header_notice_noc_active', '0') === '1' && $nocNotice['has_content']) {
-                                    $activeNoticeType = 'noc';
-                                    $hNoticeRaw   = $nocNotice['text'];
-                                    $hNoticeBadge = $nocNotice['badge'];
-                                    $hNoticeSpeed = \App\Models\Setting::get('header_notice_noc_speed', '8');
-                                    $hNoticeTheme = \App\Models\Setting::get('header_notice_noc_theme', 'indigo');
-                                }
-                            } else {
-                                // Admin and all other staff only see notice when Global toggle is ON
-                                if (\App\Models\Setting::get('header_notice_active', '0') === '1' && $globalNotice['has_content']) {
-                                    $activeNoticeType = 'global';
-                                    $hNoticeRaw   = $globalNotice['text'];
-                                    $hNoticeBadge = $globalNotice['badge'];
-                                    $hNoticeSpeed = \App\Models\Setting::get('header_notice_speed', '8');
-                                    $hNoticeTheme = \App\Models\Setting::get('header_notice_theme', 'danger');
-                                }
+                            if ($currentUser?->isReseller() && \App\Models\Setting::get('header_notice_reseller_active', '0') === '1' && $resellerNotice['has_content']) {
+                                // Dedicated Reseller notice takes precedence
+                                $activeNoticeType = 'reseller';
+                                $hNoticeRaw   = $resellerNotice['text'];
+                                $hNoticeBadge = $resellerNotice['badge'];
+                                $hNoticeSpeed = \App\Models\Setting::get('header_notice_reseller_speed', '8');
+                                $hNoticeTheme = \App\Models\Setting::get('header_notice_reseller_theme', 'warning');
+                            } elseif ($currentUser?->isNoc() && \App\Models\Setting::get('header_notice_noc_active', '0') === '1' && $nocNotice['has_content']) {
+                                // Dedicated NOC notice takes precedence
+                                $activeNoticeType = 'noc';
+                                $hNoticeRaw   = $nocNotice['text'];
+                                $hNoticeBadge = $nocNotice['badge'];
+                                $hNoticeSpeed = \App\Models\Setting::get('header_notice_noc_speed', '8');
+                                $hNoticeTheme = \App\Models\Setting::get('header_notice_noc_theme', 'indigo');
+                            } elseif (\App\Models\Setting::get('header_notice_active', '0') === '1' && $globalNotice['has_content']) {
+                                // Global notice shown to everyone when active (unless overridden by specific role notice)
+                                $activeNoticeType = 'global';
+                                $hNoticeRaw   = $globalNotice['text'];
+                                $hNoticeBadge = $globalNotice['badge'];
+                                $hNoticeSpeed = \App\Models\Setting::get('header_notice_speed', '8');
+                                $hNoticeTheme = \App\Models\Setting::get('header_notice_theme', 'danger');
                             }
                         }
 
@@ -1165,41 +1125,26 @@
                     </div>
                 </header>
 
-                {{-- Flash Messages + Main --}}
-                <main class="flex-1 {{ request()->routeIs('map.*') ? 'p-0' : 'p-3 sm:p-4 lg:p-6' }} dark:text-slate-200">
-                    @if(session('success'))
-                        <div x-data="{ show: true }" x-show="show"
-                             class="mb-4 flex items-center justify-between bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-xl">
-                            <div class="flex items-center gap-2">
-                                <svg class="w-4 h-4 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                                </svg>
-                                {{ session('success') }}
+                {{-- Flash Messages (floating auto-dismiss toasts, top-right) + Main --}}
+                @if(session('success') || session('error'))
+                    <div class="fixed top-20 right-4 z-[9999] space-y-2 w-[90%] max-w-sm pointer-events-none"
+                         x-data="{ items: [
+                            @if(session('success')) { id: 'ok', type: 'ok', msg: @js(session('success')), show: true }, @endif
+                            @if(session('error')) { id: 'err', type: 'err', msg: @js(session('error')), show: true }, @endif
+                         ] }"
+                         x-init="setTimeout(() => items.forEach(i => i.show = false), 4500)">
+                        <template x-for="i in items" :key="i.id">
+                            <div x-show="i.show" x-transition.duration.300ms
+                                 class="pointer-events-auto flex items-start gap-3 px-4 py-3 rounded-xl shadow-2xl border backdrop-blur-sm"
+                                 :class="i.type === 'ok' ? 'bg-emerald-50/95 dark:bg-emerald-900/85 border-emerald-300 dark:border-emerald-700 text-emerald-900 dark:text-emerald-100' : 'bg-red-50/95 dark:bg-red-900/85 border-red-300 dark:border-red-700 text-red-900 dark:text-red-100'">
+                                <span class="text-lg leading-none" x-text="i.type === 'ok' ? '✅' : '⚠️'"></span>
+                                <span class="text-sm font-semibold flex-1" x-text="i.msg"></span>
+                                <button @click="i.show = false" class="text-current opacity-60 hover:opacity-100 text-sm leading-none">✕</button>
                             </div>
-                            <button @click="show = false" class="text-emerald-500 hover:text-emerald-700">
-                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
-                                </svg>
-                            </button>
-                        </div>
-                    @endif
-                    @if(session('error'))
-                        <div x-data="{ show: true }" x-show="show"
-                             class="mb-4 flex items-center justify-between bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-xl">
-                            <div class="flex items-center gap-2">
-                                <svg class="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
-                                </svg>
-                                {{ session('error') }}
-                            </div>
-                            <button @click="show = false" class="text-red-500 hover:text-red-700">
-                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
-                                </svg>
-                            </button>
-                        </div>
-                    @endif
-
+                        </template>
+                    </div>
+                @endif
+                <main class="flex-1 {{ request()->routeIs('map.*') ? 'p-0' : 'p-2.5 sm:p-3' }} dark:text-slate-200">
                     {{ $slot }}
                 </main>
             </div>
@@ -1754,5 +1699,16 @@
     }
     </script>
     @endauth
+
+    {{-- Auto-submit filter forms on <select> change: add data-auto-filter to the form --}}
+    <script>
+    document.addEventListener('change', function (e) {
+        const el = e.target;
+        if (el.tagName !== 'SELECT') return;
+        const form = el.closest('form[data-auto-filter]');
+        if (!form) return;
+        form.submit();
+    });
+    </script>
     </body>
 </html>

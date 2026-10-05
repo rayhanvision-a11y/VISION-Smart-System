@@ -18,6 +18,9 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'designation',
+        'office_id',
+        'pop_office_id',
         'team',
         'current_shift',
         'shift_date',
@@ -53,12 +56,18 @@ class User extends Authenticatable
             'notify_on_message' => 'boolean',
             'two_factor_enabled' => 'boolean',
             'two_factor_recovery_codes' => 'array',
+            'last_login_at' => 'datetime',
         ];
     }
 
     public function tickets()
     {
         return $this->hasMany(Ticket::class, 'created_by');
+    }
+
+    public function popOffice()
+    {
+        return $this->belongsTo(PopOffice::class, 'pop_office_id');
     }
 
     public function assignedTickets()

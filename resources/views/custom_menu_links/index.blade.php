@@ -67,7 +67,7 @@
                             <td class="px-6 py-4 font-semibold text-slate-800 dark:text-slate-100">
                                 <div class="flex items-center gap-3">
                                     <div class="w-8 h-8 rounded-lg flex items-center justify-center {{ $link->is_important ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400' }}">
-                                        {!! $link->svgIcon('w-4 h-4') !!}
+                                        {!! $link->renderIcon('w-4 h-4') !!}
                                     </div>
                                     <div>
                                         <span class="text-sm font-semibold">{{ $link->name }}</span>
@@ -118,7 +118,7 @@
                             </td>
                             <td class="px-6 py-4 text-right">
                                 <div class="flex items-center justify-end gap-2">
-                                    <button onclick="editLinkModal({{ json_encode($link) }})"
+                                    <button onclick="editLinkModal({{ json_encode(array_merge($link->toArray(), ['icon_image_url' => $link->iconImageUrl()])) }})"
                                             class="p-1.5 text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
@@ -159,7 +159,7 @@
                 </button>
             </div>
 
-            <form method="POST" action="{{ route('custom-menu-links.store') }}" class="space-y-4">
+            <form method="POST" action="{{ route('custom-menu-links.store') }}" enctype="multipart/form-data" class="space-y-4">
                 @csrf
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide mb-1">{{ __('Link Name') }} *</label>
@@ -186,6 +186,14 @@
                         <option value="cog">⚙️ Settings / Admin</option>
                         <option value="shield">🛡️ Security / VPN</option>
                     </select>
+                    <p class="text-[11px] text-slate-400 mt-1">{{ __('Used as fallback if no icon image uploaded below.') }}</p>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide mb-1">{{ __('Icon Image (optional)') }}</label>
+                    <input type="file" name="icon_image" accept="image/png,image/jpeg,image/webp,image/svg+xml,image/gif"
+                           class="block w-full text-xs text-slate-500 dark:text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 dark:file:bg-indigo-950/60 file:text-indigo-700 dark:file:text-indigo-300 hover:file:bg-indigo-100 dark:hover:file:bg-indigo-900/50">
+                    <p class="text-[11px] text-slate-400 mt-1">{{ __('PNG, JPG, WEBP, SVG, GIF — max 512KB. Overrides the icon selected above.') }}</p>
                 </div>
 
                 <div class="flex items-center justify-between p-3 bg-amber-50/70 dark:bg-amber-900/20 rounded-xl border border-amber-200 dark:border-amber-800/50">
@@ -235,7 +243,7 @@
                 </button>
             </div>
 
-            <form id="editLinkForm" method="POST" action="" class="space-y-4">
+            <form id="editLinkForm" method="POST" action="" enctype="multipart/form-data" class="space-y-4">
                 @csrf
                 @method('PUT')
                 <div>
@@ -262,6 +270,21 @@
                         <option value="cog">⚙️ Settings / Admin</option>
                         <option value="shield">🛡️ Security / VPN</option>
                     </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide mb-1">{{ __('Icon Image (optional)') }}</label>
+                    <div id="edit_current_icon_preview" class="hidden items-center gap-3 p-2 mb-2 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+                        <img id="edit_current_icon_img" src="" alt="" class="w-8 h-8 object-contain rounded">
+                        <span class="text-[11px] text-slate-500 dark:text-slate-400 flex-1">{{ __('Current icon image') }}</span>
+                        <label class="inline-flex items-center gap-1.5 text-[11px] font-semibold text-red-600 dark:text-red-400 cursor-pointer">
+                            <input type="checkbox" name="remove_icon_image" value="1" class="rounded border-slate-300 text-red-500 focus:ring-red-500">
+                            {{ __('Remove') }}
+                        </label>
+                    </div>
+                    <input type="file" name="icon_image" accept="image/png,image/jpeg,image/webp,image/svg+xml,image/gif"
+                           class="block w-full text-xs text-slate-500 dark:text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 dark:file:bg-indigo-950/60 file:text-indigo-700 dark:file:text-indigo-300 hover:file:bg-indigo-100 dark:hover:file:bg-indigo-900/50">
+                    <p class="text-[11px] text-slate-400 mt-1">{{ __('PNG, JPG, WEBP, SVG, GIF — max 512KB. Overrides the icon above.') }}</p>
                 </div>
 
                 <div class="flex items-center justify-between p-3 bg-amber-50/70 dark:bg-amber-900/20 rounded-xl border border-amber-200 dark:border-amber-800/50">
@@ -315,6 +338,22 @@
             document.getElementById('edit_is_important').checked = !!link.is_important;
             document.getElementById('edit_is_active').checked = !!link.is_active;
             document.getElementById('edit_open_in_new_tab').checked = !!link.open_in_new_tab;
+
+            // Show existing uploaded icon preview if any
+            const previewWrap = document.getElementById('edit_current_icon_preview');
+            const previewImg = document.getElementById('edit_current_icon_img');
+            const removeCheckbox = previewWrap.querySelector('input[name="remove_icon_image"]');
+            if (removeCheckbox) removeCheckbox.checked = false;
+            if (link.icon_image_url) {
+                previewImg.src = link.icon_image_url;
+                previewWrap.classList.remove('hidden');
+                previewWrap.classList.add('flex');
+            } else {
+                previewWrap.classList.add('hidden');
+                previewWrap.classList.remove('flex');
+                previewImg.src = '';
+            }
+
             document.getElementById('editLinkModal').classList.remove('hidden');
         }
     </script>

@@ -47,12 +47,15 @@
                 @endphp
                 <div class="mb-6">
                     <label for="assigned_to" class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">{{ __('Assign to Staff') }}</label>
+                    @php
+                        $todayLeaderIds = \App\Models\DailyTechnicianTeam::whereDate('duty_date', today())->pluck('leader_id')->filter()->map(fn($i) => (int) $i)->all();
+                    @endphp
                     <select name="assigned_to" id="assigned_to"
                             class="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3.5 py-2.5 text-sm text-slate-700 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 bg-slate-50 dark:bg-slate-800">
                         <option value="">— {{ __('Leave Unassigned') }} —</option>
                         @foreach($nocUsers as $u)
                             <option value="{{ $u->id }}" {{ (string)old('assigned_to', $ticket->assigned_to) === (string)$u->id ? 'selected' : '' }}>
-                                {{ $u->isOnDuty() ? '🟢' : '⚪' }} {{ $u->name }} {{ $u->team ? '· ' . $u->team : '' }} ({{ ucfirst(str_replace('_', ' ', $u->role)) }})
+                                {{ in_array((int) $u->id, $todayLeaderIds, true) ? '👑 ' : '' }}{{ $u->isOnDuty() ? '🟢' : '⚪' }} {{ $u->name }} {{ $u->team ? '· ' . $u->team : '' }} ({{ ucfirst(str_replace('_', ' ', $u->role)) }})
                             </option>
                         @endforeach
                     </select>

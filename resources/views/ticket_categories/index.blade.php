@@ -134,7 +134,7 @@
                     @csrf
                     <div class="space-y-4">
                         <div>
-                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">{{ __('Category Name') }} <span class="text-red-500">*</span></label>
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">{{ __('Category Name') }} <span class="text-red-600 dark:text-red-400">*</span></label>
                             <input type="text" name="name" required placeholder="{{ __('e.g., ONU / Fiber Patch Issue') }}"
                                    class="w-full border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2 text-sm bg-slate-50 dark:bg-slate-800 dark:text-white focus:ring-2 focus:ring-indigo-500">
                         </div>
@@ -185,7 +185,7 @@
                     @method('PUT')
                     <div class="space-y-4">
                         <div>
-                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">{{ __('Category Name') }} <span class="text-red-500">*</span></label>
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">{{ __('Category Name') }} <span class="text-red-600 dark:text-red-400">*</span></label>
                             <input type="text" name="name" x-model="editName" required
                                    class="w-full border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2 text-sm bg-slate-50 dark:bg-slate-800 dark:text-white focus:ring-2 focus:ring-indigo-500">
                         </div>
