@@ -80,40 +80,60 @@
         }
 
         .dash-card {
-            border-radius: 20px !important;
+            border-radius: 1rem !important;
             padding: 20px 22px !important;
-            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease !important;
+            height: auto !important;
+            min-height: 0 !important;
+            width: 100%;
+            box-sizing: border-box;
+            transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), 
+                        box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1), 
+                        border-color 0.22s ease !important;
+            will-change: transform, box-shadow;
         }
         .dash-card:hover {
-            transform: translateY(-2px);
+            transform: translateY(-2.5px) !important;
+            box-shadow: 0 12px 26px -6px rgba(0, 0, 0, 0.08), 0 6px 12px -4px rgba(0, 0, 0, 0.04) !important;
+            border-color: color-mix(in srgb, var(--cp, #4f46e5) 30%, #cbd5e1);
         }
         .dash-top-card {
-            border-radius: 18px !important;
+            border-radius: 1rem !important;
             padding: 14px 12px !important;
-            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease !important;
+            height: auto !important;
+            min-height: 0 !important;
+            width: 100%;
+            box-sizing: border-box;
+            transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), 
+                        box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1), 
+                        border-color 0.22s ease !important;
+            will-change: transform, box-shadow;
         }
         .dash-top-card:hover {
-            transform: translateY(-2px);
+            transform: translateY(-2.5px) !important;
+            box-shadow: 0 12px 26px -6px rgba(0, 0, 0, 0.08), 0 6px 12px -4px rgba(0, 0, 0, 0.04) !important;
+            border-color: color-mix(in srgb, var(--cp, #4f46e5) 30%, #cbd5e1);
         }
 
         /* Refined, Elegant Dark Mode Card Engine */
         html.dark .dash-card {
             background-color: #1e293b !important;
-            border: 1px solid rgba(51, 65, 85, 0.7) !important;
-            box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.25) !important;
+            border: 1px solid rgba(51, 65, 85, 0.8) !important;
+            box-shadow: 0 4px 14px -2px rgba(0, 0, 0, 0.25) !important;
         }
         html.dark .dash-card:hover {
-            border-color: rgba(99, 102, 241, 0.45) !important;
-            box-shadow: 0 10px 25px -4px rgba(0, 0, 0, 0.35) !important;
+            transform: translateY(-2.5px) !important;
+            border-color: color-mix(in srgb, var(--cp, #4f46e5) 45%, #475569);
+            box-shadow: 0 14px 28px -6px rgba(0, 0, 0, 0.45) !important;
         }
         html.dark .dash-top-card {
             background-color: #1e293b !important;
-            border: 1px solid rgba(51, 65, 85, 0.7) !important;
-            box-shadow: 0 2px 10px -2px rgba(0, 0, 0, 0.2) !important;
+            border: 1px solid rgba(51, 65, 85, 0.8) !important;
+            box-shadow: 0 4px 14px -2px rgba(0, 0, 0, 0.25) !important;
         }
         html.dark .dash-top-card:hover {
-            border-color: rgba(99, 102, 241, 0.45) !important;
-            box-shadow: 0 8px 20px -2px rgba(0, 0, 0, 0.3) !important;
+            transform: translateY(-2.5px) !important;
+            border-color: color-mix(in srgb, var(--cp, #4f46e5) 45%, #475569);
+            box-shadow: 0 14px 28px -6px rgba(0, 0, 0, 0.45) !important;
         }
         html.dark .icon-squircle,
         html.dark .icon-squircle-sm {

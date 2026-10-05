@@ -164,15 +164,22 @@
             .app-card,
             .site-box,
             .dashboard-card,
+            .dash-card,
+            .dash-top-card,
             .stat-card,
+            .rpt-card,
+            .rpt-team-card,
+            .rpt-metric-tile,
+            .roster-card,
             main .bg-white.border:not(table):not(thead):not(tbody):not(tr):not(th):not(td):not(input):not(select):not(textarea):not(button):not(nav):not(ul):not(li):not([role="dialog"]):not([role="menu"]):not(.flatpickr-calendar):not(.ql-toolbar):not(.ql-container):not(.no-box-style),
-            main .dark\:bg-slate-900.border:not(table):not(thead):not(tbody):not(tr):not(th):not(td):not(input):not(select):not(textarea):not(button):not(nav):not(ul):not(li):not([role="dialog"]):not([role="menu"]):not(.flatpickr-calendar):not(.ql-toolbar):not(.ql-container):not(.no-box-style) {
+            main .dark\:bg-slate-900.border:not(table):not(thead):not(tbody):not(tr):not(th):not(td):not(input):not(select):not(textarea):not(button):not(nav):not(ul):not(li):not([role="dialog"]):not([role="menu"]):not(.flatpickr-calendar):not(.ql-toolbar):not(.ql-container):not(.no-box-style),
+            main .dark\:bg-slate-800.border:not(table):not(thead):not(tbody):not(tr):not(th):not(td):not(input):not(select):not(textarea):not(button):not(nav):not(ul):not(li):not([role="dialog"]):not([role="menu"]):not(.flatpickr-calendar):not(.ql-toolbar):not(.ql-container):not(.no-box-style) {
                 height: auto !important;
                 min-height: 0 !important;
                 width: 100%;
                 box-sizing: border-box;
                 position: relative;
-                border-radius: 1rem;
+                border-radius: 1rem !important;
                 box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.04);
                 transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), 
                             box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1), 
@@ -184,22 +191,52 @@
             .app-card:hover,
             .site-box:hover,
             .dashboard-card:hover,
+            .dash-card:hover,
+            .dash-top-card:hover,
             .stat-card:hover,
+            .rpt-card:hover,
+            .rpt-team-card:hover,
+            .rpt-metric-tile:hover,
+            .roster-card:hover,
             main .bg-white.border:not(table):not(thead):not(tbody):not(tr):not(th):not(td):not(input):not(select):not(textarea):not(button):not(nav):not(ul):not(li):not([role="dialog"]):not([role="menu"]):not(.flatpickr-calendar):not(.ql-toolbar):not(.ql-container):not(.no-box-style):not(.no-hover):hover,
-            main .dark\:bg-slate-900.border:not(table):not(thead):not(tbody):not(tr):not(th):not(td):not(input):not(select):not(textarea):not(button):not(nav):not(ul):not(li):not([role="dialog"]):not([role="menu"]):not(.flatpickr-calendar):not(.ql-toolbar):not(.ql-container):not(.no-box-style):not(.no-hover):hover {
-                transform: translateY(-2.5px);
+            main .dark\:bg-slate-900.border:not(table):not(thead):not(tbody):not(tr):not(th):not(td):not(input):not(select):not(textarea):not(button):not(nav):not(ul):not(li):not([role="dialog"]):not([role="menu"]):not(.flatpickr-calendar):not(.ql-toolbar):not(.ql-container):not(.no-box-style):not(.no-hover):hover,
+            main .dark\:bg-slate-800.border:not(table):not(thead):not(tbody):not(tr):not(th):not(td):not(input):not(select):not(textarea):not(button):not(nav):not(ul):not(li):not([role="dialog"]):not([role="menu"]):not(.flatpickr-calendar):not(.ql-toolbar):not(.ql-container):not(.no-box-style):not(.no-hover):hover {
+                transform: translateY(-2.5px) !important;
                 box-shadow: 0 12px 26px -6px rgba(0, 0, 0, 0.08), 0 6px 12px -4px rgba(0, 0, 0, 0.04) !important;
-                border-color: color-mix(in srgb, var(--cp, #4f46e5) 30%, #cbd5e1) !important;
+                border-color: color-mix(in srgb, var(--cp, #4f46e5) 30%, #cbd5e1);
+            }
+
+            html.dark .app-card,
+            html.dark .site-box,
+            html.dark .dashboard-card,
+            html.dark .dash-card,
+            html.dark .dash-top-card,
+            html.dark .stat-card,
+            html.dark .rpt-card,
+            html.dark .rpt-team-card,
+            html.dark .rpt-metric-tile,
+            html.dark .roster-card {
+                background-color: #1e293b !important;
+                border-color: #334155 !important;
+                box-shadow: 0 4px 14px -2px rgba(0, 0, 0, 0.25) !important;
             }
 
             html.dark .app-card:hover,
             html.dark .site-box:hover,
             html.dark .dashboard-card:hover,
+            html.dark .dash-card:hover,
+            html.dark .dash-top-card:hover,
             html.dark .stat-card:hover,
+            html.dark .rpt-card:hover,
+            html.dark .rpt-team-card:hover,
+            html.dark .rpt-metric-tile:hover,
+            html.dark .roster-card:hover,
             html.dark main .bg-white.border:not(table):not(thead):not(tbody):not(tr):not(th):not(td):not(input):not(select):not(textarea):not(button):not(nav):not(ul):not(li):not([role="dialog"]):not([role="menu"]):not(.flatpickr-calendar):not(.ql-toolbar):not(.ql-container):not(.no-box-style):not(.no-hover):hover,
-            html.dark main .dark\:bg-slate-900.border:not(table):not(thead):not(tbody):not(tr):not(th):not(td):not(input):not(select):not(textarea):not(button):not(nav):not(ul):not(li):not([role="dialog"]):not([role="menu"]):not(.flatpickr-calendar):not(.ql-toolbar):not(.ql-container):not(.no-box-style):not(.no-hover):hover {
+            html.dark main .dark\:bg-slate-900.border:not(table):not(thead):not(tbody):not(tr):not(th):not(td):not(input):not(select):not(textarea):not(button):not(nav):not(ul):not(li):not([role="dialog"]):not([role="menu"]):not(.flatpickr-calendar):not(.ql-toolbar):not(.ql-container):not(.no-box-style):not(.no-hover):hover,
+            html.dark main .dark\:bg-slate-800.border:not(table):not(thead):not(tbody):not(tr):not(th):not(td):not(input):not(select):not(textarea):not(button):not(nav):not(ul):not(li):not([role="dialog"]):not([role="menu"]):not(.flatpickr-calendar):not(.ql-toolbar):not(.ql-container):not(.no-box-style):not(.no-hover):hover {
+                transform: translateY(-2.5px) !important;
                 box-shadow: 0 14px 28px -6px rgba(0, 0, 0, 0.45) !important;
-                border-color: color-mix(in srgb, var(--cp, #4f46e5) 45%, #475569) !important;
+                border-color: color-mix(in srgb, var(--cp, #4f46e5) 45%, #475569);
             }
         </style>
         <link rel="preconnect" href="https://fonts.bunny.net">

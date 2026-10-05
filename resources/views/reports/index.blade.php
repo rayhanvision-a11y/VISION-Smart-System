@@ -24,61 +24,88 @@
         gap: 20px;
         padding-bottom: 48px;
     }
-    .rpt-card {
+    /* ── Unified Reports Card System (Matches Full Site) ── */
+    .rpt-card,
+    .rpt-team-card {
         background: #ffffff;
         border: 1px solid #e2e8f0;
-        border-radius: 16px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-        transition: all 0.2s ease;
+        border-radius: 1rem !important;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.04);
+        height: auto !important;
+        min-height: 0 !important;
+        width: 100%;
+        box-sizing: border-box;
+        position: relative;
+        transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), 
+                    box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1), 
+                    border-color 0.22s ease !important;
+        will-change: transform, box-shadow;
     }
-    .dark .rpt-card {
-        background: #1e293b;
-        border-color: #334155;
-        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+    .rpt-card:hover,
+    .rpt-team-card:hover {
+        transform: translateY(-2.5px) !important;
+        box-shadow: 0 12px 26px -6px rgba(0, 0, 0, 0.08), 0 6px 12px -4px rgba(0, 0, 0, 0.04) !important;
+        border-color: color-mix(in srgb, var(--cp, #4f46e5) 30%, #cbd5e1);
+    }
+    .dark .rpt-card,
+    .dark .rpt-team-card,
+    html.dark .rpt-card,
+    html.dark .rpt-team-card {
+        background: #1e293b !important;
+        border-color: #334155 !important;
+        box-shadow: 0 4px 14px -2px rgba(0, 0, 0, 0.25) !important;
+    }
+    .dark .rpt-card:hover,
+    .dark .rpt-team-card:hover,
+    html.dark .rpt-card:hover,
+    html.dark .rpt-team-card:hover {
+        transform: translateY(-2.5px) !important;
+        box-shadow: 0 14px 28px -6px rgba(0, 0, 0, 0.45) !important;
+        border-color: color-mix(in srgb, var(--cp, #4f46e5) 45%, #475569);
     }
     .rpt-card-header {
         padding: 16px 20px;
         border-bottom: 1px solid #f1f5f9;
         background: rgba(248, 250, 252, 0.6);
-        border-top-left-radius: 16px;
-        border-top-right-radius: 16px;
+        border-top-left-radius: 1rem;
+        border-top-right-radius: 1rem;
     }
-    .dark .rpt-card-header {
+    .dark .rpt-card-header,
+    html.dark .rpt-card-header {
         border-bottom-color: #334155;
         background: rgba(15, 23, 42, 0.4);
     }
     .rpt-inner-card {
         background: #f8fafc;
         border: 1px solid #f1f5f9;
-        border-radius: 12px;
+        border-radius: 0.75rem;
+        height: auto !important;
+        min-height: 0 !important;
+        box-sizing: border-box;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
     }
-    .dark .rpt-inner-card {
-        background: #0f172a;
-        border-color: #334155;
+    .rpt-inner-card:hover {
+        border-color: #cbd5e1;
     }
-    .rpt-team-card {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 14px;
-        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    .dark .rpt-team-card {
+    .dark .rpt-inner-card,
+    html.dark .rpt-inner-card {
         background: #0f172a !important;
         border-color: #334155 !important;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
     }
-    .dark .rpt-team-card:hover {
-        background: #131d33 !important;
-        border-color: #6366f1 !important;
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(99, 102, 241, 0.4);
-        transform: translateY(-2px);
+    .dark .rpt-inner-card:hover,
+    html.dark .rpt-inner-card:hover {
+        border-color: #475569 !important;
     }
     .rpt-team-statbox {
         background: #f8fafc;
         border: 1px solid #e2e8f0;
-        border-radius: 10px;
+        border-radius: 0.625rem;
+        height: auto !important;
+        min-height: 0 !important;
+        box-sizing: border-box;
     }
-    .dark .rpt-team-statbox {
+    .dark .rpt-team-statbox,
+    html.dark .rpt-team-statbox {
         background: #1e293b !important;
         border-color: #334155 !important;
     }
@@ -195,18 +222,35 @@
     .rpt-metric-tile {
         background: #ffffff;
         border: 1px solid #e2e8f0;
-        border-radius: 14px;
-        padding: 14px 10px;
+        border-radius: 1rem !important;
+        padding: 14px 12px;
         text-align: center;
-        transition: transform 0.15s ease, box-shadow 0.15s ease;
-    }
-    .dark .rpt-metric-tile {
-        background: #1e293b;
-        border-color: #334155;
+        height: auto !important;
+        min-height: 0 !important;
+        width: 100%;
+        box-sizing: border-box;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.04);
+        transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), 
+                    box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1), 
+                    border-color 0.22s ease !important;
+        will-change: transform, box-shadow;
     }
     .rpt-metric-tile:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        transform: translateY(-2.5px) !important;
+        box-shadow: 0 12px 26px -6px rgba(0, 0, 0, 0.08), 0 6px 12px -4px rgba(0, 0, 0, 0.04) !important;
+        border-color: color-mix(in srgb, var(--cp, #4f46e5) 30%, #cbd5e1);
+    }
+    .dark .rpt-metric-tile,
+    html.dark .rpt-metric-tile {
+        background: #1e293b !important;
+        border-color: #334155 !important;
+        box-shadow: 0 4px 14px -2px rgba(0, 0, 0, 0.25) !important;
+    }
+    .dark .rpt-metric-tile:hover,
+    html.dark .rpt-metric-tile:hover {
+        transform: translateY(-2.5px) !important;
+        box-shadow: 0 14px 28px -6px rgba(0, 0, 0, 0.45) !important;
+        border-color: color-mix(in srgb, var(--cp, #4f46e5) 45%, #475569);
     }
 </style>
 
