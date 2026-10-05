@@ -159,6 +159,48 @@
             html:not(.dark) .main-top-header { background-color: #f8fafc !important; }
             html:not(.dark) aside.bg-white,
             html:not(.dark) [class*="bg-white"].border-r { background-color: #f8fafc !important; }
+
+            /* ── Global Unified Card & Box Design System ── */
+            .app-card,
+            .site-box,
+            .dashboard-card,
+            .stat-card,
+            main .bg-white.border:not(table):not(thead):not(tbody):not(tr):not(th):not(td):not(input):not(select):not(textarea):not(button):not(nav):not(ul):not(li):not([role="dialog"]):not([role="menu"]):not(.flatpickr-calendar):not(.ql-toolbar):not(.ql-container):not(.no-box-style),
+            main .dark\:bg-slate-900.border:not(table):not(thead):not(tbody):not(tr):not(th):not(td):not(input):not(select):not(textarea):not(button):not(nav):not(ul):not(li):not([role="dialog"]):not([role="menu"]):not(.flatpickr-calendar):not(.ql-toolbar):not(.ql-container):not(.no-box-style) {
+                height: auto !important;
+                min-height: 0 !important;
+                width: 100%;
+                box-sizing: border-box;
+                position: relative;
+                border-radius: 1rem;
+                box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.04);
+                transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), 
+                            box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1), 
+                            border-color 0.22s ease !important;
+                will-change: transform, box-shadow;
+            }
+
+            /* Single Unified Hover Effect across the entire site */
+            .app-card:hover,
+            .site-box:hover,
+            .dashboard-card:hover,
+            .stat-card:hover,
+            main .bg-white.border:not(table):not(thead):not(tbody):not(tr):not(th):not(td):not(input):not(select):not(textarea):not(button):not(nav):not(ul):not(li):not([role="dialog"]):not([role="menu"]):not(.flatpickr-calendar):not(.ql-toolbar):not(.ql-container):not(.no-box-style):not(.no-hover):hover,
+            main .dark\:bg-slate-900.border:not(table):not(thead):not(tbody):not(tr):not(th):not(td):not(input):not(select):not(textarea):not(button):not(nav):not(ul):not(li):not([role="dialog"]):not([role="menu"]):not(.flatpickr-calendar):not(.ql-toolbar):not(.ql-container):not(.no-box-style):not(.no-hover):hover {
+                transform: translateY(-2.5px);
+                box-shadow: 0 12px 26px -6px rgba(0, 0, 0, 0.08), 0 6px 12px -4px rgba(0, 0, 0, 0.04) !important;
+                border-color: color-mix(in srgb, var(--cp, #4f46e5) 30%, #cbd5e1) !important;
+            }
+
+            html.dark .app-card:hover,
+            html.dark .site-box:hover,
+            html.dark .dashboard-card:hover,
+            html.dark .stat-card:hover,
+            html.dark main .bg-white.border:not(table):not(thead):not(tbody):not(tr):not(th):not(td):not(input):not(select):not(textarea):not(button):not(nav):not(ul):not(li):not([role="dialog"]):not([role="menu"]):not(.flatpickr-calendar):not(.ql-toolbar):not(.ql-container):not(.no-box-style):not(.no-hover):hover,
+            html.dark main .dark\:bg-slate-900.border:not(table):not(thead):not(tbody):not(tr):not(th):not(td):not(input):not(select):not(textarea):not(button):not(nav):not(ul):not(li):not([role="dialog"]):not([role="menu"]):not(.flatpickr-calendar):not(.ql-toolbar):not(.ql-container):not(.no-box-style):not(.no-hover):hover {
+                box-shadow: 0 14px 28px -6px rgba(0, 0, 0, 0.45) !important;
+                border-color: color-mix(in srgb, var(--cp, #4f46e5) 45%, #475569) !important;
+            }
         </style>
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600,700&display=swap" rel="stylesheet" />
