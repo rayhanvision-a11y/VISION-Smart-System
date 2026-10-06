@@ -580,4 +580,27 @@ Route::middleware(['auth'])->group(function () {
 Route::get('/two-factor-challenge', [TwoFactorController::class, 'challenge'])->name('two-factor.challenge');
 Route::post('/two-factor-challenge', [TwoFactorController::class, 'verifyChallenge'])->middleware('throttle:5,1')->name('two-factor.challenge.verify');
 
+// ── Emergency Web Artisan Runner (Bypasses cPanel Jailshell fork limits) ──
+Route::get('/system-migrate', function () {
+    if (request('key') !== 'vision_migrate_2026') {
+        abort(403, 'Unauthorized');
+    }
+
+    try {
+        \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+        $output = \Illuminate\Support\Facades\Artisan::output();
+
+        \Illuminate\Support\Facades\Artisan::call('optimize:clear');
+        $clearOutput = \Illuminate\Support\Facades\Artisan::output();
+
+        return response('<pre style="background:#0f172a;color:#10b981;padding:20px;border-radius:10px;font-family:monospace;">'
+            . "=== MIGRATION OUTPUT ===\n" . htmlspecialchars($output) . "\n\n"
+            . "=== OPTIMIZE CLEAR OUTPUT ===\n" . htmlspecialchars($clearOutput) . "\n\n"
+            . "SUCCESS! Now visit: <a href=\"/attendance\" style=\"color:#38bdf8;\">/attendance</a></pre>");
+    } catch (\Throwable $e) {
+        return response('<pre style="background:#0f172a;color:#ef4444;padding:20px;border-radius:10px;font-family:monospace;">Error: '
+            . htmlspecialchars($e->getMessage()) . '</pre>', 500);
+    }
+});
+
 require __DIR__.'/auth.php';
