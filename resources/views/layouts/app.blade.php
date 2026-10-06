@@ -217,7 +217,7 @@
             html.dark .rpt-metric-tile,
             html.dark .roster-card {
                 background-color: #1e293b !important;
-                border-color: #334155 !important;
+                border-color: rgba(255, 255, 255, 0.05) !important;
                 box-shadow: 0 4px 14px -2px rgba(0, 0, 0, 0.25) !important;
             }
 
@@ -236,7 +236,66 @@
             html.dark main .dark\:bg-slate-800.border:not(table):not(thead):not(tbody):not(tr):not(th):not(td):not(input):not(select):not(textarea):not(button):not(nav):not(ul):not(li):not([role="dialog"]):not([role="menu"]):not(.flatpickr-calendar):not(.ql-toolbar):not(.ql-container):not(.no-box-style):not(.no-hover):hover {
                 transform: translateY(-2.5px) !important;
                 box-shadow: 0 14px 28px -6px rgba(0, 0, 0, 0.45) !important;
-                border-color: color-mix(in srgb, var(--cp, #4f46e5) 45%, #475569);
+                border-color: rgba(255, 255, 255, 0.12) !important;
+            }
+
+            /* ── Full System Border Softening (Eliminates Deep/Harsh Wireframe Borders) ── */
+            /* Form inputs: smooth, subtle border in both light and dark mode */
+            input, select, textarea {
+                border-color: rgba(0, 0, 0, 0.08) !important;
+            }
+            html.dark input, 
+            html.dark select, 
+            html.dark textarea {
+                background-color: #0f172a !important;
+                color: #e2e8f0 !important;
+                border-color: rgba(255, 255, 255, 0.08) !important;
+            }
+            html.dark input:focus, 
+            html.dark select:focus, 
+            html.dark textarea:focus {
+                border-color: var(--cp, #4f46e5) !important;
+                box-shadow: 0 0 0 2px color-mix(in srgb, var(--cp, #4f46e5) 25%, transparent) !important;
+            }
+
+            /* Dark mode: soften all harsh slate/gray border utilities across every component */
+            html.dark .border-slate-100,
+            html.dark .border-slate-200,
+            html.dark .border-slate-300,
+            html.dark .border-slate-600,
+            html.dark .border-slate-700,
+            html.dark .border-slate-800,
+            html.dark [class*="dark:border-slate-"],
+            html.dark [class*="dark:border-gray-"],
+            html.dark [class*="border-slate-"],
+            html.dark [class*="border-gray-"],
+            html.dark .border-gray-200,
+            html.dark .border-gray-300 {
+                border-color: rgba(255, 255, 255, 0.06) !important;
+            }
+
+            /* Dark mode: tinted card borders softened to subtle ambient glow */
+            html.dark [class*="dark:border-emerald-"] { border-color: rgba(16, 185, 129, 0.2) !important; }
+            html.dark [class*="dark:border-amber-"]   { border-color: rgba(245, 158, 11, 0.2) !important; }
+            html.dark [class*="dark:border-indigo-"]  { border-color: rgba(99, 102, 241, 0.2) !important; }
+            html.dark [class*="dark:border-blue-"]    { border-color: rgba(59, 130, 246, 0.2) !important; }
+            html.dark [class*="dark:border-purple-"]  { border-color: rgba(168, 85, 247, 0.2) !important; }
+            html.dark [class*="dark:border-rose-"]    { border-color: rgba(244, 63, 94, 0.2) !important; }
+            html.dark [class*="dark:border-red-"]     { border-color: rgba(239, 68, 68, 0.2) !important; }
+
+            /* Dark mode: dividers & table borders */
+            html.dark .divide-slate-50 > :not([hidden]) ~ :not([hidden]),
+            html.dark .divide-slate-100 > :not([hidden]) ~ :not([hidden]),
+            html.dark .divide-slate-200 > :not([hidden]) ~ :not([hidden]),
+            html.dark .divide-slate-700 > :not([hidden]) ~ :not([hidden]),
+            html.dark .divide-slate-800 > :not([hidden]) ~ :not([hidden]) {
+                border-color: rgba(255, 255, 255, 0.04) !important;
+            }
+
+            /* Light mode: soften prominent border utilities */
+            html:not(.dark) .border-slate-300,
+            html:not(.dark) .border-gray-300 {
+                border-color: #e2e8f0 !important;
             }
         </style>
         <link rel="preconnect" href="https://fonts.bunny.net">

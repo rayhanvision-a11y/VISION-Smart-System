@@ -559,45 +559,45 @@
                         {{-- Spacious Bilingual Cards --}}
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
                             {{-- English --}}
-                            <div class="p-4 sm:p-5 bg-slate-50/80 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700/80 space-y-3.5 shadow-xs">
-                                <div class="flex items-center justify-between pb-1 border-b border-slate-200/60 dark:border-slate-700/60">
+                            <div class="p-4 sm:p-5 bg-slate-50/80 dark:bg-slate-800/40 rounded-2xl border border-slate-200/60 dark:border-white/5 space-y-3.5 shadow-xs">
+                                <div class="flex items-center justify-between pb-1 border-b border-slate-200/40 dark:border-white/5">
                                     <span class="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
                                         <span class="text-base">🇬🇧</span> {{ __('English Notice') }}
                                     </span>
-                                    <span class="text-xs font-semibold px-2 py-0.5 rounded-md bg-slate-200/70 dark:bg-slate-700 text-slate-600 dark:text-slate-300">English Language</span>
+                                    <span class="text-xs font-semibold px-2 py-0.5 rounded-md bg-slate-200/50 dark:bg-slate-700/60 text-slate-600 dark:text-slate-300">English Language</span>
                                 </div>
                                 <div class="space-y-3">
                                     <div>
                                         <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1.5">{{ __('Badge') }}</label>
                                         <input type="text" name="notice_badge_en" value="{{ old('notice_badge_en', $noticeBadgeEn ?? 'GLOBAL NOTICE') }}" maxlength="30"
-                                               class="w-full px-3.5 py-2.5 text-sm font-bold uppercase border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-xs">
+                                               class="w-full px-3.5 py-2.5 text-sm font-bold uppercase border border-slate-200 dark:border-white/10 rounded-xl bg-white dark:bg-slate-900/80 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-xs">
                                     </div>
                                     <div>
                                         <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1.5">{{ __('Notice Message') }}</label>
                                         <textarea name="notice_text_en" rows="5" placeholder="{{ __('Notice text in English...') }}"
-                                                  class="w-full px-3.5 py-3 text-sm border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 dark:text-slate-100 leading-relaxed min-h-[130px] focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-xs resize-y">{{ old('notice_text_en', $noticeTextEn ?? '') }}</textarea>
+                                                  class="w-full px-3.5 py-3 text-sm border border-slate-200 dark:border-white/10 rounded-xl bg-white dark:bg-slate-900/80 dark:text-slate-100 leading-relaxed min-h-[130px] focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-xs resize-y">{{ old('notice_text_en', $noticeTextEn ?? '') }}</textarea>
                                     </div>
                                 </div>
                             </div>
 
                             {{-- Bangla --}}
-                            <div class="p-4 sm:p-5 bg-emerald-50/40 dark:bg-emerald-950/20 rounded-2xl border border-emerald-200/70 dark:border-emerald-900/50 space-y-3.5 shadow-xs">
-                                <div class="flex items-center justify-between pb-1 border-b border-emerald-200/60 dark:border-emerald-900/60">
+                            <div class="p-4 sm:p-5 bg-emerald-50/40 dark:bg-emerald-950/20 rounded-2xl border border-emerald-500/20 dark:border-emerald-500/10 space-y-3.5 shadow-xs">
+                                <div class="flex items-center justify-between pb-1 border-b border-emerald-500/15 dark:border-white/5">
                                     <span class="text-sm font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-2">
                                         <span class="text-base">🇧🇩</span> {{ __('Bangla Notice') }}
                                     </span>
-                                    <span class="text-xs font-semibold px-2 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300">বাংলা ভাষা</span>
+                                    <span class="text-xs font-semibold px-2 py-0.5 rounded-md bg-emerald-100/70 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300">বাংলা ভাষা</span>
                                 </div>
                                 <div class="space-y-3">
                                     <div>
                                         <label class="block text-xs font-bold text-emerald-800 dark:text-emerald-300 uppercase tracking-wider mb-1.5">{{ __('ব্যাজ') }}</label>
                                         <input type="text" name="notice_badge_bn" value="{{ old('notice_badge_bn', $noticeBadgeBn ?? 'সাধারণ নোটিশ') }}" maxlength="30"
-                                               class="w-full px-3.5 py-2.5 text-sm font-bold border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all shadow-xs">
+                                               class="w-full px-3.5 py-2.5 text-sm font-bold border border-slate-200 dark:border-white/10 rounded-xl bg-white dark:bg-slate-900/80 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all shadow-xs">
                                     </div>
                                     <div>
                                         <label class="block text-xs font-bold text-emerald-800 dark:text-emerald-300 uppercase tracking-wider mb-1.5">{{ __('নোটিশ বার্তা') }}</label>
                                         <textarea name="notice_text_bn" rows="5" placeholder="{{ __('বাংলায় নোটিশ লিখুন...') }}"
-                                                  class="w-full px-3.5 py-3 text-sm border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 dark:text-slate-100 leading-relaxed min-h-[130px] focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all shadow-xs resize-y">{{ old('notice_text_bn', $noticeTextBn ?? '') }}</textarea>
+                                                  class="w-full px-3.5 py-3 text-sm border border-slate-200 dark:border-white/10 rounded-xl bg-white dark:bg-slate-900/80 dark:text-slate-100 leading-relaxed min-h-[130px] focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all shadow-xs resize-y">{{ old('notice_text_bn', $noticeTextBn ?? '') }}</textarea>
                                     </div>
                                 </div>
                             </div>
@@ -606,7 +606,7 @@
 
                     {{-- ================= CHANNEL 2: RESELLER ================= --}}
                     <div x-show="noticeChannel === 'reseller'" class="space-y-3.5">
-                        <div class="p-2.5 bg-amber-50/60 dark:bg-amber-950/30 rounded-xl border border-amber-200/80 dark:border-amber-900/60 flex flex-col md:flex-row md:items-center justify-between gap-3">
+                        <div class="p-2.5 bg-amber-50/60 dark:bg-amber-950/20 rounded-xl border border-amber-500/20 dark:border-amber-500/10 flex flex-col md:flex-row md:items-center justify-between gap-3">
                             <div class="flex items-center gap-3">
                                 <button type="button"
                                         @click="toggleNotice('reseller')"
@@ -626,7 +626,7 @@
                             <div class="flex items-center gap-2">
                                 <div class="flex items-center gap-1.5">
                                     <label class="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase">{{ __('Theme:') }}</label>
-                                    <select name="notice_reseller_theme" class="px-2.5 py-1 text-xs font-semibold border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 dark:text-slate-100">
+                                    <select name="notice_reseller_theme" class="px-2.5 py-1 text-xs font-semibold border border-slate-200 dark:border-white/10 rounded-lg bg-white dark:bg-slate-800 dark:text-slate-100">
                                         <option value="warning" {{ ($noticeResellerTheme ?? 'warning') === 'warning' ? 'selected' : '' }}>🟡 Amber</option>
                                         <option value="danger"  {{ ($noticeResellerTheme ?? '') === 'danger' ? 'selected' : '' }}>🔴 Red</option>
                                         <option value="info"    {{ ($noticeResellerTheme ?? '') === 'info' ? 'selected' : '' }}>🔵 Blue</option>
@@ -636,7 +636,7 @@
                                 </div>
                                 <div class="flex items-center gap-1.5">
                                     <label class="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase">{{ __('Speed:') }}</label>
-                                    <select name="notice_reseller_speed" class="px-2.5 py-1 text-xs font-semibold border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 dark:text-slate-100">
+                                    <select name="notice_reseller_speed" class="px-2.5 py-1 text-xs font-semibold border border-slate-200 dark:border-white/10 rounded-lg bg-white dark:bg-slate-800 dark:text-slate-100">
                                         <option value="4" {{ ($noticeResellerSpeed ?? 8) == 4 ? 'selected' : '' }}>Slow</option>
                                         <option value="8" {{ ($noticeResellerSpeed ?? 8) == 8 ? 'selected' : '' }}>Normal</option>
                                         <option value="12" {{ ($noticeResellerSpeed ?? 8) == 12 ? 'selected' : '' }}>Fast</option>
@@ -648,45 +648,45 @@
                         {{-- Spacious Bilingual Cards --}}
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
                             {{-- English --}}
-                            <div class="p-4 sm:p-5 bg-slate-50/80 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700/80 space-y-3.5 shadow-xs">
-                                <div class="flex items-center justify-between pb-1 border-b border-slate-200/60 dark:border-slate-700/60">
+                            <div class="p-4 sm:p-5 bg-slate-50/80 dark:bg-slate-800/40 rounded-2xl border border-slate-200/60 dark:border-white/5 space-y-3.5 shadow-xs">
+                                <div class="flex items-center justify-between pb-1 border-b border-slate-200/40 dark:border-white/5">
                                     <span class="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
                                         <span class="text-base">🇬🇧</span> {{ __('English (Reseller)') }}
                                     </span>
-                                    <span class="text-xs font-semibold px-2 py-0.5 rounded-md bg-slate-200/70 dark:bg-slate-700 text-slate-600 dark:text-slate-300">English Language</span>
+                                    <span class="text-xs font-semibold px-2 py-0.5 rounded-md bg-slate-200/50 dark:bg-slate-700/60 text-slate-600 dark:text-slate-300">English Language</span>
                                 </div>
                                 <div class="space-y-3">
                                     <div>
                                         <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1.5">{{ __('Badge') }}</label>
                                         <input type="text" name="notice_reseller_badge_en" value="{{ old('notice_reseller_badge_en', $noticeResellerBadgeEn ?? 'RESELLER ALERT') }}" maxlength="30"
-                                               class="w-full px-3.5 py-2.5 text-sm font-bold uppercase border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all shadow-xs">
+                                               class="w-full px-3.5 py-2.5 text-sm font-bold uppercase border border-slate-200 dark:border-white/10 rounded-xl bg-white dark:bg-slate-900/80 dark:text-slate-100 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all shadow-xs">
                                     </div>
                                     <div>
                                         <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1.5">{{ __('Notice Message') }}</label>
                                         <textarea name="notice_reseller_text_en" rows="5" placeholder="{{ __('Reseller notice in English...') }}"
-                                                  class="w-full px-3.5 py-3 text-sm border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 dark:text-slate-100 leading-relaxed min-h-[130px] focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all shadow-xs resize-y">{{ old('notice_reseller_text_en', $noticeResellerTextEn ?? '') }}</textarea>
+                                                  class="w-full px-3.5 py-3 text-sm border border-slate-200 dark:border-white/10 rounded-xl bg-white dark:bg-slate-900/80 dark:text-slate-100 leading-relaxed min-h-[130px] focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all shadow-xs resize-y">{{ old('notice_reseller_text_en', $noticeResellerTextEn ?? '') }}</textarea>
                                     </div>
                                 </div>
                             </div>
 
                             {{-- Bangla --}}
-                            <div class="p-4 sm:p-5 bg-amber-50/40 dark:bg-amber-950/20 rounded-2xl border border-amber-200/70 dark:border-amber-900/50 space-y-3.5 shadow-xs">
-                                <div class="flex items-center justify-between pb-1 border-b border-amber-200/60 dark:border-amber-900/60">
+                            <div class="p-4 sm:p-5 bg-amber-50/40 dark:bg-amber-950/20 rounded-2xl border border-amber-500/20 dark:border-amber-500/10 space-y-3.5 shadow-xs">
+                                <div class="flex items-center justify-between pb-1 border-b border-amber-500/15 dark:border-white/5">
                                     <span class="text-sm font-bold text-amber-800 dark:text-amber-300 flex items-center gap-2">
                                         <span class="text-base">🇧🇩</span> {{ __('Bangla (Reseller)') }}
                                     </span>
-                                    <span class="text-xs font-semibold px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-900/60 text-amber-700 dark:text-amber-300">বাংলা ভাষা</span>
+                                    <span class="text-xs font-semibold px-2 py-0.5 rounded-md bg-amber-100/70 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300">বাংলা ভাষা</span>
                                 </div>
                                 <div class="space-y-3">
                                     <div>
                                         <label class="block text-xs font-bold text-amber-800 dark:text-amber-300 uppercase tracking-wider mb-1.5">{{ __('ব্যাজ') }}</label>
                                         <input type="text" name="notice_reseller_badge_bn" value="{{ old('notice_reseller_badge_bn', $noticeResellerBadgeBn ?? 'রিসেলার নোটিশ') }}" maxlength="30"
-                                               class="w-full px-3.5 py-2.5 text-sm font-bold border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all shadow-xs">
+                                               class="w-full px-3.5 py-2.5 text-sm font-bold border border-slate-200 dark:border-white/10 rounded-xl bg-white dark:bg-slate-900/80 dark:text-slate-100 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all shadow-xs">
                                     </div>
                                     <div>
                                         <label class="block text-xs font-bold text-amber-800 dark:text-amber-300 uppercase tracking-wider mb-1.5">{{ __('নোটিশ বার্তা') }}</label>
                                         <textarea name="notice_reseller_text_bn" rows="5" placeholder="{{ __('বাংলায় রিসেলার নোটিশ লিখুন...') }}"
-                                                  class="w-full px-3.5 py-3 text-sm border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 dark:text-slate-100 leading-relaxed min-h-[130px] focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all shadow-xs resize-y">{{ old('notice_reseller_text_bn', $noticeResellerTextBn ?? '') }}</textarea>
+                                                  class="w-full px-3.5 py-3 text-sm border border-slate-200 dark:border-white/10 rounded-xl bg-white dark:bg-slate-900/80 dark:text-slate-100 leading-relaxed min-h-[130px] focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all shadow-xs resize-y">{{ old('notice_reseller_text_bn', $noticeResellerTextBn ?? '') }}</textarea>
                                     </div>
                                 </div>
                             </div>
@@ -695,7 +695,7 @@
 
                     {{-- ================= CHANNEL 3: NOC ================= --}}
                     <div x-show="noticeChannel === 'noc'" class="space-y-3.5">
-                        <div class="p-2.5 bg-indigo-50/60 dark:bg-indigo-950/30 rounded-xl border border-indigo-200/80 dark:border-indigo-900/60 flex flex-col md:flex-row md:items-center justify-between gap-3">
+                        <div class="p-2.5 bg-indigo-50/60 dark:bg-indigo-950/20 rounded-xl border border-indigo-500/20 dark:border-indigo-500/10 flex flex-col md:flex-row md:items-center justify-between gap-3">
                             <div class="flex items-center gap-3">
                                 <button type="button"
                                         @click="toggleNotice('noc')"
@@ -715,7 +715,7 @@
                             <div class="flex items-center gap-2">
                                 <div class="flex items-center gap-1.5">
                                     <label class="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase">{{ __('Theme:') }}</label>
-                                    <select name="notice_noc_theme" class="px-2.5 py-1 text-xs font-semibold border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 dark:text-slate-100">
+                                    <select name="notice_noc_theme" class="px-2.5 py-1 text-xs font-semibold border border-slate-200 dark:border-white/10 rounded-lg bg-white dark:bg-slate-800 dark:text-slate-100">
                                         <option value="indigo"  {{ ($noticeNocTheme ?? 'indigo') === 'indigo' ? 'selected' : '' }}>🟣 Indigo</option>
                                         <option value="danger"  {{ ($noticeNocTheme ?? '') === 'danger' ? 'selected' : '' }}>🔴 Red</option>
                                         <option value="warning" {{ ($noticeNocTheme ?? '') === 'warning' ? 'selected' : '' }}>🟡 Amber</option>
@@ -725,7 +725,7 @@
                                 </div>
                                 <div class="flex items-center gap-1.5">
                                     <label class="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase">{{ __('Speed:') }}</label>
-                                    <select name="notice_noc_speed" class="px-2.5 py-1 text-xs font-semibold border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 dark:text-slate-100">
+                                    <select name="notice_noc_speed" class="px-2.5 py-1 text-xs font-semibold border border-slate-200 dark:border-white/10 rounded-lg bg-white dark:bg-slate-800 dark:text-slate-100">
                                         <option value="4" {{ ($noticeNocSpeed ?? 8) == 4 ? 'selected' : '' }}>Slow</option>
                                         <option value="8" {{ ($noticeNocSpeed ?? 8) == 8 ? 'selected' : '' }}>Normal</option>
                                         <option value="12" {{ ($noticeNocSpeed ?? 8) == 12 ? 'selected' : '' }}>Fast</option>
@@ -737,45 +737,45 @@
                         {{-- Spacious Bilingual Cards --}}
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
                             {{-- English --}}
-                            <div class="p-4 sm:p-5 bg-slate-50/80 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700/80 space-y-3.5 shadow-xs">
-                                <div class="flex items-center justify-between pb-1 border-b border-slate-200/60 dark:border-slate-700/60">
+                            <div class="p-4 sm:p-5 bg-slate-50/80 dark:bg-slate-800/40 rounded-2xl border border-slate-200/60 dark:border-white/5 space-y-3.5 shadow-xs">
+                                <div class="flex items-center justify-between pb-1 border-b border-slate-200/40 dark:border-white/5">
                                     <span class="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
                                         <span class="text-base">🇬🇧</span> {{ __('English (NOC)') }}
                                     </span>
-                                    <span class="text-xs font-semibold px-2 py-0.5 rounded-md bg-slate-200/70 dark:bg-slate-700 text-slate-600 dark:text-slate-300">English Language</span>
+                                    <span class="text-xs font-semibold px-2 py-0.5 rounded-md bg-slate-200/50 dark:bg-slate-700/60 text-slate-600 dark:text-slate-300">English Language</span>
                                 </div>
                                 <div class="space-y-3">
                                     <div>
                                         <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1.5">{{ __('Badge') }}</label>
                                         <input type="text" name="notice_noc_badge_en" value="{{ old('notice_noc_badge_en', $noticeNocBadgeEn ?? 'NOC DISPATCH') }}" maxlength="30"
-                                               class="w-full px-3.5 py-2.5 text-sm font-bold uppercase border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-xs">
+                                               class="w-full px-3.5 py-2.5 text-sm font-bold uppercase border border-slate-200 dark:border-white/10 rounded-xl bg-white dark:bg-slate-900/80 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-xs">
                                     </div>
                                     <div>
                                         <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1.5">{{ __('Notice Message') }}</label>
                                         <textarea name="notice_noc_text_en" rows="5" placeholder="{{ __('NOC notice in English...') }}"
-                                                  class="w-full px-3.5 py-3 text-sm border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 dark:text-slate-100 leading-relaxed min-h-[130px] focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-xs resize-y">{{ old('notice_noc_text_en', $noticeNocTextEn ?? '') }}</textarea>
+                                                  class="w-full px-3.5 py-3 text-sm border border-slate-200 dark:border-white/10 rounded-xl bg-white dark:bg-slate-900/80 dark:text-slate-100 leading-relaxed min-h-[130px] focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-xs resize-y">{{ old('notice_noc_text_en', $noticeNocTextEn ?? '') }}</textarea>
                                     </div>
                                 </div>
                             </div>
 
                             {{-- Bangla --}}
-                            <div class="p-4 sm:p-5 bg-indigo-50/40 dark:bg-indigo-950/20 rounded-2xl border border-indigo-200/70 dark:border-indigo-900/50 space-y-3.5 shadow-xs">
-                                <div class="flex items-center justify-between pb-1 border-b border-indigo-200/60 dark:border-indigo-900/60">
+                            <div class="p-4 sm:p-5 bg-indigo-50/40 dark:bg-indigo-950/20 rounded-2xl border border-indigo-500/20 dark:border-indigo-500/10 space-y-3.5 shadow-xs">
+                                <div class="flex items-center justify-between pb-1 border-b border-indigo-500/15 dark:border-white/5">
                                     <span class="text-sm font-bold text-indigo-800 dark:text-indigo-300 flex items-center gap-2">
                                         <span class="text-base">🇧🇩</span> {{ __('Bangla (NOC)') }}
                                     </span>
-                                    <span class="text-xs font-semibold px-2 py-0.5 rounded-md bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300">বাংলা ভাষা</span>
+                                    <span class="text-xs font-semibold px-2 py-0.5 rounded-md bg-indigo-100/70 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300">বাংলা ভাষা</span>
                                 </div>
                                 <div class="space-y-3">
                                     <div>
                                         <label class="block text-xs font-bold text-indigo-800 dark:text-indigo-300 uppercase tracking-wider mb-1.5">{{ __('ব্যাজ') }}</label>
                                         <input type="text" name="notice_noc_badge_bn" value="{{ old('notice_noc_badge_bn', $noticeNocBadgeBn ?? 'এনওসি নোটিশ') }}" maxlength="30"
-                                               class="w-full px-3.5 py-2.5 text-sm font-bold border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-xs">
+                                               class="w-full px-3.5 py-2.5 text-sm font-bold border border-slate-200 dark:border-white/10 rounded-xl bg-white dark:bg-slate-900/80 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-xs">
                                     </div>
                                     <div>
                                         <label class="block text-xs font-bold text-indigo-800 dark:text-indigo-300 uppercase tracking-wider mb-1.5">{{ __('নোটিশ বার্তা') }}</label>
                                         <textarea name="notice_noc_text_bn" rows="5" placeholder="{{ __('বাংলায় এনওসি নোটিশ লিখুন...') }}"
-                                                  class="w-full px-3.5 py-3 text-sm border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 dark:text-slate-100 leading-relaxed min-h-[130px] focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-xs resize-y">{{ old('notice_noc_text_bn', $noticeNocTextBn ?? '') }}</textarea>
+                                                  class="w-full px-3.5 py-3 text-sm border border-slate-200 dark:border-white/10 rounded-xl bg-white dark:bg-slate-900/80 dark:text-slate-100 leading-relaxed min-h-[130px] focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-xs resize-y">{{ old('notice_noc_text_bn', $noticeNocTextBn ?? '') }}</textarea>
                                     </div>
                                 </div>
                             </div>
