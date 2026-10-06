@@ -1028,22 +1028,24 @@
                         $hNoticeTheme = 'danger';
 
                         if ($masterActive) {
-                            if ($currentUser?->isReseller() && \App\Models\Setting::get('header_notice_reseller_active', '0') === '1' && $resellerNotice['has_content']) {
-                                // Dedicated Reseller notice takes precedence
-                                $activeNoticeType = 'reseller';
-                                $hNoticeRaw   = $resellerNotice['text'];
-                                $hNoticeBadge = $resellerNotice['badge'];
-                                $hNoticeSpeed = \App\Models\Setting::get('header_notice_reseller_speed', '8');
-                                $hNoticeTheme = \App\Models\Setting::get('header_notice_reseller_theme', 'warning');
-                            } elseif ($currentUser?->isNoc() && \App\Models\Setting::get('header_notice_noc_active', '0') === '1' && $nocNotice['has_content']) {
-                                // Dedicated NOC notice takes precedence
-                                $activeNoticeType = 'noc';
-                                $hNoticeRaw   = $nocNotice['text'];
-                                $hNoticeBadge = $nocNotice['badge'];
-                                $hNoticeSpeed = \App\Models\Setting::get('header_notice_noc_speed', '8');
-                                $hNoticeTheme = \App\Models\Setting::get('header_notice_noc_theme', 'indigo');
+                            if ($currentUser?->isReseller()) {
+                                if (\App\Models\Setting::get('header_notice_reseller_active', '0') === '1' && $resellerNotice['has_content']) {
+                                    $activeNoticeType = 'reseller';
+                                    $hNoticeRaw   = $resellerNotice['text'];
+                                    $hNoticeBadge = $resellerNotice['badge'];
+                                    $hNoticeSpeed = \App\Models\Setting::get('header_notice_reseller_speed', '8');
+                                    $hNoticeTheme = \App\Models\Setting::get('header_notice_reseller_theme', 'warning');
+                                }
+                            } elseif ($currentUser?->isNoc()) {
+                                if (\App\Models\Setting::get('header_notice_noc_active', '0') === '1' && $nocNotice['has_content']) {
+                                    $activeNoticeType = 'noc';
+                                    $hNoticeRaw   = $nocNotice['text'];
+                                    $hNoticeBadge = $nocNotice['badge'];
+                                    $hNoticeSpeed = \App\Models\Setting::get('header_notice_noc_speed', '8');
+                                    $hNoticeTheme = \App\Models\Setting::get('header_notice_noc_theme', 'indigo');
+                                }
                             } elseif (\App\Models\Setting::get('header_notice_active', '0') === '1' && $globalNotice['has_content']) {
-                                // Global notice shown to everyone when active (unless overridden by specific role notice)
+                                // Global notice shown to everyone when active
                                 $activeNoticeType = 'global';
                                 $hNoticeRaw   = $globalNotice['text'];
                                 $hNoticeBadge = $globalNotice['badge'];
