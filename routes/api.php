@@ -21,7 +21,7 @@ Route::post('/login', [ApiAuthController::class, 'login']);
 
 // HikCentral OpenAPI Biometric & Face Attendance Webhook
 Route::get('/hikcentral/status', [\App\Http\Controllers\Api\HikCentralWebhookController::class, 'status']);
-Route::post('/hikcentral/event', [\App\Http\Controllers\Api\HikCentralWebhookController::class, 'handleEvent']);
+Route::match(['GET', 'POST', 'PUT'], '/hikcentral/event', [\App\Http\Controllers\Api\HikCentralWebhookController::class, 'handleEvent']);
 
 // Authenticated Routes (Sanctum)
 Route::middleware('auth:sanctum')->group(function () {

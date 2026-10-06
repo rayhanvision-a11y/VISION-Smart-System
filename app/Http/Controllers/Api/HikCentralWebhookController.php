@@ -14,19 +14,26 @@ class HikCentralWebhookController extends Controller
 {
     /**
      * Health & status check endpoint for HikCentral integration.
-     * Accessible via GET /api/hikcentral/status
+     * Accessible via GET /api/hikcentral/status or GET /api/hikcentral/event
      */
     public function status(): JsonResponse
     {
         $lastHit = \Illuminate\Support\Facades\Cache::get('hikcentral_last_hit');
-        $recentLogs = AttendanceLog::latest()->take(5)->get(['id', 'employee_no', 'person_name', 'status', 'event_time', 'shift_assigned']);
+        $totalLogs = 0;
+        $recentLogs = [];
+        try {
+            $totalLogs = AttendanceLog::count();
+            $recentLogs = AttendanceLog::latest()->take(5)->get(['id', 'employee_no', 'person_name', 'event_type', 'event_time', 'shift_assigned']);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('HikCentral status check log query error: ' . $e->getMessage());
+        }
 
         return response()->json([
             'status'            => 'online',
             'service'           => 'VISION Smart System - HikCentral Face Attendance Gateway',
             'webhook_url'       => url('/api/hikcentral/event'),
             'timestamp'         => now()->toIso8601String(),
-            'total_logs_stored' => AttendanceLog::count(),
+            'total_logs_stored' => $totalLogs,
             'last_device_hit'   => $lastHit,
             'recent_attendance' => $recentLogs,
         ]);
@@ -34,10 +41,15 @@ class HikCentralWebhookController extends Controller
 
     /**
      * Webhook endpoint to receive real-time access events from HikCentral OpenAPI.
-     * Accessible via POST /api/hikcentral/event
+     * Accessible via POST /api/hikcentral/event or GET /api/hikcentral/event
      */
     public function handleEvent(Request $request): JsonResponse
     {
+        // If accessed via GET in browser or monitoring check, return gateway status
+        if ($request->isMethod('GET')) {
+            return $this->status();
+        }
+
         $rawContent = $request->getContent();
         $payload = $request->all();
 
