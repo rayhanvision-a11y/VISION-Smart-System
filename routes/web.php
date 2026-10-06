@@ -443,6 +443,11 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/roster/update-shift', [RosterController::class, 'updateShift'])->name('roster.update-shift');
     Route::post('/roster/users/{user}/team', [RosterController::class, 'updateTeam'])->name('roster.users.team');
 
+    // ── Attendance Logs & Biometric Monitoring ───────────────────
+    Route::get('/attendance', [\App\Http\Controllers\AttendanceController::class, 'index'])->name('attendance.index');
+    Route::delete('/attendance/{attendanceLog}', [\App\Http\Controllers\AttendanceController::class, 'destroy'])->name('attendance.destroy');
+    Route::post('/attendance/clear', [\App\Http\Controllers\AttendanceController::class, 'clearOldLogs'])->name('attendance.clear');
+
     // ── Live Staff & Technician Map ────────────────────────────────
     Route::get('/live-map', [LocationMapController::class, 'index'])->name('map.index');
     Route::get('/live-map/data', [LocationMapController::class, 'data'])->name('map.data');

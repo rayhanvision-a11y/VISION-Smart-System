@@ -34,23 +34,33 @@
 
         .dash-middle-grid {
             display: grid !important;
-            grid-template-columns: 2fr 1fr !important;
+            grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
             gap: 20px !important;
             margin-bottom: 20px !important;
+        }
+        .dash-trend-col {
+            grid-column: span 2 / span 2 !important;
+        }
+        .dash-cat-col {
+            grid-column: span 1 / span 1 !important;
         }
         @media (max-width: 1024px) {
             .dash-middle-grid {
                 grid-template-columns: 1fr !important;
             }
+            .dash-trend-col,
+            .dash-cat-col {
+                grid-column: span 1 / span 1 !important;
+            }
         }
 
         .dash-bottom-grid {
             display: grid !important;
-            grid-template-columns: 1fr 1fr 1fr !important;
+            grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
             gap: 20px !important;
             margin-bottom: 20px !important;
         }
-        @media (max-width: 1180px) {
+        @media (max-width: 1024px) {
             .dash-bottom-grid {
                 grid-template-columns: 1fr !important;
             }
@@ -410,7 +420,7 @@
     @if($user->isAdmin())
     <div class="dash-middle-grid">
         {{-- Left: Tickets Trend Chart (2/3 width) --}}
-        <div class="dash-card bg-white dark:bg-[#131b2e] border border-slate-200/80 dark:border-slate-800/80 shadow-xs flex flex-col justify-between">
+        <div class="dash-card dash-trend-col bg-white dark:bg-[#131b2e] border border-slate-200/80 dark:border-slate-800/80 shadow-xs flex flex-col justify-between">
             <div class="flex items-center justify-between mb-4">
                 <div>
                     <h2 class="text-base font-extrabold text-slate-800 dark:text-white tracking-tight">
@@ -442,7 +452,7 @@
         </div>
 
         {{-- Right: Tickets by Category Donut Chart (1/3 width) --}}
-        <div class="dash-card bg-white dark:bg-[#131b2e] border border-slate-200/80 dark:border-slate-800/80 shadow-xs flex flex-col justify-between">
+        <div class="dash-card dash-cat-col bg-white dark:bg-[#131b2e] border border-slate-200/80 dark:border-slate-800/80 shadow-xs flex flex-col justify-between">
             <div class="flex items-center justify-between mb-2">
                 <h2 class="text-base font-extrabold text-slate-800 dark:text-white tracking-tight">
                     {{ __('Tickets by Category') }}
