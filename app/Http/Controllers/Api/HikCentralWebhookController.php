@@ -18,11 +18,17 @@ class HikCentralWebhookController extends Controller
      */
     public function status(): JsonResponse
     {
+        $lastHit = \Illuminate\Support\Facades\Cache::get('hikcentral_last_hit');
+        $recentLogs = AttendanceLog::latest()->take(5)->get(['id', 'employee_no', 'person_name', 'status', 'event_time', 'shift_assigned']);
+
         return response()->json([
-            'status'      => 'online',
-            'service'     => 'VISION Smart System - HikCentral Face Attendance Gateway',
-            'webhook_url' => url('/api/hikcentral/event'),
-            'timestamp'   => now()->toIso8601String(),
+            'status'            => 'online',
+            'service'           => 'VISION Smart System - HikCentral Face Attendance Gateway',
+            'webhook_url'       => url('/api/hikcentral/event'),
+            'timestamp'         => now()->toIso8601String(),
+            'total_logs_stored' => AttendanceLog::count(),
+            'last_device_hit'   => $lastHit,
+            'recent_attendance' => $recentLogs,
         ]);
     }
 
@@ -32,21 +38,49 @@ class HikCentralWebhookController extends Controller
      */
     public function handleEvent(Request $request): JsonResponse
     {
+        $rawContent = $request->getContent();
         $payload = $request->all();
+
+        // If body was raw JSON and not parsed into $request->all()
+        if (empty($payload) && !empty($rawContent)) {
+            $decoded = json_decode($rawContent, true);
+            if (is_array($decoded)) {
+                $payload = $decoded;
+            }
+        }
+
+        // Cache last raw hit telemetry for instant debugging via /api/hikcentral/status
+        \Illuminate\Support\Facades\Cache::put('hikcentral_last_hit', [
+            'time'       => now()->toIso8601String(),
+            'ip'         => $request->ip(),
+            'user_agent' => $request->userAgent(),
+            'payload'    => !empty($payload) ? $payload : ['raw' => substr($rawContent, 0, 1000)],
+        ], 86400);
 
         Log::info('HikCentral Webhook Event Received:', [
             'ip'      => $request->ip(),
             'payload' => $payload,
         ]);
 
-        $rawEvents = $this->extractEvents($payload);
+        $rawEvents = $this->extractEvents($payload, $rawContent);
 
         if (empty($rawEvents)) {
-            Log::warning('HikCentral Webhook: No recognizable event list in payload.');
+            Log::warning('HikCentral Webhook: No recognizable event list in payload. Saving fallback entry.');
+
+            // Record raw capture so it visibly shows up in /attendance
+            AttendanceLog::create([
+                'employee_no'    => 'UNKNOWN',
+                'person_name'    => 'Hikvision Event (Raw)',
+                'event_type'     => 'raw_capture',
+                'event_time'     => now(),
+                'device_name'    => $request->ip(),
+                'shift_assigned' => (now()->format('H') >= 14) ? 'night_shift' : 'day_shift',
+                'raw_data'       => !empty($payload) ? $payload : ['raw' => substr($rawContent, 0, 1000)],
+            ]);
 
             return response()->json([
                 'code' => '0',
-                'msg'  => 'No recognizable events found in payload',
+                'msg'  => 'Event recorded as raw capture',
             ], 200);
         }
 
@@ -77,7 +111,11 @@ class HikCentralWebhookController extends Controller
                 ->first();
 
             $shiftAssigned = null;
-            $parsedDate = Carbon::parse($eventTime);
+            try {
+                $parsedDate = Carbon::parse($eventTime);
+            } catch (\Throwable) {
+                $parsedDate = now();
+            }
 
             if ($user) {
                 $matched++;
@@ -127,9 +165,25 @@ class HikCentralWebhookController extends Controller
     /**
      * Normalize events from various HikCentral / Hikvision payload formats.
      */
-    protected function extractEvents(array $payload): array
+    protected function extractEvents(array $payload, string $rawContent = ''): array
     {
         $normalized = [];
+
+        // If event_log is a JSON string (typical for multipart Hikvision ISAPI alarms)
+        if (isset($payload['event_log']) && is_string($payload['event_log'])) {
+            $parsed = json_decode($payload['event_log'], true);
+            if (is_array($parsed)) {
+                $payload = array_merge($payload, $parsed);
+            }
+        }
+
+        // If AccessControllerEvent is stringified JSON
+        if (isset($payload['AccessControllerEvent']) && is_string($payload['AccessControllerEvent'])) {
+            $parsed = json_decode($payload['AccessControllerEvent'], true);
+            if (is_array($parsed)) {
+                $payload['AccessControllerEvent'] = $parsed;
+            }
+        }
 
         // Format 1: HikCentral OpenAPI (params.events)
         if (isset($payload['params']['events']) && is_array($payload['params']['events'])) {
@@ -138,6 +192,7 @@ class HikCentralWebhookController extends Controller
                 $empNo = $data['extEventPersonNo']
                     ?? $data['personId']
                     ?? $data['employeeNo']
+                    ?? $data['employeeNoString']
                     ?? $data['cardNo']
                     ?? '';
 
@@ -155,36 +210,66 @@ class HikCentralWebhookController extends Controller
         }
 
         // Format 2: Direct Hikvision Terminal AccessControllerEvent
-        if (isset($payload['AccessControllerEvent'])) {
+        if (isset($payload['AccessControllerEvent']) && is_array($payload['AccessControllerEvent'])) {
             $ace = $payload['AccessControllerEvent'];
-            $empNo = $ace['employeeNoString'] ?? $ace['employeeNo'] ?? $ace['cardNo'] ?? '';
+            $empNo = $ace['employeeNoString'] ?? $ace['employeeNo'] ?? $ace['personId'] ?? $ace['cardNo'] ?? '';
 
             $normalized[] = [
                 'employee_no' => (string) $empNo,
                 'person_name' => $ace['name'] ?? null,
-                'event_time'  => $ace['time'] ?? now(),
+                'event_time'  => $ace['time'] ?? ($payload['dateTime'] ?? now()),
                 'door_name'   => $ace['doorName'] ?? ($ace['doorNo'] ?? null),
-                'device_name' => $payload['deviceName'] ?? null,
+                'device_name' => $ace['deviceName'] ?? ($payload['deviceName'] ?? null),
                 'event_type'  => 'face_match',
             ];
 
             return $normalized;
         }
 
-        // Format 3: Direct single object or test payload
-        if (isset($payload['employeeNo']) || isset($payload['personId']) || isset($payload['office_id'])) {
-            $empNo = $payload['employeeNo'] ?? $payload['personId'] ?? $payload['office_id'];
+        // Format 3: Direct flat fields (employeeNoString, employeeNo, personId, office_id, etc.)
+        $flatEmpNo = $payload['employeeNoString']
+            ?? $payload['employeeNo']
+            ?? $payload['employee_no']
+            ?? $payload['personId']
+            ?? $payload['person_id']
+            ?? $payload['office_id']
+            ?? $payload['cardNo']
+            ?? null;
 
+        if ($flatEmpNo !== null && $flatEmpNo !== '') {
             $normalized[] = [
-                'employee_no' => (string) $empNo,
+                'employee_no' => (string) $flatEmpNo,
                 'person_name' => $payload['personName'] ?? $payload['name'] ?? null,
-                'event_time'  => $payload['eventTime'] ?? $payload['time'] ?? now(),
+                'event_time'  => $payload['eventTime'] ?? $payload['time'] ?? ($payload['dateTime'] ?? now()),
                 'door_name'   => $payload['doorName'] ?? null,
                 'device_name' => $payload['deviceName'] ?? null,
                 'event_type'  => $payload['eventType'] ?? 'face_match',
             ];
 
             return $normalized;
+        }
+
+        // Format 4: XML payload fallback
+        if (str_contains($rawContent, '<employeeNoString>') || str_contains($rawContent, '<employeeNo>')) {
+            preg_match('/<employeeNoString>(.*?)<\/employeeNoString>/', $rawContent, $m1);
+            preg_match('/<employeeNo>(.*?)<\/employeeNo>/', $rawContent, $m2);
+            $xmlEmpNo = $m1[1] ?? ($m2[1] ?? '');
+
+            if ($xmlEmpNo !== '') {
+                preg_match('/<name>(.*?)<\/name>/', $rawContent, $mName);
+                preg_match('/<time>(.*?)<\/time>/', $rawContent, $mTime);
+
+                $normalized[] = [
+                    'employee_no' => trim($xmlEmpNo),
+                    'person_name' => $mName[1] ?? null,
+                    'event_time'  => $mTime[1] ?? now(),
+                    'door_name'   => null,
+                    'device_name' => 'Hikvision XML',
+                    'event_type'  => 'face_match',
+                ];
+
+                return $normalized;
+            }
         }
 
         return $normalized;
