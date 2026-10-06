@@ -189,11 +189,12 @@ class HikCentralWebhookController extends Controller
             }
         }
 
-        // If AccessControllerEvent is stringified JSON
-        if (isset($payload['AccessControllerEvent']) && is_string($payload['AccessControllerEvent'])) {
-            $parsed = json_decode($payload['AccessControllerEvent'], true);
+        // If AccessControllerEvent is stringified JSON or case variant
+        $ace = $payload['AccessControllerEvent'] ?? $payload['accessControllerEvent'] ?? null;
+        if (is_string($ace)) {
+            $parsed = json_decode($ace, true);
             if (is_array($parsed)) {
-                $payload['AccessControllerEvent'] = $parsed;
+                $ace = $parsed;
             }
         }
 
@@ -221,9 +222,8 @@ class HikCentralWebhookController extends Controller
             return $normalized;
         }
 
-        // Format 2: Direct Hikvision Terminal AccessControllerEvent
-        if (isset($payload['AccessControllerEvent']) && is_array($payload['AccessControllerEvent'])) {
-            $ace = $payload['AccessControllerEvent'];
+        // Format 2: Direct Hikvision Terminal AccessControllerEvent / Access Control Event
+        if (is_array($ace)) {
             $empNo = $ace['employeeNoString'] ?? $ace['employeeNo'] ?? $ace['personId'] ?? $ace['cardNo'] ?? '';
 
             $normalized[] = [
