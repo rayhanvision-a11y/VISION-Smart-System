@@ -23,8 +23,8 @@ class AttendanceController extends Controller
 
         $today = Carbon::today();
 
-        // Query builder
-        $query = AttendanceLog::with('user')->latest('event_time');
+        // Query builder - order by newest record ID first
+        $query = AttendanceLog::with('user')->latest('id');
 
         // Filter: Date
         $filterDate = $request->get('date');

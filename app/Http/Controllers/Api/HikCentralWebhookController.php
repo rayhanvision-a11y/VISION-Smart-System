@@ -98,17 +98,24 @@ class HikCentralWebhookController extends Controller
             }
         }
 
+        // Sanitize any UploadedFile objects to prevent serialization errors
+        $sanitizedPayload = $this->sanitizePayload($payload);
+
         // Cache last raw hit telemetry for instant debugging via /api/hikcentral/status
-        \Illuminate\Support\Facades\Cache::put('hikcentral_last_hit', [
-            'time'       => now()->toIso8601String(),
-            'ip'         => $request->ip(),
-            'user_agent' => $request->userAgent(),
-            'payload'    => !empty($payload) ? $payload : ['raw' => substr($rawContent, 0, 1000)],
-        ], 86400);
+        try {
+            \Illuminate\Support\Facades\Cache::put('hikcentral_last_hit', [
+                'time'       => now()->toIso8601String(),
+                'ip'         => $request->ip(),
+                'user_agent' => $request->userAgent(),
+                'payload'    => !empty($sanitizedPayload) ? $sanitizedPayload : ['raw' => substr($rawContent, 0, 1000)],
+            ], 86400);
+        } catch (\Throwable $e) {
+            Log::warning('HikCentral: Failed to cache last hit telemetry: ' . $e->getMessage());
+        }
 
         Log::info('HikCentral Webhook Event Received:', [
             'ip'      => $request->ip(),
-            'payload' => $payload,
+            'payload' => $sanitizedPayload,
         ]);
 
         $rawEvents = $this->extractEvents($payload, $rawContent);
@@ -124,7 +131,7 @@ class HikCentralWebhookController extends Controller
                 'event_time'     => now(),
                 'device_name'    => $request->ip(),
                 'shift_assigned' => (now()->format('H') >= 14) ? 'night_shift' : 'day_shift',
-                'raw_data'       => !empty($payload) ? $payload : ['raw' => substr($rawContent, 0, 1000)],
+                'raw_data'       => !empty($sanitizedPayload) ? $sanitizedPayload : ['raw' => substr($rawContent, 0, 1000)],
             ]);
 
             return response()->json([
@@ -146,22 +153,28 @@ class HikCentralWebhookController extends Controller
             $deviceName = $eventItem['device_name'] ?? null;
             $eventType  = $eventItem['event_type'] ?? 'face_match';
 
-            if ($employeeNo === '') {
-                continue;
+            $isKnown = ($employeeNo !== '');
+            if (!$isKnown) {
+                $employeeNo = 'UNKNOWN';
+                $personName = $personName ?? 'Face/Finger Not Recognized';
+                $eventType  = 'auth_unrecognized';
             }
 
             // Find matching user in system by office_id or numeric user ID
-            $user = User::whereRaw('LOWER(office_id) = ?', [strtolower($employeeNo)])
+            $user = $isKnown ? User::whereRaw('LOWER(office_id) = ?', [strtolower($employeeNo)])
                 ->orWhere(function ($q) use ($employeeNo) {
                     if (is_numeric($employeeNo)) {
                         $q->where('id', (int) $employeeNo);
                     }
                 })
-                ->first();
+                ->first() : null;
 
             $shiftAssigned = null;
             try {
                 $parsedDate = Carbon::parse($eventTime);
+                if (abs($parsedDate->diffInDays(now())) > 3) {
+                    $parsedDate = now();
+                }
             } catch (\Throwable) {
                 $parsedDate = now();
             }
@@ -196,7 +209,7 @@ class HikCentralWebhookController extends Controller
                 'door_name'      => $doorName,
                 'device_name'    => $deviceName,
                 'shift_assigned' => $shiftAssigned,
-                'raw_data'       => $eventItem,
+                'raw_data'       => $this->sanitizePayload($eventItem),
             ]);
         }
 
@@ -378,5 +391,30 @@ class HikCentralWebhookController extends Controller
                 ? "Attendance Machine ({$deviceIp}) is ONLINE! Response time: {$latencyMs}ms."
                 : "Attendance Machine ({$deviceIp}) did not respond on Port 80/443.",
         ]);
+    }
+
+    /**
+     * Recursively sanitize payload by stripping / converting UploadedFile instances
+     * so they can be safely stored in Cache and JSON database columns without serialization error.
+     */
+    protected function sanitizePayload(mixed $data): mixed
+    {
+        if ($data instanceof \Illuminate\Http\UploadedFile) {
+            return [
+                'file_name' => $data->getClientOriginalName(),
+                'size'      => $data->getSize(),
+                'mime'      => $data->getClientMimeType(),
+            ];
+        }
+
+        if (is_array($data)) {
+            $clean = [];
+            foreach ($data as $key => $val) {
+                $clean[$key] = $this->sanitizePayload($val);
+            }
+            return $clean;
+        }
+
+        return $data;
     }
 }
