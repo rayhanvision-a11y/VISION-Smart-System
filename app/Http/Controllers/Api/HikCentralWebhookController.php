@@ -145,14 +145,6 @@ class HikCentralWebhookController extends Controller
                 continue;
             }
 
-            // Skip old historical buffer from previous years/months
-            try {
-                $rawDate = Carbon::parse($eventTime);
-                if ($rawDate->year < now()->year) {
-                    continue;
-                }
-            } catch (\Throwable) {}
-
             $parsedDate = now();
 
             // Find matching user in system by office_id or numeric user ID
