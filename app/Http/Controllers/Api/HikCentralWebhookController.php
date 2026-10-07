@@ -156,14 +156,14 @@ class HikCentralWebhookController extends Controller
                 })
                 ->first();
 
+            // Determine shift based on check-in hour
+            // 9:00 AM - 6:00 PM: Day Shift (if punch before 14:00 / 2:00 PM)
+            // 2:00 PM - 10:00 PM: Night Shift (if punch at or after 14:00)
+            $hour = (int) $parsedDate->format('H');
+            $shiftAssigned = ($hour >= 14) ? 'night_shift' : 'day_shift';
+
             if ($user) {
                 $matched++;
-
-                // Determine shift based on check-in hour
-                // 9:00 AM - 6:00 PM: Day Shift (if punch before 14:00 / 2:00 PM)
-                // 2:00 PM - 10:00 PM: Night Shift (if punch at or after 14:00)
-                $hour = (int) $parsedDate->format('H');
-                $shiftAssigned = ($hour >= 14) ? 'night_shift' : 'day_shift';
 
                 // Automatically activate On Duty and update shift
                 $user->forceFill([
