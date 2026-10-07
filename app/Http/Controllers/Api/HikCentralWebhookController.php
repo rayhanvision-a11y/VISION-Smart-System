@@ -121,22 +121,9 @@ class HikCentralWebhookController extends Controller
         $rawEvents = $this->extractEvents($payload, $rawContent);
 
         if (empty($rawEvents)) {
-            Log::warning('HikCentral Webhook: No recognizable event list in payload. Saving fallback entry.');
-
-            // Record raw capture so it visibly shows up in /attendance
-            AttendanceLog::create([
-                'employee_no'    => 'UNKNOWN',
-                'person_name'    => 'Hikvision Event (Raw)',
-                'event_type'     => 'raw_capture',
-                'event_time'     => now(),
-                'device_name'    => $request->ip(),
-                'shift_assigned' => (now()->format('H') >= 14) ? 'night_shift' : 'day_shift',
-                'raw_data'       => !empty($sanitizedPayload) ? $sanitizedPayload : ['raw' => substr($rawContent, 0, 1000)],
-            ]);
-
             return response()->json([
                 'code' => '0',
-                'msg'  => 'Event recorded as raw capture',
+                'msg'  => 'success',
             ], 200);
         }
 
@@ -153,31 +140,29 @@ class HikCentralWebhookController extends Controller
             $deviceName = $eventItem['device_name'] ?? null;
             $eventType  = $eventItem['event_type'] ?? 'face_match';
 
-            $isKnown = ($employeeNo !== '');
-            if (!$isKnown) {
-                $employeeNo = 'UNKNOWN';
-                $personName = $personName ?? 'Face/Finger Not Recognized';
-                $eventType  = 'auth_unrecognized';
+            // Only process recognized employees - skip strangers and unrecognized faces
+            if ($employeeNo === '' || $employeeNo === 'UNKNOWN') {
+                continue;
             }
 
+            // Skip old historical buffer from previous years/months
+            try {
+                $rawDate = Carbon::parse($eventTime);
+                if ($rawDate->year < now()->year) {
+                    continue;
+                }
+            } catch (\Throwable) {}
+
+            $parsedDate = now();
+
             // Find matching user in system by office_id or numeric user ID
-            $user = $isKnown ? User::whereRaw('LOWER(office_id) = ?', [strtolower($employeeNo)])
+            $user = User::whereRaw('LOWER(office_id) = ?', [strtolower($employeeNo)])
                 ->orWhere(function ($q) use ($employeeNo) {
                     if (is_numeric($employeeNo)) {
                         $q->where('id', (int) $employeeNo);
                     }
                 })
-                ->first() : null;
-
-            $shiftAssigned = null;
-            try {
-                $parsedDate = Carbon::parse($eventTime);
-                if (abs($parsedDate->diffInDays(now())) > 3) {
-                    $parsedDate = now();
-                }
-            } catch (\Throwable) {
-                $parsedDate = now();
-            }
+                ->first();
 
             if ($user) {
                 $matched++;

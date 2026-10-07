@@ -26,9 +26,9 @@ class AttendanceController extends Controller
         // Query builder - order by newest record ID first
         $query = AttendanceLog::with('user')->latest('id');
 
-        // Filter: Date
-        $filterDate = $request->get('date');
-        if ($filterDate) {
+        // Filter: Date (Default to today)
+        $filterDate = $request->get('date', $today->toDateString());
+        if ($filterDate && $filterDate !== 'all') {
             $query->whereDate('event_time', $filterDate);
         }
 
