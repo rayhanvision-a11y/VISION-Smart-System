@@ -140,8 +140,18 @@ class HikCentralWebhookController extends Controller
             $deviceName = $eventItem['device_name'] ?? null;
             $eventType  = $eventItem['event_type'] ?? 'face_match';
 
-            // Only process recognized employees - skip strangers and unrecognized faces
+            // 1. Only process recognized employees - skip strangers and unrecognized faces
             if ($employeeNo === '' || $employeeNo === 'UNKNOWN') {
+                continue;
+            }
+
+            // 2. STRICT: Only accept punches from TODAY! All previous backlog/history is DROPPED!
+            try {
+                $rawDate = Carbon::parse($eventTime);
+                if (! $rawDate->isToday()) {
+                    continue;
+                }
+            } catch (\Throwable) {
                 continue;
             }
 
