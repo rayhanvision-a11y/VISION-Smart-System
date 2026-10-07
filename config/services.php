@@ -39,4 +39,11 @@ return [
         'secret' => env('MAIL_WEBHOOK_SECRET'),
     ],
 
+    'attendance' => [
+        'device_ip'   => env('ATTENDANCE_DEVICE_IP', '172.27.1.49'),
+        'device_port' => (int) env('ATTENDANCE_DEVICE_PORT', 80),
+        'dns_ip'      => env('ATTENDANCE_DNS_IP', '172.30.20.50'),
+        'server_ip'   => env('ATTENDANCE_SERVER_LAN_IP', '103.31.179.118'),
+    ],
+
 ];

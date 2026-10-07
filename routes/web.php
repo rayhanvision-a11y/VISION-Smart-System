@@ -445,6 +445,7 @@ Route::middleware(['auth'])->group(function () {
 
     // ── Attendance Logs & Biometric Monitoring ───────────────────
     Route::get('/attendance', [\App\Http\Controllers\AttendanceController::class, 'index'])->name('attendance.index');
+    Route::get('/attendance/test-connection', [\App\Http\Controllers\AttendanceController::class, 'testDeviceConnection'])->name('attendance.test-connection');
     Route::delete('/attendance/{attendanceLog}', [\App\Http\Controllers\AttendanceController::class, 'destroy'])->name('attendance.destroy');
     Route::post('/attendance/clear', [\App\Http\Controllers\AttendanceController::class, 'clearOldLogs'])->name('attendance.clear');
 

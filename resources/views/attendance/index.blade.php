@@ -5,10 +5,28 @@
         showWebhookInfo: false,
         selectedLogPayload: null,
         copied: false,
+        testingConnection: false,
+        testResult: null,
         copyUrl(url) {
             navigator.clipboard.writeText(url);
             this.copied = true;
             setTimeout(() => this.copied = false, 2500);
+        },
+        async testConnection() {
+            this.testingConnection = true;
+            this.testResult = null;
+            try {
+                const res = await fetch('{{ route('attendance.test-connection') }}');
+                const data = await res.json();
+                this.testResult = data;
+            } catch (err) {
+                this.testResult = {
+                    success: false,
+                    message: 'Network error checking device: ' + (err.message || 'Server timeout')
+                };
+            } finally {
+                this.testingConnection = false;
+            }
         }
     }">
 
@@ -23,7 +41,19 @@
                     {{ __('Real-time face recognition and access control logs from HikCentral') }}
                 </p>
             </div>
-            <div class="flex items-center gap-2">
+            <div class="flex items-center flex-wrap gap-2">
+                {{-- Live Test Connection Button --}}
+                <button type="button" @click="testConnection()" :disabled="testingConnection"
+                        class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-500 disabled:opacity-60 transition-colors shadow-2xs">
+                    <template x-if="!testingConnection">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                    </template>
+                    <template x-if="testingConnection">
+                        <svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
+                    </template>
+                    <span x-text="testingConnection ? '{{ __('Checking...') }}' : '{{ __('Test Machine') }}'"></span>
+                </button>
+
                 <button type="button" @click="showWebhookInfo = !showWebhookInfo"
                         class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 transition-colors shadow-2xs border border-indigo-200/60 dark:border-indigo-800/60">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
@@ -46,6 +76,12 @@
 
         {{-- Webhook Information Accordion Card --}}
         <div x-show="showWebhookInfo" x-transition class="mb-6 bg-linear-to-br from-indigo-50/80 via-white to-sky-50/80 dark:from-slate-900 dark:via-slate-900/90 dark:to-slate-900 border border-indigo-200/80 dark:border-indigo-900/50 rounded-2xl p-5 shadow-sm">
+            @php
+                $networkHealth = $networkHealth ?? [];
+                $devIp = $networkHealth['device_ip'] ?? '172.27.1.49';
+                $dnsSrvIp = $networkHealth['dns_ip'] ?? '172.30.20.50';
+                $srvIp = $networkHealth['server_lan_ip'] ?? $networkHealth['server_ip'] ?? '103.31.179.118';
+            @endphp
             <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-indigo-100 dark:border-slate-800">
                 <div class="flex items-center gap-3">
                     <span class="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold text-lg shadow-md shadow-indigo-600/20">
@@ -53,47 +89,149 @@
                     </span>
                     <div>
                         <h3 class="text-sm font-extrabold text-slate-900 dark:text-white">
-                            {{ __('HikCentral OpenAPI Webhook Configuration') }}
+                            {{ __('Hikvision & HikCentral Biometric Integration') }}
                         </h3>
                         <p class="text-xs text-slate-500 dark:text-slate-400">
-                            {{ __('Configure this endpoint in your HikCentral Event Subscription to automatically synchronize face events.') }}
+                            {{ __('Real-time event synchronization from LAN terminal or cloud OpenAPI.') }}
                         </p>
                     </div>
                 </div>
-                <div class="flex items-center gap-2">
-                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/50">
-                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                        {{ __('Endpoint Online') }}
-                    </span>
-                    <a :href="'{{ $statusUrl }}'" target="_blank" class="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline">
-                        {{ __('Check Health') }} &rarr;
+                <div class="flex items-center flex-wrap gap-2">
+                    {{-- Device LAN Status Badge --}}
+                    @if(!empty($networkHealth['device_online']))
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/50">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                            {{ __('Device Online') }} ({{ $devIp }})
+                        </span>
+                    @else
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/50">
+                            <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                            {{ __('Device') }}: {{ $devIp }}
+                        </span>
+                    @endif
+
+                    {{-- DNS Status Badge --}}
+                    @if(!empty($networkHealth['dns_online']))
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/50">
+                            <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                            DNS: {{ $dnsSrvIp }}
+                        </span>
+                    @endif
+
+                    <a :href="'{{ $statusUrl }}'" target="_blank" class="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline inline-flex items-center gap-1">
+                        {{ __('Status API') }} &rarr;
                     </a>
                 </div>
             </div>
 
-            <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                        {{ __('Webhook URL (Post to this in HikCentral):') }}
-                    </label>
+            <div class="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {{-- LAN Webhook (Preferred for Attendance Device on same LAN) --}}
+                <div class="p-3.5 bg-white/80 dark:bg-slate-800/80 rounded-xl border border-indigo-200 dark:border-indigo-900/40 shadow-2xs">
+                    <div class="flex items-center justify-between mb-1.5">
+                        <label class="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                            <span>🏠</span>
+                            <span>{{ __('LAN Webhook URL') }}</span>
+                            <span class="px-1.5 py-0.5 rounded text-[10px] font-extrabold bg-emerald-100 text-emerald-700 dark:bg-emerald-950/80 dark:text-emerald-300">
+                                {{ __('Recommended for Local Terminal') }}
+                            </span>
+                        </label>
+                    </div>
                     <div class="flex items-center gap-2">
-                        <input type="text" readonly value="{{ $webhookUrl }}"
-                               class="flex-1 text-xs font-mono bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-200 select-all">
-                        <button type="button" @click="copyUrl('{{ $webhookUrl }}')"
-                                class="px-3.5 py-2 rounded-xl text-xs font-bold bg-indigo-600 text-white hover:bg-indigo-500 transition-colors flex items-center gap-1.5 flex-shrink-0 shadow-xs">
+                        <input type="text" readonly value="{{ $lanWebhookUrl ?? $webhookUrl }}"
+                               class="flex-1 text-xs font-mono bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-800 dark:text-slate-200 select-all">
+                        <button type="button" @click="copyUrl('{{ $lanWebhookUrl ?? $webhookUrl }}')"
+                                class="px-3 py-2 rounded-lg text-xs font-bold bg-indigo-600 text-white hover:bg-indigo-500 transition-colors flex items-center gap-1.5 flex-shrink-0 shadow-xs">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
                             <span x-text="copied ? '{{ __('Copied!') }}' : '{{ __('Copy') }}'"></span>
                         </button>
                     </div>
+                    <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1.5">
+                        {{ __('Use this directly inside your Hikvision Terminal web page (HTTP Listening) or local HikCentral.') }}
+                    </p>
                 </div>
 
-                <div class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed bg-white/70 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
-                    <p class="font-bold text-slate-800 dark:text-slate-200 mb-1">💡 {{ __('Quick Setup in HikCentral:') }}</p>
-                    <ol class="list-decimal list-inside space-y-0.5">
+                {{-- Cloud / Public Webhook --}}
+                <div class="p-3.5 bg-white/80 dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700 shadow-2xs">
+                    <div class="flex items-center justify-between mb-1.5">
+                        <label class="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                            <span>🌐</span>
+                            <span>{{ __('Cloud / Public Webhook URL') }}</span>
+                            <span class="px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300">
+                                {{ __('Internet / Ngrok') }}
+                            </span>
+                        </label>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <input type="text" readonly value="{{ $cloudWebhookUrl ?? $webhookUrl }}"
+                               class="flex-1 text-xs font-mono bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-800 dark:text-slate-200 select-all">
+                        <button type="button" @click="copyUrl('{{ $cloudWebhookUrl ?? $webhookUrl }}')"
+                                class="px-3 py-2 rounded-lg text-xs font-bold bg-slate-700 text-white hover:bg-slate-600 transition-colors flex items-center gap-1.5 flex-shrink-0 shadow-xs">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                            <span x-text="copied ? '{{ __('Copied!') }}' : '{{ __('Copy') }}'"></span>
+                        </button>
+                    </div>
+                    <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1.5">
+                        {{ __('Use when HikCentral or Attendance server is in another branch or cloud over internet.') }}
+                    </p>
+                </div>
+            </div>
+
+            {{-- Terminal Setup Guide --}}
+            <div class="mt-3.5 grid grid-cols-1 md:grid-cols-2 gap-3 text-xs bg-white/70 dark:bg-slate-800/50 p-3.5 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
+                <div>
+                    <p class="font-bold text-slate-800 dark:text-slate-200 mb-1">
+                        📷 {{ __('Method 1: Direct Hikvision Face Terminal (LAN):') }}
+                    </p>
+                    <ol class="list-decimal list-inside space-y-0.5 text-slate-600 dark:text-slate-400">
+                        <li>{{ __('Open browser:') }} <a href="http://{{ $devIp }}" target="_blank" class="text-indigo-600 dark:text-indigo-400 underline font-mono">http://{{ $devIp }}</a></li>
+                        <li>{{ __('Go to Configuration > Network > Advanced > HTTP Listening (Alarm Host)') }}</li>
+                        <li>{{ __('Set Destination IP:') }} <span class="font-mono font-bold">{{ $srvIp }}</span>, {{ __('Port:') }} <span class="font-mono font-bold">{{ request()->getPort() ?: 80 }}</span></li>
+                        <li>{{ __('Set URL Path:') }} <span class="font-mono font-bold">/api/hikcentral/event</span></li>
+                    </ol>
+                </div>
+                <div>
+                    <p class="font-bold text-slate-800 dark:text-slate-200 mb-1">
+                        🏢 {{ __('Method 2: HikCentral OpenAPI Subscription:') }}
+                    </p>
+                    <ol class="list-decimal list-inside space-y-0.5 text-slate-600 dark:text-slate-400">
                         <li>{{ __('Open OpenAPI Manager or /artemis-web') }}</li>
                         <li>{{ __('Go to Event Subscription > Access Control Events') }}</li>
-                        <li>{{ __('Enable "Face Authentication Passed" and paste this Webhook URL') }}</li>
+                        <li>{{ __('Enable "Face Authentication Passed" event') }}</li>
+                        <li>{{ __('Paste the LAN or Cloud Webhook URL above') }}</li>
                     </ol>
+                </div>
+            </div>
+        </div>
+
+        {{-- Live Connection Test Result Banner --}}
+        <div x-show="testResult !== null" x-transition class="mb-6">
+            <div :class="testResult && testResult.success ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-800 text-emerald-900 dark:text-emerald-100' : 'bg-rose-50 dark:bg-rose-950/40 border-rose-300 dark:border-rose-800 text-rose-900 dark:text-rose-100'"
+                 class="border rounded-2xl p-4 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3">
+                <div class="flex items-start gap-3">
+                    <span class="text-2xl" x-text="testResult && testResult.success ? '✅' : '⚠️'"></span>
+                    <div>
+                        <h4 class="text-sm font-black" x-text="testResult && testResult.message"></h4>
+                        <template x-if="testResult && testResult.success">
+                            <div class="flex flex-wrap items-center gap-2 mt-1.5 text-xs">
+                                <span class="px-2 py-0.5 rounded bg-emerald-200/80 dark:bg-emerald-900/60 font-semibold">
+                                    ⏱️ Latency: <strong x-text="testResult.latency_ms + 'ms'"></strong>
+                                </span>
+                                <span class="px-2 py-0.5 rounded bg-emerald-200/80 dark:bg-emerald-900/60 font-semibold" x-text="'HTTP 80: ' + (testResult.port_80 ? 'Open' : 'Closed')"></span>
+                                <span class="px-2 py-0.5 rounded bg-emerald-200/80 dark:bg-emerald-900/60 font-semibold" x-text="'HTTPS 443: ' + (testResult.port_443 ? 'Open' : 'Closed')"></span>
+                                <span class="px-2 py-0.5 rounded bg-emerald-200/80 dark:bg-emerald-900/60 font-semibold" x-text="'DNS: ' + (testResult.dns_online ? 'Active' : 'Offline')"></span>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 self-end md:self-center">
+                    <button type="button" @click="testConnection()" :disabled="testingConnection"
+                            class="px-3 py-1.5 rounded-xl text-xs font-bold bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition shadow-2xs">
+                        {{ __('Retest') }}
+                    </button>
+                    <button type="button" @click="testResult = null"
+                            class="p-1.5 rounded-xl text-slate-500 hover:bg-slate-200/60 dark:hover:bg-slate-800 transition">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
                 </div>
             </div>
         </div>
