@@ -9,6 +9,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class AttendanceController extends Controller
@@ -22,13 +23,29 @@ class AttendanceController extends Controller
         abort_if(! ($user->isAdmin() || $user->isSupervisorLevel()), 403, 'Unauthorized access.');
 
         $today = Carbon::today();
+        $sevenDaysAgo = $today->copy()->subDays(6)->startOfDay();
+        $totalAllLogs = AttendanceLog::where('event_time', '>=', $sevenDaysAgo)->count();
+        $latestRecord = AttendanceLog::where('event_time', '>=', $sevenDaysAgo)->latest('event_time')->first();
+        $latestLogDate = $latestRecord && $latestRecord->event_time ? $latestRecord->event_time->toDateString() : null;
 
-        // Query builder - order by newest record ID first
-        $query = AttendanceLog::with('user')->latest('id');
+        $last7StartDate = $sevenDaysAgo->toDateString();
+        $last7EndDate   = $today->toDateString();
+        $last7Dates     = [];
+        for ($i = 0; $i < 7; $i++) {
+            $last7Dates[] = $today->copy()->subDays($i)->toDateString();
+        }
 
-        // Filter: Date (Default to today)
-        $filterDate = $request->get('date', $today->toDateString());
-        if ($filterDate && $filterDate !== 'all') {
+        // Query builder - STRICT POLICY: Only load and process logs within the last 7 days!
+        $query = AttendanceLog::with('user')
+            ->where('event_time', '>=', $sevenDaysAgo)
+            ->latest('id');
+
+        // Filter: Date (Default to '7days')
+        $filterDate = $request->get('date', '7days');
+
+        if ($filterDate === 'today') {
+            $query->whereDate('event_time', $today);
+        } elseif ($filterDate && ! in_array($filterDate, ['7days', 'all'])) {
             $query->whereDate('event_time', $filterDate);
         }
 
@@ -39,7 +56,14 @@ class AttendanceController extends Controller
 
         // Filter: Shift
         if ($request->filled('shift')) {
-            $query->where('shift_assigned', $request->get('shift'));
+            $shiftVal = $request->get('shift');
+            if (in_array($shiftVal, ['1st_shift', 'day_shift'])) {
+                $query->whereIn('shift_assigned', ['1st_shift', 'day_shift']);
+            } elseif (in_array($shiftVal, ['2nd_shift', 'night_shift'])) {
+                $query->whereIn('shift_assigned', ['2nd_shift', 'night_shift']);
+            } else {
+                $query->where('shift_assigned', $shiftVal);
+            }
         }
 
         // Filter: Match Status
@@ -67,14 +91,104 @@ class AttendanceController extends Controller
 
         $logs = $query->paginate(25)->withQueryString();
 
-        // Today's summary statistics
+        // Selected Date summary statistics
+        if ($filterDate === 'today') {
+            $statsDate = $today->toDateString();
+            $statsQuery = AttendanceLog::whereDate('event_time', $today);
+        } elseif ($filterDate && ! in_array($filterDate, ['7days', 'all'])) {
+            $statsDate = $filterDate;
+            $statsQuery = AttendanceLog::whereDate('event_time', $filterDate);
+        } else {
+            $statsDate = $today->toDateString();
+            $statsQuery = AttendanceLog::where('event_time', '>=', $sevenDaysAgo);
+        }
+
+        $latestLog = (clone $statsQuery)->latest('id')->first();
+        if (! $latestLog) {
+            $latestLog = AttendanceLog::where('event_time', '>=', $sevenDaysAgo)->latest('id')->first();
+        }
+
         $stats = [
-            'today_total'       => AttendanceLog::whereDate('event_time', $today)->count(),
-            'today_unique_staff'=> AttendanceLog::whereDate('event_time', $today)->whereNotNull('user_id')->distinct('user_id')->count('user_id'),
-            'today_day_shift'   => AttendanceLog::whereDate('event_time', $today)->where('shift_assigned', 'day_shift')->count(),
-            'today_night_shift' => AttendanceLog::whereDate('event_time', $today)->where('shift_assigned', 'night_shift')->count(),
-            'total_unmatched'   => AttendanceLog::whereNull('user_id')->count(),
+            'today_total'        => (clone $statsQuery)->count(),
+            'today_unique_staff' => (int) ((clone $statsQuery)->selectRaw('COUNT(DISTINCT COALESCE(NULLIF(user_id, ""), NULLIF(employee_no, ""))) as cnt')->value('cnt') ?? 0),
+            'today_1st_shift'    => (clone $statsQuery)->whereIn('shift_assigned', ['1st_shift', 'day_shift'])->count(),
+            'today_2nd_shift'    => (clone $statsQuery)->whereIn('shift_assigned', ['2nd_shift', 'night_shift'])->count(),
+            'total_unmatched'    => (clone $statsQuery)->whereNull('user_id')->count(),
+            'total_all'          => $totalAllLogs,
+            'latest_punch_time'  => $latestLog ? $latestLog->event_time->timezone(config('app.timezone', 'Asia/Dhaka'))->format('h:i:s A') : null,
+            'latest_punch_ago'   => $latestLog ? $latestLog->event_time->diffForHumans() : null,
+            'latest_person_name' => $latestLog ? ($latestLog->person_name ?: 'ID: ' . $latestLog->employee_no) : null,
         ];
+
+        // Daily Staff Summary: First In (Entry) & Last Out (Exit) - Supports ALL punches (matched & unmatched)
+        $dayGroupedLogsQuery = AttendanceLog::with('user');
+        if ($filterDate === 'today') {
+            $dayGroupedLogsQuery->whereDate('event_time', $today);
+        } elseif ($filterDate && ! in_array($filterDate, ['7days', 'all'])) {
+            $dayGroupedLogsQuery->whereDate('event_time', $statsDate);
+        } else {
+            $dayGroupedLogsQuery->where('event_time', '>=', $sevenDaysAgo);
+        }
+
+        $dayGroupedLogs = $dayGroupedLogsQuery
+            ->orderBy('event_time', 'asc')
+            ->get()
+            ->groupBy(function ($log) {
+                return $log->user_id ? 'user_' . $log->user_id : 'emp_' . ($log->employee_no ?: $log->id);
+            });
+
+        $staffSummaries = $dayGroupedLogs->map(function ($userLogs) {
+            $firstPunch = $userLogs->first();
+            $lastPunch  = $userLogs->last();
+            $user       = $firstPunch->user;
+            $totalCount = $userLogs->count();
+
+            $firstTime = $firstPunch ? $firstPunch->event_time : null;
+            $firstMins = $firstTime ? ((int) $firstTime->format('H') * 60 + (int) $firstTime->format('i')) : 0;
+            $lastTime  = $lastPunch ? $lastPunch->event_time : null;
+            $lastMins  = $lastTime ? ((int) $lastTime->format('H') * 60 + (int) $lastTime->format('i')) : 0;
+
+            // Shift assigned:
+            // 7:00 AM - 11:30 AM / before 12:00 PM -> 1st Shift (9:00 AM - 6:00 PM)
+            // 12:00 PM onwards -> 2nd Shift (2:00 PM - 10:00 PM)
+            $shift = $firstPunch->shift_assigned;
+            if (!$shift || !in_array($shift, ['1st_shift', 'day_shift', '2nd_shift', 'night_shift'])) {
+                $shift = ($firstMins < 720) ? '1st_shift' : '2nd_shift';
+            }
+
+            // Duty Complete (Out) rules:
+            // 1st Shift: If scanned after 6:00 PM (1080 mins) -> Duty Complete
+            // 2nd Shift: If scanned after 10:00 PM (1320 mins) -> Duty Complete
+            // Otherwise within duty hours -> On Duty
+            $isDutyComplete = false;
+            if (in_array($shift, ['1st_shift', 'day_shift'])) {
+                if ($lastMins >= 1080 && $totalCount > 1) {
+                    $isDutyComplete = true;
+                }
+            } elseif (in_array($shift, ['2nd_shift', 'night_shift'])) {
+                if ($lastMins >= 1320 && $totalCount > 1) {
+                    $isDutyComplete = true;
+                }
+            }
+
+            if ($user && $user->current_shift === 'off_duty') {
+                $isDutyComplete = true;
+            }
+
+            return [
+                'user'             => $user,
+                'employee_no'      => $firstPunch->employee_no,
+                'person_name'      => $firstPunch->person_name ?: ($user ? $user->name : ('ID: ' . $firstPunch->employee_no)),
+                'shift'            => $shift,
+                'first_in'         => $firstPunch ? $firstPunch->event_time : null,
+                'last_out'         => ($totalCount > 1 && $isDutyComplete) ? $lastPunch->event_time : null,
+                'latest_scan'      => $lastPunch ? $lastPunch->event_time : null,
+                'total_scans'      => $totalCount,
+                'is_duty_complete' => $isDutyComplete,
+                'is_out'           => $isDutyComplete,
+                'is_on_duty'       => ! $isDutyComplete,
+            ];
+        });
 
         // All users for filter dropdown
         $staffUsers = User::orderBy('name')->get(['id', 'name', 'office_id', 'team', 'role']);
@@ -123,8 +237,16 @@ class AttendanceController extends Controller
         return view('attendance.index', compact(
             'logs',
             'stats',
+            'statsDate',
+            'staffSummaries',
             'staffUsers',
             'filterDate',
+            'latestLogDate',
+            'last7StartDate',
+            'last7EndDate',
+            'last7Dates',
+            'totalAllLogs',
+            'today',
             'webhookUrl',
             'cloudWebhookUrl',
             'lanWebhookUrl',
@@ -152,7 +274,7 @@ class AttendanceController extends Controller
     {
         abort_if(! auth()->user()->isSuperAdmin(), 403);
 
-        $days = (int) $request->get('days', 30);
+        $days = max(1, (int) $request->get('days', 7));
         $count = AttendanceLog::where('event_time', '<', now()->subDays($days))->delete();
 
         return back()->with('success', __(':count logs older than :days days removed.', ['count' => $count, 'days' => $days]));

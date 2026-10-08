@@ -171,9 +171,9 @@
             .rpt-team-card,
             .rpt-metric-tile,
             .roster-card,
-            main .bg-white.border:not(table):not(thead):not(tbody):not(tr):not(th):not(td):not(input):not(select):not(textarea):not(button):not(nav):not(ul):not(li):not([role="dialog"]):not([role="menu"]):not(.flatpickr-calendar):not(.ql-toolbar):not(.ql-container):not(.no-box-style),
-            main .dark\:bg-slate-900.border:not(table):not(thead):not(tbody):not(tr):not(th):not(td):not(input):not(select):not(textarea):not(button):not(nav):not(ul):not(li):not([role="dialog"]):not([role="menu"]):not(.flatpickr-calendar):not(.ql-toolbar):not(.ql-container):not(.no-box-style),
-            main .dark\:bg-slate-800.border:not(table):not(thead):not(tbody):not(tr):not(th):not(td):not(input):not(select):not(textarea):not(button):not(nav):not(ul):not(li):not([role="dialog"]):not([role="menu"]):not(.flatpickr-calendar):not(.ql-toolbar):not(.ql-container):not(.no-box-style) {
+            main .bg-white.border:not(table):not(thead):not(tbody):not(tr):not(th):not(td):not(input):not(select):not(textarea):not(button):not(nav):not(ul):not(li):not(a):not(span):not(label):not(p):not(img):not([role="dialog"]):not([role="menu"]):not(.flatpickr-calendar):not(.ql-toolbar):not(.ql-container):not(.no-box-style),
+            main .dark\:bg-slate-900.border:not(table):not(thead):not(tbody):not(tr):not(th):not(td):not(input):not(select):not(textarea):not(button):not(nav):not(ul):not(li):not(a):not(span):not(label):not(p):not(img):not([role="dialog"]):not([role="menu"]):not(.flatpickr-calendar):not(.ql-toolbar):not(.ql-container):not(.no-box-style),
+            main .dark\:bg-slate-800.border:not(table):not(thead):not(tbody):not(tr):not(th):not(td):not(input):not(select):not(textarea):not(button):not(nav):not(ul):not(li):not(a):not(span):not(label):not(p):not(img):not([role="dialog"]):not([role="menu"]):not(.flatpickr-calendar):not(.ql-toolbar):not(.ql-container):not(.no-box-style) {
                 height: auto !important;
                 min-height: 0 !important;
                 width: 100%;
@@ -198,9 +198,9 @@
             .rpt-team-card:hover,
             .rpt-metric-tile:hover,
             .roster-card:hover,
-            main .bg-white.border:not(table):not(thead):not(tbody):not(tr):not(th):not(td):not(input):not(select):not(textarea):not(button):not(nav):not(ul):not(li):not([role="dialog"]):not([role="menu"]):not(.flatpickr-calendar):not(.ql-toolbar):not(.ql-container):not(.no-box-style):not(.no-hover):hover,
-            main .dark\:bg-slate-900.border:not(table):not(thead):not(tbody):not(tr):not(th):not(td):not(input):not(select):not(textarea):not(button):not(nav):not(ul):not(li):not([role="dialog"]):not([role="menu"]):not(.flatpickr-calendar):not(.ql-toolbar):not(.ql-container):not(.no-box-style):not(.no-hover):hover,
-            main .dark\:bg-slate-800.border:not(table):not(thead):not(tbody):not(tr):not(th):not(td):not(input):not(select):not(textarea):not(button):not(nav):not(ul):not(li):not([role="dialog"]):not([role="menu"]):not(.flatpickr-calendar):not(.ql-toolbar):not(.ql-container):not(.no-box-style):not(.no-hover):hover {
+            main .bg-white.border:not(table):not(thead):not(tbody):not(tr):not(th):not(td):not(input):not(select):not(textarea):not(button):not(nav):not(ul):not(li):not(a):not(span):not(label):not(p):not(img):not([role="dialog"]):not([role="menu"]):not(.flatpickr-calendar):not(.ql-toolbar):not(.ql-container):not(.no-box-style):not(.no-hover):hover,
+            main .dark\:bg-slate-900.border:not(table):not(thead):not(tbody):not(tr):not(th):not(td):not(input):not(select):not(textarea):not(button):not(nav):not(ul):not(li):not(a):not(span):not(label):not(p):not(img):not([role="dialog"]):not([role="menu"]):not(.flatpickr-calendar):not(.ql-toolbar):not(.ql-container):not(.no-box-style):not(.no-hover):hover,
+            main .dark\:bg-slate-800.border:not(table):not(thead):not(tbody):not(tr):not(th):not(td):not(input):not(select):not(textarea):not(button):not(nav):not(ul):not(li):not(a):not(span):not(label):not(p):not(img):not([role="dialog"]):not([role="menu"]):not(.flatpickr-calendar):not(.ql-toolbar):not(.ql-container):not(.no-box-style):not(.no-hover):hover {
                 transform: translateY(-2.5px) !important;
                 box-shadow: 0 12px 26px -6px rgba(0, 0, 0, 0.08), 0 6px 12px -4px rgba(0, 0, 0, 0.04) !important;
                 border-color: color-mix(in srgb, var(--cp, #4f46e5) 30%, #cbd5e1);
@@ -231,9 +231,9 @@
             html.dark .rpt-team-card:hover,
             html.dark .rpt-metric-tile:hover,
             html.dark .roster-card:hover,
-            html.dark main .bg-white.border:not(table):not(thead):not(tbody):not(tr):not(th):not(td):not(input):not(select):not(textarea):not(button):not(nav):not(ul):not(li):not([role="dialog"]):not([role="menu"]):not(.flatpickr-calendar):not(.ql-toolbar):not(.ql-container):not(.no-box-style):not(.no-hover):hover,
-            html.dark main .dark\:bg-slate-900.border:not(table):not(thead):not(tbody):not(tr):not(th):not(td):not(input):not(select):not(textarea):not(button):not(nav):not(ul):not(li):not([role="dialog"]):not([role="menu"]):not(.flatpickr-calendar):not(.ql-toolbar):not(.ql-container):not(.no-box-style):not(.no-hover):hover,
-            html.dark main .dark\:bg-slate-800.border:not(table):not(thead):not(tbody):not(tr):not(th):not(td):not(input):not(select):not(textarea):not(button):not(nav):not(ul):not(li):not([role="dialog"]):not([role="menu"]):not(.flatpickr-calendar):not(.ql-toolbar):not(.ql-container):not(.no-box-style):not(.no-hover):hover {
+            html.dark main .bg-white.border:not(table):not(thead):not(tbody):not(tr):not(th):not(td):not(input):not(select):not(textarea):not(button):not(nav):not(ul):not(li):not(a):not(span):not(label):not(p):not(img):not([role="dialog"]):not([role="menu"]):not(.flatpickr-calendar):not(.ql-toolbar):not(.ql-container):not(.no-box-style):not(.no-hover):hover,
+            html.dark main .dark\:bg-slate-900.border:not(table):not(thead):not(tbody):not(tr):not(th):not(td):not(input):not(select):not(textarea):not(button):not(nav):not(ul):not(li):not(a):not(span):not(label):not(p):not(img):not([role="dialog"]):not([role="menu"]):not(.flatpickr-calendar):not(.ql-toolbar):not(.ql-container):not(.no-box-style):not(.no-hover):hover,
+            html.dark main .dark\:bg-slate-800.border:not(table):not(thead):not(tbody):not(tr):not(th):not(td):not(input):not(select):not(textarea):not(button):not(nav):not(ul):not(li):not(a):not(span):not(label):not(p):not(img):not([role="dialog"]):not([role="menu"]):not(.flatpickr-calendar):not(.ql-toolbar):not(.ql-container):not(.no-box-style):not(.no-hover):hover {
                 transform: translateY(-2.5px) !important;
                 box-shadow: 0 14px 28px -6px rgba(0, 0, 0, 0.45) !important;
                 border-color: rgba(255, 255, 255, 0.12) !important;

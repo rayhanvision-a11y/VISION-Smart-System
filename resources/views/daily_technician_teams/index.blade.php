@@ -356,13 +356,23 @@
         <div x-show="showModal" x-cloak
              class="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
             <div @click.away="showModal = false"
-                 class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-lg shadow-xl overflow-hidden">
-                
+                 class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden max-h-[92vh] overflow-y-auto my-auto">
                 {{-- Modal Header --}}
-                <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                    <h3 class="text-base font-bold text-slate-800 dark:text-white"
-                        x-text="isEdit ? '{{ __('Edit Technician Team') }}' : '{{ __('Create 3-Person Technician Team') }}'"></h3>
-                    <button type="button" @click="showModal = false" class="text-slate-400 hover:text-slate-600 text-lg leading-none">&times;</button>
+                <div class="px-6 border-b border-slate-100 dark:border-slate-800/80 flex items-center justify-between sticky top-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md z-10" style="padding-top: 18px; padding-bottom: 18px;">
+                    <div class="flex items-center gap-3">
+                        <span class="w-10 h-10 rounded-xl bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-lg border border-indigo-500/20 shrink-0">🛵</span>
+                        <div>
+                            <h3 class="text-base font-extrabold text-slate-900 dark:text-white tracking-tight leading-tight"
+                                x-text="isEdit ? '{{ __('Edit Technician Team') }}' : '{{ __('Create 3-Person Technician Team') }}'"></h3>
+                            <p class="text-[11px] text-slate-500 dark:text-slate-400 font-medium leading-tight mt-1">
+                                {{ __('Assign leader & members for today\'s field squad') }}
+                            </p>
+                        </div>
+                    </div>
+                    <button type="button" @click="showModal = false"
+                            class="w-8 h-8 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
                 </div>
 
                 {{-- Modal Form --}}
@@ -374,15 +384,15 @@
 
                     <div class="grid grid-cols-2 gap-3">
                         <div>
-                            <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wide mb-1">{{ __('Duty Date') }} *</label>
+                            <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wide mb-1.5">{{ __('Duty Date') }} <span class="text-red-600 dark:text-red-400">*</span></label>
                             <input type="date" name="duty_date" x-model="form.duty_date" required
-                                   class="w-full border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500">
+                                   class="w-full border border-slate-200 dark:border-slate-700/80 rounded-xl px-3.5 py-2.5 text-sm bg-slate-50 dark:bg-slate-800/80 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all">
                         </div>
 
                         <div>
-                            <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wide mb-1">{{ __('Category') }} *</label>
+                            <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wide mb-1.5">{{ __('Category') }} <span class="text-red-600 dark:text-red-400">*</span></label>
                             <select name="category" x-model="form.category" required
-                                    class="w-full border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 font-medium">
+                                    class="w-full border border-slate-200 dark:border-slate-700/80 rounded-xl px-3.5 py-2.5 text-sm bg-slate-50 dark:bg-slate-800/80 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 font-medium transition-all">
                                 @foreach($categories as $catKey => $catMeta)
                                     <option value="{{ $catKey }}">{{ $catMeta['icon'] ?? '👷' }} {{ __($catMeta['label']) }}</option>
                                 @endforeach
@@ -391,12 +401,12 @@
                     </div>
 
                     <div>
-                        <div class="flex items-center justify-between mb-1">
+                        <div class="flex items-center justify-between mb-1.5">
                             <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wide">{{ __('Team / Group Name') }}</label>
                             <span class="text-[10px] text-slate-400 font-medium">{{ __('Auto-named if blank') }}</span>
                         </div>
                         <input type="text" name="team_name" x-model="form.team_name" placeholder="{{ __('e.g. Team #1, Group #1, New Connection Alpha') }}"
-                               class="w-full border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500">
+                               class="w-full border border-slate-200 dark:border-slate-700/80 rounded-xl px-3.5 py-2.5 text-sm bg-slate-50 dark:bg-slate-800/80 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all">
                         <div class="flex items-center gap-1.5 flex-wrap mt-2">
                             <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{{ __('Quick Presets (1-10)') }}:</span>
                             @for($i = 1; $i <= 10; $i++)
@@ -416,12 +426,12 @@
                     </div>
 
                     {{-- Member 1: Team Leader --}}
-                    <div class="p-3.5 rounded-xl bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-800/40">
-                        <label class="block text-xs font-bold text-amber-800 dark:text-amber-300 uppercase tracking-wide mb-1.5 flex items-center gap-1">
-                            <span>👑</span> {{ __('Team Leader') }} *
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wide mb-1.5 flex items-center gap-1">
+                            <span>👑</span> {{ __('Team Leader') }} <span class="text-red-600 dark:text-red-400">*</span>
                         </label>
                         <select name="leader_id" x-model="form.leader_id" required
-                                class="w-full border border-amber-300 dark:border-amber-700 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-amber-500 font-medium">
+                                class="w-full border border-slate-200 dark:border-slate-700/80 rounded-xl px-3.5 py-2.5 text-sm bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 font-medium transition-all">
                             <option value="">— {{ __('Select Team Leader') }} —</option>
                             @foreach($eligibleStaff as $s)
                             <option value="{{ $s->id }}">{{ $s->isOnDuty() ? '🟢' : '⚪' }} {{ $s->name }} ({{ ucfirst(str_replace('_',' ',$s->role)) }})</option>
@@ -429,66 +439,55 @@
                         </select>
                     </div>
 
-                    {{-- Member 2: Assistant 1 --}}
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wide mb-1">
-                            👷 {{ __('Team Member 1') }}
-                        </label>
-                        <select name="member_1_id" x-model="form.member_1_id"
-                                class="w-full border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500">
-                            <option value="">— {{ __('Select Member 1') }} —</option>
-                            @foreach($eligibleStaff as $s)
-                            <option value="{{ $s->id }}">{{ $s->isOnDuty() ? '🟢' : '⚪' }} {{ $s->name }} ({{ ucfirst(str_replace('_',' ',$s->role)) }})</option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    {{-- Member 3: Assistant 2 --}}
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wide mb-1">
-                            👷 {{ __('Team Member 2') }}
-                        </label>
-                        <select name="member_2_id" x-model="form.member_2_id"
-                                class="w-full border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500">
-                            <option value="">— {{ __('Select Member 2') }} —</option>
-                            @foreach($eligibleStaff as $s)
-                            <option value="{{ $s->id }}">{{ $s->isOnDuty() ? '🟢' : '⚪' }} {{ $s->name }} ({{ ucfirst(str_replace('_',' ',$s->role)) }})</option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-3">
+                    {{-- Members 2 & 3: Side-by-side in 1 line --}}
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
-                            <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wide mb-1">📍 {{ __('Assigned Area') }}</label>
-                            <input type="text" name="area" list="modal-areas-list" x-model="form.area" placeholder="{{ __('e.g. Shadhupara') }}"
-                                   class="w-full border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500">
-                            <datalist id="modal-areas-list">
-                                @foreach($areas as $a)
-                                <option value="{{ $a }}"></option>
+                            <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wide mb-1.5 flex items-center gap-1">
+                                <span>👷</span> {{ __('Team Member 1') }}
+                            </label>
+                            <select name="member_1_id" x-model="form.member_1_id"
+                                    class="w-full border border-slate-200 dark:border-slate-700/80 rounded-xl px-3.5 py-2.5 text-sm bg-slate-50 dark:bg-slate-800/80 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 font-medium transition-all">
+                                <option value="">— {{ __('Select Member 1') }} —</option>
+                                @foreach($eligibleStaff as $s)
+                                <option value="{{ $s->id }}">{{ $s->isOnDuty() ? '🟢' : '⚪' }} {{ $s->name }} ({{ ucfirst(str_replace('_',' ',$s->role)) }})</option>
                                 @endforeach
-                            </datalist>
+                            </select>
                         </div>
 
                         <div>
-                            <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wide mb-1">🛵 {{ __('Vehicle No') }}</label>
-                            <input type="text" name="vehicle_no" x-model="form.vehicle_no" placeholder="{{ __('e.g. Bike-01') }}"
-                                   class="w-full border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500">
+                            <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wide mb-1.5 flex items-center gap-1">
+                                <span>👷</span> {{ __('Team Member 2') }}
+                            </label>
+                            <select name="member_2_id" x-model="form.member_2_id"
+                                    class="w-full border border-slate-200 dark:border-slate-700/80 rounded-xl px-3.5 py-2.5 text-sm bg-slate-50 dark:bg-slate-800/80 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 font-medium transition-all">
+                                <option value="">— {{ __('Select Member 2') }} —</option>
+                                @foreach($eligibleStaff as $s)
+                                <option value="{{ $s->id }}">{{ $s->isOnDuty() ? '🟢' : '⚪' }} {{ $s->name }} ({{ ucfirst(str_replace('_',' ',$s->role)) }})</option>
+                                @endforeach
+                            </select>
                         </div>
                     </div>
 
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wide mb-1">📝 {{ __('Notes / Instructions') }}</label>
-                        <textarea name="notes" x-model="form.notes" rows="2" placeholder="{{ __('Any special instructions for this team today...') }}"
-                                  class="w-full border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 resize-none"></textarea>
+                        <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wide mb-1.5 flex items-center gap-1">
+                            <span>📍</span> {{ __('Assigned Area') }}
+                        </label>
+                        <input type="text" name="area" list="modal-areas-list" x-model="form.area" placeholder="{{ __('e.g. Shadhupara') }}"
+                               class="w-full border border-slate-200 dark:border-slate-700/80 rounded-xl px-3.5 py-2.5 text-sm bg-slate-50 dark:bg-slate-800/80 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all">
+                        <datalist id="modal-areas-list">
+                            @foreach($areas as $a)
+                            <option value="{{ $a }}"></option>
+                            @endforeach
+                        </datalist>
                     </div>
 
-                    <div class="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-3">
+                    <div class="pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-end gap-2.5">
                         <button type="button" @click="showModal = false"
-                                class="px-4 py-2 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                                class="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
                             {{ __('Cancel') }}
                         </button>
                         <button type="submit"
-                                class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors shadow-sm cursor-pointer">
+                                class="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-xs font-black text-white bg-indigo-600 hover:bg-indigo-500 shadow-sm shadow-indigo-600/30 active:scale-95 transition-all cursor-pointer">
                             <span>🔔</span>
                             <span x-text="isEdit ? '{{ __('Update & Notify') }}' : '{{ __('Save & Notify Members') }}'"></span>
                         </button>

@@ -11,3 +11,6 @@ Artisan::command('inspire', function () {
 Schedule::command('app:check-sla-breaches')->everyFifteenMinutes();
 Schedule::command('backup:database')->daily();
 Schedule::command('app:prune-location-history --days=7')->dailyAt('03:00');
+Schedule::call(function () {
+    \App\Models\AttendanceLog::where('event_time', '<', now()->subDays(7)->startOfDay())->delete();
+})->dailyAt('03:30')->name('prune-attendance-logs-older-than-7-days');

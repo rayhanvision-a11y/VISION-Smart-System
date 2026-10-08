@@ -50,8 +50,8 @@ class RosterController extends Controller
         // Group by current_shift
         $grouped = [
             'unassigned' => $allUsers->whereIn('current_shift', ['unassigned', null]),
-            'day_shift' => $allUsers->where('current_shift', 'day_shift'),
-            'night_shift' => $allUsers->where('current_shift', 'night_shift'),
+            'day_shift' => $allUsers->whereIn('current_shift', ['1st_shift', 'day_shift']),
+            'night_shift' => $allUsers->whereIn('current_shift', ['2nd_shift', 'night_shift']),
             'day_off' => $allUsers->where('current_shift', 'day_off'),
         ];
 
@@ -63,16 +63,16 @@ class RosterController extends Controller
                 'icon' => '👥',
             ],
             'day_shift' => [
-                'label' => __('Day Shift'),
-                'time' => '9:00 AM - 6:00 PM',
+                'label' => __('1st Shift'),
+                'time' => '9:00 AM - 12:00 PM',
                 'color' => 'amber',
                 'icon' => '☀️',
             ],
             'night_shift' => [
-                'label' => __('Night Shift'),
-                'time' => '2:00 PM - 10:00 PM',
+                'label' => __('2nd Shift'),
+                'time' => '12:00 PM - 3:00 PM',
                 'color' => 'orange',
-                'icon' => '🌙',
+                'icon' => '🌤️',
             ],
             'day_off' => [
                 'label' => __('Day Off'),
@@ -94,7 +94,7 @@ class RosterController extends Controller
     {
         $request->validate([
             'user_id' => 'required|exists:users,id',
-            'shift' => 'required|in:unassigned,day_shift,night_shift,day_off',
+            'shift' => 'required|in:unassigned,1st_shift,2nd_shift,day_shift,night_shift,day_off',
         ]);
 
         $user = User::findOrFail($request->user_id);

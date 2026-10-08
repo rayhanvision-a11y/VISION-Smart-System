@@ -153,10 +153,13 @@ class User extends Authenticatable
     ];
 
     public const SHIFTS = [
-        'unassigned' => 'Unassigned Pool',
-        'day_shift' => 'Day Shift (9:00 AM - 6:00 PM)',
-        'night_shift' => 'Night Shift (2:00 PM - 10:00 PM)',
-        'day_off' => 'Day Off',
+        'unassigned'  => 'Unassigned Pool',
+        '1st_shift'   => '1st Shift (9:00 AM - 6:00 PM)',
+        '2nd_shift'   => '2nd Shift (2:00 PM - 10:00 PM)',
+        'day_shift'   => '1st Shift (9:00 AM - 6:00 PM)',
+        'night_shift' => '2nd Shift (2:00 PM - 10:00 PM)',
+        'off_duty'    => 'Duty Complete',
+        'day_off'     => 'Day Off',
     ];
 
     public function ensureCurrentShiftDate(): void
@@ -175,7 +178,7 @@ class User extends Authenticatable
         $this->ensureCurrentShiftDate();
 
         $shift = $this->current_shift ?? 'unassigned';
-        if (in_array($shift, ['day_off', 'unassigned'])) {
+        if (in_array($shift, ['day_off', 'unassigned', 'off_duty'])) {
             return false;
         }
 
@@ -184,14 +187,14 @@ class User extends Authenticatable
         $minute = (int) $now->format('i');
         $timeMinutes = $hour * 60 + $minute;
 
-        if ($shift === 'day_shift') {
-            // 9:00 AM (540 mins) to 6:00 PM (1080 mins)
-            return $timeMinutes >= 540 && $timeMinutes <= 1080;
+        if (in_array($shift, ['1st_shift', 'day_shift'])) {
+            // 1st Shift: 7:00 AM (420 mins) to 6:00 PM (1080 mins). After 6:00 PM, shift ends
+            return $timeMinutes >= 420 && $timeMinutes < 1080;
         }
 
-        if ($shift === 'night_shift') {
-            // 2:00 PM (840 mins = 14:00) to 10:00 PM (1320 mins = 22:00)
-            return $timeMinutes >= 840 && $timeMinutes <= 1320;
+        if (in_array($shift, ['2nd_shift', 'night_shift'])) {
+            // 2nd Shift: 12:00 PM entry (720 mins) to 10:00 PM (1320 mins). After 10:00 PM, shift ends
+            return $timeMinutes >= 720 && $timeMinutes < 1320;
         }
 
         return false;

@@ -44,6 +44,8 @@ return [
         'device_port' => (int) env('ATTENDANCE_DEVICE_PORT', 80),
         'dns_ip'      => env('ATTENDANCE_DNS_IP', '172.30.20.50'),
         'server_ip'   => env('ATTENDANCE_SERVER_LAN_IP', '103.31.179.118'),
+        'device_user' => env('ATTENDANCE_DEVICE_USER', 'admin'),
+        'device_pass' => env('ATTENDANCE_DEVICE_PASS', ''),
     ],
 
 ];

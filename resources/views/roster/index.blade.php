@@ -107,8 +107,8 @@
                     
                     {{-- Top row: ID / Role + Shift Pill --}}
                     <div class="flex items-center justify-between gap-2 mb-2">
-                        <span class="text-xs font-bold text-indigo-600 dark:text-indigo-400 font-mono truncate">
-                            USR-{{ str_pad($stUser->id, 4, '0', STR_PAD_LEFT) }}
+                        <span class="text-xs font-bold text-indigo-600 dark:text-indigo-400 font-mono truncate" title="{{ $stUser->office_id ? 'Office ID: ' . $stUser->office_id : 'ID: ' . $stUser->id }}">
+                            {{ $stUser->office_id ? 'Office ID: ' . $stUser->office_id : 'USR-' . str_pad($stUser->id, 4, '0', STR_PAD_LEFT) }}
                         </span>
                         
                         @if($onDuty)

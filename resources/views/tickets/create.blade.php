@@ -15,17 +15,19 @@
     @endphp
 
     {{-- Header --}}
-    <div class="mb-6 flex items-center justify-between gap-4">
-        <div class="flex items-center gap-3">
+    <div class="mb-6 flex items-center justify-between gap-4 no-box-style">
+        <div class="flex items-center gap-3.5 min-w-0 flex-1">
             <a href="{{ route('tickets.index') }}"
-               class="w-9 h-9 flex items-center justify-center rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 hover:text-indigo-600 hover:border-indigo-300 dark:hover:border-indigo-500 transition">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+               class="no-box-style shrink-0 w-10 h-10 min-w-[40px] max-w-[40px] inline-flex items-center justify-center rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:border-indigo-300 dark:hover:border-indigo-500 hover:bg-slate-50 dark:hover:bg-slate-700/50 shadow-2xs transition-all cursor-pointer"
+               style="width: 40px !important; min-width: 40px !important; max-width: 40px !important; height: 40px !important; flex-shrink: 0 !important; display: inline-flex !important;"
+               title="{{ __('Back to Tickets') }}">
+                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/>
                 </svg>
             </a>
-            <div>
-                <h1 class="text-xl sm:text-2xl font-bold text-slate-800 dark:text-slate-100 leading-tight">{{ __('Create New Ticket') }}</h1>
-                <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400">{{ __('Pick a ticket type below and complete the required fields.') }}</p>
+            <div class="min-w-0">
+                <h1 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight leading-tight whitespace-nowrap">{{ __('Create New Ticket') }}</h1>
+                <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5 whitespace-nowrap">{{ __('Pick a ticket type below and complete the required fields.') }}</p>
             </div>
         </div>
     </div>

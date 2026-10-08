@@ -113,11 +113,6 @@ class HikCentralWebhookController extends Controller
             Log::warning('HikCentral: Failed to cache last hit telemetry: ' . $e->getMessage());
         }
 
-        Log::info('HikCentral Webhook Event Received:', [
-            'ip'      => $request->ip(),
-            'payload' => $sanitizedPayload,
-        ]);
-
         $rawEvents = $this->extractEvents($payload, $rawContent);
 
         if (empty($rawEvents)) {
@@ -140,61 +135,99 @@ class HikCentralWebhookController extends Controller
             $deviceName = $eventItem['device_name'] ?? null;
             $eventType  = $eventItem['event_type'] ?? 'face_match';
 
-            // 1. Only process recognized employees - skip strangers and unrecognized faces
+            // 1. Process all punches with an ID or a person name
             if ($employeeNo === '' || $employeeNo === 'UNKNOWN') {
-                continue;
-            }
-
-            // 2. STRICT: Only accept punches from TODAY! All previous backlog/history is DROPPED!
-            try {
-                $rawDate = Carbon::parse($eventTime);
-                if (! $rawDate->isToday()) {
+                if (!empty($personName)) {
+                    $employeeNo = 'STAFF';
+                } else {
                     continue;
                 }
+            }
+
+            // 2. Parse event timestamp
+            try {
+                $rawEventDate = Carbon::parse($eventTime);
             } catch (\Throwable) {
+                $rawEventDate = now();
+            }
+
+            // STRICT POLICY: Only accept events from the last 7 days! Drop all older backlog buffer.
+            if ($rawEventDate->lt(now()->subDays(7)->startOfDay())) {
                 continue;
             }
 
-            $parsedDate = now();
-
-            // Find matching user in system by office_id or numeric user ID
-            $user = User::whereRaw('LOWER(office_id) = ?', [strtolower($employeeNo)])
-                ->orWhere(function ($q) use ($employeeNo) {
-                    if (is_numeric($employeeNo)) {
-                        $q->where('id', (int) $employeeNo);
-                    }
-                })
-                ->first();
-
-            // Determine shift based on check-in hour
-            // 9:00 AM - 6:00 PM: Day Shift (if punch before 14:00 / 2:00 PM)
-            // 2:00 PM - 10:00 PM: Night Shift (if punch at or after 14:00)
-            $hour = (int) $parsedDate->format('H');
-            $shiftAssigned = ($hour >= 14) ? 'night_shift' : 'day_shift';
-
-            if ($user) {
-                $matched++;
-
-                // Automatically activate On Duty and update shift
-                $user->forceFill([
-                    'current_shift' => $shiftAssigned,
-                    'shift_date'    => $parsedDate->toDateString(),
-                ])->save();
-
-                Log::info("HikCentral: User {$user->name} (Office ID: {$user->office_id}, ID: {$user->id}) marked ON DUTY with {$shiftAssigned}.");
-            } else {
-                Log::warning("HikCentral: Received face event for unmatched Employee No: {$employeeNo} ({$personName}).");
+            // 3. Find matching user in system strictly by office_id first
+            $user = User::whereRaw('LOWER(office_id) = ?', [strtolower($employeeNo)])->first();
+            if (! $user && is_numeric($employeeNo)) {
+                $user = User::where('id', (int) $employeeNo)->whereNull('office_id')->first();
             }
 
-            // Save log to attendance_logs table
+            // 4. Calculate shift and in/out status according to business rules:
+            // 1st Shift: 9:00 AM - 6:00 PM (Face scans starting from 7:00 AM up to 11:30 AM/before 12:00 PM).
+            //           Face scans between 9:00 AM and 6:00 PM remain On Duty.
+            //           Scan after 6:00 PM (18:00 / 1080 mins) exits shift -> Duty Complete (off_duty).
+            // 2nd Shift: 2:00 PM - 10:00 PM (Face scans from 12:00 PM onwards).
+            //           Face scans between 12:00 PM and 10:00 PM remain On Duty.
+            //           Scan after 10:00 PM (22:00 / 1320 mins) exits shift -> Duty Complete (off_duty).
+            $hour = (int) $rawEventDate->format('H');
+            $minute = (int) $rawEventDate->format('i');
+            $timeMinutes = $hour * 60 + $minute;
+
+            // Check if user/employee already established a shift today
+            $existingTodayShift = null;
+            if ($user && $user->shift_date === $rawEventDate->toDateString()) {
+                $existingTodayShift = $user->current_shift;
+            } else {
+                $priorPunchToday = AttendanceLog::where('employee_no', $employeeNo)
+                    ->whereDate('event_time', $rawEventDate->toDateString())
+                    ->oldest('event_time')
+                    ->first();
+                if ($priorPunchToday) {
+                    $existingTodayShift = $priorPunchToday->shift_assigned;
+                }
+            }
+
+            if ($existingTodayShift && in_array($existingTodayShift, ['1st_shift', 'day_shift'])) {
+                $shiftAssigned = '1st_shift';
+                // Scanned after 6:00 PM (1080 mins) -> exits shift (Duty Complete)
+                $dutyStatus = ($timeMinutes >= 1080) ? 'off_duty' : 'on_duty';
+            } elseif ($existingTodayShift && in_array($existingTodayShift, ['2nd_shift', 'night_shift'])) {
+                $shiftAssigned = '2nd_shift';
+                // Scanned after 10:00 PM (1320 mins) -> exits shift (Duty Complete)
+                $dutyStatus = ($timeMinutes >= 1320) ? 'off_duty' : 'on_duty';
+            } else {
+                // First punch of the day:
+                if ($timeMinutes < 720) {
+                    // Punched before 12:00 PM (from 7:00 AM, 9:00 AM, 10:00 AM up to 11:30 AM) -> 1st Shift
+                    $shiftAssigned = '1st_shift';
+                    $dutyStatus = 'on_duty';
+                } else {
+                    // Punched from 12:00 PM onwards -> 2nd Shift (2:00 PM - 10:00 PM)
+                    $shiftAssigned = '2nd_shift';
+                    $dutyStatus = ($timeMinutes >= 1320) ? 'off_duty' : 'on_duty';
+                }
+            }
+
+            // 5. Update live user duty status ONLY if event occurred TODAY
+            if ($user && $rawEventDate->isToday()) {
+                $matched++;
+                $user->forceFill([
+                    'current_shift' => $dutyStatus === 'off_duty' ? 'off_duty' : $shiftAssigned,
+                    'shift_date'    => $rawEventDate->toDateString(),
+                ])->save();
+
+                Log::info("HikCentral: User {$user->name} (Office ID: {$user->office_id}, ID: {$user->id}) status set to {$dutyStatus} ({$shiftAssigned}) for today.");
+            }
+
+            // 6. Permanently save event into AttendanceLog database (Nothing is deleted or removed)
             AttendanceLog::create([
-                'user_id'        => $user?->id,
+                'user_id'        => $user ? $user->id : null,
                 'employee_no'    => $employeeNo,
-                'person_name'    => $personName,
-                'event_type'     => (string) $eventType,
-                'event_time'     => $parsedDate,
-                'door_name'      => $doorName,
-                'device_name'    => $deviceName,
+                'person_name'    => $user ? $user->name : ($personName ?: "ID: {$employeeNo}"),
+                'event_type'     => ($dutyStatus ?? 'face_match') === 'off_duty' ? 'out' : ((string) $eventType),
+                'event_time'     => $rawEventDate,
+                'door_name'      => $doorName ?: 'Office Door',
+                'device_name'    => $deviceName ?: 'Hikvision Terminal',
                 'shift_assigned' => $shiftAssigned,
                 'raw_data'       => $this->sanitizePayload($eventItem),
             ]);

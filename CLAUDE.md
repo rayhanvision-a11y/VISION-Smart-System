@@ -33,6 +33,13 @@ php artisan backup:database                 # daily 23:59
 php artisan app:prune-location-history --days=7   # daily 03:00
 ```
 
+Production also needs a **queue worker cron** so queued `SyncTicketToGoogleSheet` jobs run (otherwise ticket → sheet sync is deferred forever):
+
+```
+* * * * * cd <project> && php artisan queue:work --stop-when-empty --max-time=55 --tries=3 --sleep=2 >> /dev/null 2>&1
+0 0 * * 0 cd <project> && php artisan queue:retry all >> /dev/null 2>&1
+```
+
 Flutter client (run from `mobile_app/`):
 
 ```bash
@@ -78,8 +85,11 @@ Aggregated stat queries are written with `selectRaw`. The **web** `/dashboard` c
 ### Firebase (push + realtime)
 `FirebaseService` handles both FCM push and Realtime Database ticket sync, and `TicketObserver` / `TicketMessageObserver` call it. Everything is gated on `FIREBASE_ENABLED` plus `config/firebase.php` credentials, so the service no-ops when unconfigured — keep that guard, since tests and most dev setups run without Firebase. Devices register their token via `POST /api/user/fcm-token`; the Flutter side is `lib/services/push_service.dart` and `lib/services/firebase_realtime_service.dart`.
 
-### Google Sheet sync
-`GoogleSheetSyncService` posts ticket create/update events to a Google Apps Script webhook, gated on the `google_sheet_sync_enabled` and `google_sheet_webhook_url` settings (both stored in the `Setting` model, edited from `/settings`). It is integrated into `TicketObserver` (guarded from unit tests) and called from `TicketController`, `BoardController` (drag & drop), and mobile `ApiTicketController`. Column F is mapped to the website ticket key (e.g. `260927009`), and Column O is mapped to Current Status (`Assigned`, `Pending`, `Processing`, `Solved`). Errors are logged and swallowed — never let sync failures block ticket writes.
+### Ticket type: internal vs external
+`tickets.ticket_type` is `internal` or `external` (default `external`). The create form (`resources/views/tickets/create.blade.php`) shows a two-tab Alpine.js switcher; **internal** tickets collect only Title, Description, Category, Priority, Assign To, while **external** tickets hide Title/Description (auto-generated from client name + category) and surface Client ID / Client Name / Area / `address` (separate from `area`) / Complaint Source / ONU Power. Only external tickets are dispatched to Google Sheet — `GoogleSheetSyncService::syncTicketCreated/Updated` early-return when `ticket_type === 'internal'`.
+
+### Google Sheet sync (queued)
+`GoogleSheetSyncService` posts ticket create/update events to a Google Apps Script webhook, gated on `google_sheet_sync_enabled` and `google_sheet_webhook_url` settings (edited from `/settings`). The service is **never called directly from controllers or the observer** — instead they dispatch `App\Jobs\SyncTicketToGoogleSheet` with `($ticketId, 'create'|'update', $remarks?)`. This keeps ticket create/status endpoints under 200ms even when the Apps Script webhook is slow. The job uses `tries=3`, `timeout=30`, `backoff=10`. In production `QUEUE_CONNECTION=database` and a per-minute cron runs `php artisan queue:work --stop-when-empty --max-time=55 --tries=3 --sleep=2`. Local dev typically keeps `QUEUE_CONNECTION=sync` so webhook calls happen inline (no worker to run). Column F = ticket key, Column O = Current Status (`Assigned`, `Pending`, `Processing`, `Solved`). The service also humanises slugs — e.g. `line_fault` → `Line Fault` — via `mapCategoryName()` fallback. Errors are logged and swallowed; sync failures never block ticket writes.
 
 ### Live location tracking
 `UserLocation` stores each user's latest position (plus accuracy, battery, speed and an `is_sharing` flag), with a history table pruned by `app:prune-location-history`. Web side: `LocationMapController` at `/live-map` (Leaflet). Mobile side: `lib/services/location_service.dart` posting to `/api/user/location`. Sharing is opt-in per user — respect `is_sharing` in any new query.
@@ -98,10 +108,14 @@ Aggregated stat queries are written with `selectRaw`. The **web** `/dashboard` c
 - `routes/api.php` serves the mobile app under `/api`, using Sanctum token auth (`POST /api/login` returns a token). Controllers are in `app/Http/Controllers/Api/` and return JSON. They must scope tickets with `Ticket::forUser()` too. Tests: `tests/Feature/MobileApiTest.php` and `MobileDashboardAndAdminApiTest.php`.
 - cPanel's FastCGI strips the `Authorization` header. To work around that, `AppServiceProvider` registers `Sanctum::getAccessTokenFromRequestUsing()`, which falls back to `X-Authorization`, `X-Api-Token`, `REDIRECT_HTTP_AUTHORIZATION` and `?token=`. `public/.htaccess` also forwards the headers. Keep both in place.
 - In `mobile_app/lib/`: HTTP calls go through `services/api_service.dart`, session and shared state through `services/app_state.dart`, and models are in `models/`. Nested relations such as `assigned_to` and `created_by` are parsed from the API JSON, so changing the shape of an API response can break the app.
+- **Background service:** `services/background_service.dart` (`BgService`) runs a Flutter foreground service via `flutter_background_service` that keeps location updates (5 min) and notification polling (30 sec) alive after the app is swiped away. It is initialised in `main.dart` and started on login (`login_screen.dart`) / stopped on logout (`profile_screen.dart`). Android requires `ACCESS_BACKGROUND_LOCATION`, `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_LOCATION`, and the `id.flutter.flutter_background_service.BackgroundService` declaration in `AndroidManifest.xml` with `foregroundServiceType="location|dataSync"` — don't remove any of these.
 - CI: `.github/workflows/ci.yml` runs `pint --test` plus `php artisan test` on every push and PR. `build_apk.yml` builds the release APK when `mobile_app/**` changes and publishes it to the `latest` GitHub release.
 
 ### Knowledge Base
 `BlogPostController`, `KbArticleController` and `KbCategoryController` are mounted at `/knowledge-base`. Legacy routes (`/knowledge-base-blogs-*`) and redirects from `/blogs` and `/kb` stay for backward compatibility with external links, so don't remove them.
+
+### Attendance device integration
+`.env` carries `ATTENDANCE_DEVICE_IP`, `ATTENDANCE_DEVICE_PORT`, `ATTENDANCE_DNS_IP`, and `ATTENDANCE_SERVER_LAN_IP` for the LAN biometric / Hikvision webhook flow (see recent commits `829c177`, `2529bb9`, `a7cebe0`, `6871f6f`). These control the Hikvision ISAPI endpoint and the server-side DNS/LAN diagnostics shown on `/attendance/*` admin pages. Leave the keys in place even when a dev machine can't reach the device — the controllers already guard the calls.
 
 ### Disabled or removed modules (stale references)
 - **WhatsApp:** the WhatsApp routes in `routes/web.php` are commented out. `WhatsAppController`, `WhatsAppService` and the Node bridge are no longer in the repo, and only `WA_INTERNAL_SECRET` is left in `.env` (stale WhatsApp entries also remain in `.claude/settings.json`). The feature doesn't exist, so don't uncomment those routes.
